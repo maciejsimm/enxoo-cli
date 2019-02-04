@@ -1,0 +1,58 @@
+APPROACH
+
+- TOP LEVEL CATALOGUE OBJECTS
+--- idmapping
+--- product
+--- category
+--- attribute set with attribute set attributes
+--- attribute with values
+--- pricebook
+--- provisioning plan with task assignments and tasks
+--- price rule
+
+- QUERY particular product
+|| --- get product
+|| --- get list of product attributes 
+        -> identify list of attributes to be migrated
+        -> identify list of attribute sets to be migrated
+|| --- get list of product attribute values 
+|| --- get list of attribute default values
+|| --- get list of attribute dependencies
+|| --- get list of attribute rules
+--- get list of child products (including charges & charge elements)
+--- get list of product relationships
+|| --- get list of provisioning plan assignments
+        -> identify list of provisioning plans to be migrated
+--- get list of pricebook entries - standard price
+--- get list of pricebook entries - other price
+--- get list of price rules
+        -> identify list of price rules to be migrated
+
+
+- MIGRATION APPROACH
+--- 
+
+
+
+  const sourceConn = await auth.loginSource();
+  const recordTypesSource = await query.queryRecordTypes(sourceConn);
+  const attributeSets = await query.queryAttributeSets(sourceConn);
+  const categories = await query.queryCategories(sourceConn);
+  const attributes = await query.queryAttributes(sourceConn);
+  const products = await query.queryProducts(sourceConn);
+  const pricebooks = await query.queryPricebooks(sourceConn);
+  const provisioningPlans = await query.queryProvisioningPlans(sourceConn);
+  const provisioningTasks = await query.queryProvisioningTasks(sourceConn);
+  const priceRules = await query.queryPriceRules(sourceConn);
+  const priceRuleConditions = await query.queryPriceRuleConditions(sourceConn);
+  const priceRuleActions = await query.queryPriceRuleActions(sourceConn);
+  const attributeValues = await query.queryAttributeValues(sourceConn);
+  const attributeSetAttributes = await query.queryAttributeSetAttributes(sourceConn);
+  const productAttributes = await query.queryProductAttributes(sourceConn);
+  const attributeDefaultValues = await query.queryAttributeDefaultValues(sourceConn);
+  const attributeValueDependencies = await query.queryAttributeValueDependency(sourceConn);
+  const attributeRules = await query.queryAttributeRules(sourceConn);
+  const productRelationships = await query.queryProductRelationships(sourceConn);
+  const provisioningPlanAssignments = await query.queryProvisioningPlanAssignments(sourceConn);
+  const provisioningTaskAssignments = await query.queryProvisioningTaskAssignments(sourceConn);
+  

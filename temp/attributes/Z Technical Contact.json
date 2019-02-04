@@ -1,0 +1,15 @@
+{
+   "Name": "Z Technical Contact",
+   "enxCPQ__Active__c": true,
+   "enxCPQ__Display_Disabled__c": false,
+   "enxCPQ__Display_in_Configurator__c": true,
+   "enxCPQ__Display_on_Configuration_Description__c": true,
+   "enxCPQ__Editable_not_on_Quote_Stage__c": "Approved;Cancelled",
+   "enxCPQ__Lookup_Field__c": "id",
+   "enxCPQ__Lookup_Field_Query__c": "Name",
+   "enxCPQ__Lookup_Object__c": "Contact",
+   "enxCPQ__Required__c": false,
+   "enxCPQ__TECH_Definition_Id__c": "ATR_ZTECHNICALCONTACT_",
+   "enxCPQ__Type__c": "Lookup",
+   "enxCPQ__TECH_External_Id__c": "ATR000VOY5N71RU"
+}

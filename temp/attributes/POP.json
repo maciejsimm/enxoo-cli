@@ -1,0 +1,16 @@
+{
+   "Name": "POP",
+   "enxCPQ__Active__c": true,
+   "enxCPQ__Display_Disabled__c": false,
+   "enxCPQ__Display_in_Configurator__c": true,
+   "enxCPQ__Display_on_Configuration_Description__c": false,
+   "enxCPQ__Editable_not_on_Quote_Stage__c": "Approved;Cancelled",
+   "enxCPQ__Lookup_Field__c": "id",
+   "enxCPQ__Lookup_Field_Query__c": "enxB2B__POP_Name__c",
+   "enxCPQ__Lookup_Object__c": "enxB2B__POP__c",
+   "enxCPQ__Product_Field_to_Update__c": "enxB2B__A_POP_Location__c",
+   "enxCPQ__Required__c": true,
+   "enxCPQ__TECH_Definition_Id__c": "ATR_POP_",
+   "enxCPQ__Type__c": "Lookup",
+   "enxCPQ__TECH_External_Id__c": "ATR00IY4LEIBWK8"
+}

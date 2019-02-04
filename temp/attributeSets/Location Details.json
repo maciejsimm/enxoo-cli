@@ -1,0 +1,132 @@
+{
+   "Name": "Location Details",
+   "enxCPQ__TECH_Definition_Id__c": "ATS_LOCATIONDETAILS_",
+   "enxCPQ__TECH_External_Id__c": "ATS00DXM35743YN",
+   "enxCPQ__AttributeSetAttributes__r": {
+      "totalSize": 11,
+      "done": true,
+      "records": [
+         {
+            "Name": "Location Details",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR007PMP7ZFLS6"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DXM35743YN"
+            },
+            "enxCPQ__Order__c": 10,
+            "enxCPQ__TECH_External_Id__c": "ASA00RV889J6V61"
+         },
+         {
+            "Name": "Location",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00T9VMTIE3P9"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DXM35743YN"
+            },
+            "enxCPQ__Order__c": 20,
+            "enxCPQ__TECH_External_Id__c": "ASA00U9GR31IL3E"
+         },
+         {
+            "Name": "Demarcation Type",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00CLBN2F0PYA"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DXM35743YN"
+            },
+            "enxCPQ__Order__c": 30,
+            "enxCPQ__TECH_External_Id__c": "ASA005Z5DBVHTK4"
+         },
+         {
+            "Name": "Demarcation Details",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00ZY7LOLKC1S"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DXM35743YN"
+            },
+            "enxCPQ__Order__c": 40,
+            "enxCPQ__TECH_External_Id__c": "ASA00TT07NOVIZS"
+         },
+         {
+            "Name": "Local Loop Details",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00GK6BS7BMWB"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DXM35743YN"
+            },
+            "enxCPQ__Order__c": 50,
+            "enxCPQ__TECH_External_Id__c": "ASA007KC9FHC6BU"
+         },
+         {
+            "Name": "POP",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00IY4LEIBWK8"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DXM35743YN"
+            },
+            "enxCPQ__Order__c": 60,
+            "enxCPQ__TECH_External_Id__c": "ASA00V7HJAS1RYF"
+         },
+         {
+            "Name": "Interface",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00YIJA0TGWEX"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DXM35743YN"
+            },
+            "enxCPQ__Order__c": 70,
+            "enxCPQ__TECH_External_Id__c": "ASA00CAEDXL76HF"
+         },
+         {
+            "Name": "Connector",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00ZQTKK8R722"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DXM35743YN"
+            },
+            "enxCPQ__Order__c": 80,
+            "enxCPQ__TECH_External_Id__c": "ASA00OE3PW99OLL"
+         },
+         {
+            "Name": "Fibre Mode",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00QNMK5EER2D"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DXM35743YN"
+            },
+            "enxCPQ__Order__c": 90,
+            "enxCPQ__TECH_External_Id__c": "ASA00V5AQI1G4IF"
+         },
+         {
+            "Name": "CPE Details",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00317HQC393U"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DXM35743YN"
+            },
+            "enxCPQ__Order__c": 100,
+            "enxCPQ__TECH_External_Id__c": "ASA007HR47RB0C9"
+         },
+         {
+            "Name": "Technical Contact",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR002V0JTVQRF9"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DXM35743YN"
+            },
+            "enxCPQ__Order__c": 110,
+            "enxCPQ__TECH_External_Id__c": "ASA00XJVA3476QQ"
+         }
+      ]
+   }
+}

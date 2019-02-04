@@ -1,0 +1,14 @@
+{
+   "Name": "Local Loop Details",
+   "enxCPQ__Active__c": true,
+   "enxCPQ__Display_Disabled__c": false,
+   "enxCPQ__Display_in_Configurator__c": true,
+   "enxCPQ__Display_on_Configuration_Description__c": false,
+   "enxCPQ__Editable_not_on_Quote_Stage__c": "Approved;Cancelled",
+   "enxCPQ__Helptext__c": "Specify customer requirements for the connectivity towards termination point (required local tails, cross connects, other). If the connectivity is provided by customer - specify supplier and contact details.",
+   "enxCPQ__Product_Field_to_Update__c": "enxB2B__A_End_Offnet_Details__c",
+   "enxCPQ__Required__c": false,
+   "enxCPQ__TECH_Definition_Id__c": "ATR_LOCALLOOPDETAILS_",
+   "enxCPQ__Type__c": "Textarea",
+   "enxCPQ__TECH_External_Id__c": "ATR00GK6BS7BMWB"
+}

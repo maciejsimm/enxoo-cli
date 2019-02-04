@@ -1,0 +1,132 @@
+{
+   "Name": "Z Location Details",
+   "enxCPQ__TECH_Definition_Id__c": "ATS_ZLOCATIONDETAILS_",
+   "enxCPQ__TECH_External_Id__c": "ATS00DCHYXP8O58",
+   "enxCPQ__AttributeSetAttributes__r": {
+      "totalSize": 11,
+      "done": true,
+      "records": [
+         {
+            "Name": "Z Location Details",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00O5CWK64SU8"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DCHYXP8O58"
+            },
+            "enxCPQ__Order__c": 10,
+            "enxCPQ__TECH_External_Id__c": "ASA00RSRCFASJMD"
+         },
+         {
+            "Name": "Z Location",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00RKVZLA4XOS"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DCHYXP8O58"
+            },
+            "enxCPQ__Order__c": 20,
+            "enxCPQ__TECH_External_Id__c": "ASA00Q4TSG02XOM"
+         },
+         {
+            "Name": "Z Demarcation Type",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00V3ETCANKN0"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DCHYXP8O58"
+            },
+            "enxCPQ__Order__c": 30,
+            "enxCPQ__TECH_External_Id__c": "ASA001B3LISMJ4I"
+         },
+         {
+            "Name": "Z Demarcation Details",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR005IRWB1NXW9"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DCHYXP8O58"
+            },
+            "enxCPQ__Order__c": 40,
+            "enxCPQ__TECH_External_Id__c": "ASA00ZPLG20GZ1M"
+         },
+         {
+            "Name": "Z Local Loop Details",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00BGDT8GOVFP"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DCHYXP8O58"
+            },
+            "enxCPQ__Order__c": 50,
+            "enxCPQ__TECH_External_Id__c": "ASA00P7MUD0V7HW"
+         },
+         {
+            "Name": "Z POP",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00MQ2RCHD7W0"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DCHYXP8O58"
+            },
+            "enxCPQ__Order__c": 60,
+            "enxCPQ__TECH_External_Id__c": "ASA00O7V0BVDHKJ"
+         },
+         {
+            "Name": "Z Interface",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00XX5P1Z8CPO"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DCHYXP8O58"
+            },
+            "enxCPQ__Order__c": 70,
+            "enxCPQ__TECH_External_Id__c": "ASA00XK9QN1HDY8"
+         },
+         {
+            "Name": "Z Connector",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00M734T9T0U0"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DCHYXP8O58"
+            },
+            "enxCPQ__Order__c": 80,
+            "enxCPQ__TECH_External_Id__c": "ASA00L78HUWV146"
+         },
+         {
+            "Name": "Z Fibre Mode",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00MJFG59ZJS3"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DCHYXP8O58"
+            },
+            "enxCPQ__Order__c": 90,
+            "enxCPQ__TECH_External_Id__c": "ASA00AG6I3OR3PQ"
+         },
+         {
+            "Name": "Z CPE Details",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR00VBQA8474SJ"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DCHYXP8O58"
+            },
+            "enxCPQ__Order__c": 100,
+            "enxCPQ__TECH_External_Id__c": "ASA00SH9BDYSB5P"
+         },
+         {
+            "Name": "Z Technical Contact",
+            "enxCPQ__Attribute__r": {
+               "enxCPQ__TECH_External_Id__c": "ATR000VOY5N71RU"
+            },
+            "enxCPQ__Attribute_Set__r": {
+               "enxCPQ__TECH_External_Id__c": "ATS00DCHYXP8O58"
+            },
+            "enxCPQ__Order__c": 110,
+            "enxCPQ__TECH_External_Id__c": "ASA00FBOMJZM3Y9"
+         }
+      ]
+   }
+}

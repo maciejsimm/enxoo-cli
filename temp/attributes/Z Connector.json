@@ -1,0 +1,13 @@
+{
+   "Name": "Z Connector",
+   "enxCPQ__Active__c": true,
+   "enxCPQ__Display_Disabled__c": false,
+   "enxCPQ__Display_in_Configurator__c": true,
+   "enxCPQ__Display_on_Configuration_Description__c": true,
+   "enxCPQ__Editable_not_on_Quote_Stage__c": "Approved;Cancelled",
+   "enxCPQ__Product_Field_to_Update__c": "enxB2B__B_Connector__c",
+   "enxCPQ__Required__c": false,
+   "enxCPQ__TECH_Definition_Id__c": "ATR_ZCONNECTOR_",
+   "enxCPQ__Type__c": "Picklist",
+   "enxCPQ__TECH_External_Id__c": "ATR00M734T9T0U0"
+}
