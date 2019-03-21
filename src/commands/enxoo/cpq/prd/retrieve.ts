@@ -14,21 +14,22 @@ export default class Org extends SfdxCommand {
   public static description = messages.getMessage('commandDescription');
 
   public static examples = [
-  `$ sfdx hello:org --targetusername myOrg@example.com --targetdevhubusername devhub@org.com
-  Hello world! This is org: MyOrg and I will be around until Tue Mar 20 2018!
-  My hub org id is: 00Dxx000000001234
+  `$ sfdx enxoo:cpq:prd:retrieve --u myOrg@example.com -p 'GEPL,IPLC,Colocation Service'
+  *** Begin exporting GEPL,IPLC products ***
+  --- exporting product definition 
+  --- exporting product attributes 
   `,
-  `$ sfdx hello:org --name myname --targetusername myOrg@example.com
-  Hello myname! This is org: MyOrg and I will be around until Tue Mar 20 2018!
+  `$ sfdx enxoo:cpq:prd:retrieve --u myOrg@example.com -p *ALL
+  *** Begin exporting all products ***
+  --- exporting product definition 
+  ...
   `
   ];
 
   public static args = [{name: 'file'}];
 
   protected static flagsConfig = {
-    // flag with a value (-n, --name=VALUE)
-    name: flags.string({char: 'n', description: messages.getMessage('nameFlagDescription')}),
-    force: flags.boolean({char: 'f', description: messages.getMessage('forceFlagDescription')})
+    products: flags.array({char: 'p', required: true, description: messages.getMessage('productsFlagDescription')})
   };
 
   // Comment this out if your command does not require an org username
@@ -45,15 +46,15 @@ export default class Org extends SfdxCommand {
 
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
     const conn = this.org.getConnection();
+    const products = this.flags.products;
 
-    this.ux.log('*** Query Begin ***');
+    this.ux.log('*** Begin exporting ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
 
-    const exporter = new ProductExporter();
+    const exporter = new ProductExporter(products);
     await exporter.all(conn);
 
     this.ux.log('*** Finished ***');
     
-
     // const query = 'Select Name, TrialExpirationDate from Organization';
 
     // The type we are querying for

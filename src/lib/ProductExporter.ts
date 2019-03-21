@@ -1,32 +1,67 @@
 // Class responsible for Extracting product data from an org
 
+// ----- categories
+// ----- products
+// ----- productAttributes
+// ----- attributeSets
+// ----- attributeSetAttributes
+// ----- attributes
+// ----- attributeValues
+// ----- attributeValueDependencies
+// ----- attributeDefaultValues
+// ----- attributeRules
+// ----- provisioningPlanAssignments
+// ----- provisioningPlans
+
+// charges
+// pricebooks
+// stdPricebookEntries
+// pricebookEntries
+// productRelationships
+// provisioningTasks
+// provisioningTaskAssignments
+// priceRules
+// priceRuleConditions
+// priceRuleActions
+
+
 import { Util } from './Util';
 import { Connection } from '@salesforce/core';
 import * as fs from 'fs';
 
 export class ProductExporter {
 
+    constructor(products: Array<String>) {
+        if (products[0] === '*ALL') {
+            this.productList = ['GEPL', 'IPLC', 'VPN']; // to-do -> query all products in the org and build the list
+        } else {
+            this.productList = products;
+        }
+    }
+
     private categoryIds:Set<String>;
     private attributeIds:Set<String>;
     private attributeSetIds:Set<String>;
+    private provisioningPlanIds:Set<String>;
+    private productList:Array<String>;
 
     public async all(conn: Connection) {            
         this.categoryIds = new Set<String>();
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
-
-        let productList = ['GEPL', 'IPLC'];
+        this.provisioningPlanIds = new Set<String>();
+        
         // let pricebookIds = [];
-        // let provisioningPlanIds = [];
         // let priceRuleIds = [];
 
-        for (let prodname of productList) {
+        for (let prodname of this.productList) {
             await this.retrieveProduct(conn, prodname);
         }
 
         await this.retrieveCategories(conn);
         await this.retrieveAttributes(conn);
         await this.retrieveAttributeSets(conn);
+        await this.retrieveProvisioningPlans(conn);
     } 
 
     private async retrieveProduct(conn: Connection, productName: String) {
@@ -34,7 +69,7 @@ export class ProductExporter {
 
         let productDefinition = await ProductExporter.queryProduct(conn, productName);
         let productAttributes = await ProductExporter.queryProductAttributes(conn, productName);
-        let attributeValues = await ProductExporter.queryAttributeValues(conn, productName);
+        let attributeValues = await ProductExporter.queryProductAttributeValues(conn, productName);
         let attributeDefaultValues = await ProductExporter.queryAttributeDefaultValues(conn, productName);
         let attributeValueDependencies = await ProductExporter.queryAttributeValueDependencies(conn, productName);
         let attributeRules = await ProductExporter.queryAttributeRules(conn, productName);
@@ -66,13 +101,24 @@ export class ProductExporter {
     }
 
     private extractIds(product:any) {
+
+        // Category IDs
         this.categoryIds.add(product.root.enxCPQ__Category__r.enxCPQ__TECH_External_Id__c);
+
+        // Attribute & Attribute Set IDs
         if (product.productAttributes != null) {
             for (let attr of product.productAttributes) {
                 this.attributeIds.add(attr.enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c);
                 if (attr['enxCPQ__Attribute_Set__r'] != undefined) {
                     this.attributeSetIds.add(attr.enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c);
                 }
+            }
+        }
+
+        // Provisioning Plan IDs
+        if (product.provisioningPlanAssings != null) {
+            for (let assign of product.provisioningPlanAssings) {
+                this.provisioningPlanIds.add(assign.enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c);
             }
         }
     }
@@ -92,31 +138,39 @@ export class ProductExporter {
                 }
             });
         }
-
     }
 
     private async retrieveAttributes(conn: Connection) {
         let attributes = await ProductExporter.queryAttributes(conn, this.attributeIds);
-        // let attributeValues = await ProductExporter.queryAttributeValues(conn, this.attributeIds);
-        
+        let attributeValues = await ProductExporter.queryAttributeValues(conn, this.attributeIds);
+
         var dir = './temp/attributes';
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir);
         }
 
         for (let attribute of attributes) {
-            await fs.writeFile("./temp/attributes/" + attribute['Name'] + ".json", JSON.stringify(Util.sanitizeJSON(attribute), null, 3), function(err) {
+            let attributeToSave:any = {};
+            attributeToSave.root = attribute;
+            attributeToSave.values = new Array<any>();
+
+            for (let attributeValue of attributeValues) {
+                if (attributeValue['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] === attribute['enxCPQ__TECH_External_Id__c']) {
+                    attributeToSave.values.push(attributeValue);
+                }
+            }
+
+            await fs.writeFile("./temp/attributes/" + attribute['Name'] + ".json", JSON.stringify(Util.sanitizeJSON(attributeToSave), null, 3), function(err) {
                 if(err) {
                     return console.log(err);
                 }
             });
         }
-
     }
 
     private async retrieveAttributeSets(conn: Connection) {
         let attributeSets = await ProductExporter.queryAttributeSets(conn, this.attributeSetIds);
-        // let attributeValues = await ProductExporter.queryAttributeValues(conn, this.attributeIds);
+        let attributeSetAttributes = await ProductExporter.queryAttributeSetAttributes(conn, this.attributeSetIds);
         
         var dir = './temp/attributeSets';
         if (!fs.existsSync(dir)){
@@ -124,13 +178,50 @@ export class ProductExporter {
         }
 
         for (let attributeSet of attributeSets) {
-            await fs.writeFile("./temp/attributeSets/" + attributeSet['Name'] + ".json", JSON.stringify(Util.sanitizeJSON(attributeSet), null, 3), function(err) {
+            let attributeSetToSave:any = {};
+            attributeSetToSave.root = attributeSet;
+            attributeSetToSave.values = new Array<any>();
+
+            for (let attributeSetAttribute of attributeSetAttributes) {
+                if (attributeSetAttribute['enxCPQ__Attribute_Set__r']['enxCPQ__TECH_External_Id__c'] === attributeSet['enxCPQ__TECH_External_Id__c']) {
+                    attributeSetToSave.values.push(attributeSetAttribute);
+                }
+            }
+
+            await fs.writeFile("./temp/attributeSets/" + attributeSet['Name'] + ".json", JSON.stringify(Util.sanitizeJSON(attributeSetToSave), null, 3), function(err) {
                 if(err) {
                     return console.log(err);
                 }
             });
         }
+    }
 
+    private async retrieveProvisioningPlans(conn: Connection) {
+        let provisioningPlans = await ProductExporter.queryProvisioningPlans(conn, this.provisioningPlanIds);
+        // let attributeSetAttributes = await ProductExporter.queryAttributeSetAttributes(conn, this.attributeSetIds);
+        
+        var dir = './temp/provisioningPlans';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+
+        for (let provisioningPlan of provisioningPlans) {
+            let provisioningPlanToSave:any = {};
+            provisioningPlanToSave.root = provisioningPlan;
+        //     attributeSetToSave.values = new Array<any>();
+
+        //     for (let attributeSetAttribute of attributeSetAttributes) {
+        //         if (attributeSetAttribute['enxCPQ__Attribute_Set__r']['enxCPQ__TECH_External_Id__c'] === attributeSet['enxCPQ__TECH_External_Id__c']) {
+        //             attributeSetToSave.values.push(attributeSetAttribute);
+        //         }
+        //     }
+
+            await fs.writeFile("./temp/provisioningPlans/" + provisioningPlan['Name'] + ".json", JSON.stringify(Util.sanitizeJSON(provisioningPlanToSave), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
+            });
+        }
     }
 
     private static queryProduct(conn: Connection, productName: String): Promise<string> {
@@ -159,14 +250,27 @@ export class ProductExporter {
         });
     }
 
-    private static queryAttributeValues(conn: Connection, productName: String): Promise<string> {
-        Util.log('--- exporting local product attribute values ');
+    private static queryProductAttributeValues(conn: Connection, productName: String): Promise<string> {
+        Util.log('--- exporting product attribute values ');
         return new Promise<string>((resolve: Function, reject: Function) => {
 
             conn.query("SELECT Name, enxCPQ__Active__c, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c, enxCPQ__TECH_Definition_Id__c FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = false AND enxCPQ__Exclusive_for_Product__r.Name = '" + productName + "' ORDER BY enxCPQ__Order__c", 
             null,
             function (err, res) {
-                if (err) reject('Failed to retrieve local product attribute values: ' + productName + '. Error: ' + err);
+                if (err) reject('Failed to retrieve product attribute values: ' + productName + '. Error: ' + err);
+                resolve(res.records);
+            });
+        });
+    }
+
+    private static queryAttributeValues(conn: Connection, attributeIds: Set<String>): Promise<string> {
+        Util.log('--- exporting product attribute values ');
+        return new Promise<string>((resolve: Function, reject: Function) => {
+
+            conn.query("SELECT Name, enxCPQ__Active__c, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c, enxCPQ__TECH_Definition_Id__c FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c", 
+            null,
+            function (err, res) {
+                if (err) reject('Failed to retrieve product attribute values: ' + attributeIds + '. Error: ' + err);
                 resolve(res.records);
             });
         });
@@ -224,6 +328,19 @@ export class ProductExporter {
         });
     }
 
+    private static queryProvisioningPlans(conn: Connection, provisioningPlanIds: Set<String>): Promise<string> {
+        Util.log('--- exporting provisioning plans ' + provisioningPlanIds.size);
+        return new Promise<string>((resolve: Function, reject: Function) => {
+
+            conn.query("SELECT Name, enxB2B__Support_Plan__c, enxB2B__TECH_External_Id__c FROM enxB2B__ProvisioningPlan__c WHERE enxB2B__TECH_External_Id__c IN (" + Util.setToIdString(provisioningPlanIds) + ")",
+            null,
+            function (err, res) {
+                if (err) reject('Failed to retrieve provisioning plans: ' + provisioningPlanIds + '. Error: ' + err);
+                resolve(res.records);
+            });
+        });
+    }
+
     private static queryCategories(conn: Connection, categoryIds: Set<String>): Promise<string> {
         Util.log('--- exporting categories - ' + categoryIds.size);
         return new Promise<string>((resolve: Function, reject: Function) => {
@@ -261,7 +378,20 @@ export class ProductExporter {
                 resolve(res.records);
             });
 
-            // , (SELECT Name, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeSetAttributes__r ORDER BY enxCPQ__Order__c)
+        });
+    }
+
+    private static queryAttributeSetAttributes(conn: Connection, attributeSetIds: Set<String>): Promise<string> {
+        Util.log('--- exporting attributes set attributes ');
+        return new Promise<string>((resolve: Function, reject: Function) => {
+
+            conn.query("SELECT Name, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeSetAttribute__c WHERE enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeSetIds) + ") ORDER BY enxCPQ__Order__c ", 
+            null,
+            function (err, res) {
+                if (err) reject('Failed to retrieve attribute set attributes. Error: ' + err);
+                resolve(res.records);
+            });
+
         });
     }
 }
