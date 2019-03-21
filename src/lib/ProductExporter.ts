@@ -10,6 +10,7 @@
 // ----- attributeValueDependencies
 // ----- attributeDefaultValues
 // ----- attributeRules
+// ----- productRelationships
 // ----- provisioningPlanAssignments
 // ----- provisioningPlans
 
@@ -17,7 +18,6 @@
 // pricebooks
 // stdPricebookEntries
 // pricebookEntries
-// productRelationships
 // provisioningTasks
 // provisioningTaskAssignments
 // priceRules
@@ -73,6 +73,7 @@ export class ProductExporter {
         let attributeDefaultValues = await ProductExporter.queryAttributeDefaultValues(conn, productName);
         let attributeValueDependencies = await ProductExporter.queryAttributeValueDependencies(conn, productName);
         let attributeRules = await ProductExporter.queryAttributeRules(conn, productName);
+        let productRelationships = await ProductExporter.queryProductRelationships(conn, productName);
         let provisioningPlanAssings = await ProductExporter.queryProvisioningPlanAssigns(conn, productName);
 
         let product:any = {};
@@ -82,6 +83,7 @@ export class ProductExporter {
         product.attributeDefaultValues = attributeDefaultValues;
         product.attributeValueDependencies = attributeValueDependencies;
         product.attributeRules = attributeRules;
+        product.productRelationships = productRelationships;
         product.provisioningPlanAssings = provisioningPlanAssings;
 
         this.extractIds(product);
@@ -310,6 +312,19 @@ export class ProductExporter {
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve attribute rules: ' + productName + '. Error: ' + err);
+                resolve(res.records);
+            });
+        });
+    }
+
+    private static queryProductRelationships(conn: Connection, productName: String): Promise<string> {
+        Util.log('--- exporting product relationships ');
+        return new Promise<string>((resolve: Function, reject: Function) => {
+
+            conn.query("SELECT Name, enxCPQ__Max_Occurrences__c, enxCPQ__Min_Occurrences__c, enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Relationship_Type__c, enxCPQ__Secondary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__ProductRelationship__c WHERE enxCPQ__Primary_Product__r.Name = '" + productName + "' AND enxCPQ__Secondary_Product__c != null", 
+            null,
+            function (err, res) {
+                if (err) reject('Failed to retrieve product relationships: ' + productName + '. Error: ' + err);
                 resolve(res.records);
             });
         });
