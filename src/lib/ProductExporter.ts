@@ -254,12 +254,14 @@ export class ProductExporter {
         Util.log('--- exporting attributes sets - ' + attributeSetIds.size);
         return new Promise<string>((resolve: Function, reject: Function) => {
 
-            conn.query("SELECT Name, enxCPQ__Description__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c, (SELECT Name, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeSetAttributes__r ORDER BY enxCPQ__Order__c) FROM enxCPQ__AttributeSet__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeSetIds) + ") ", 
+            conn.query("SELECT Name, enxCPQ__Description__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeSet__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeSetIds) + ") ", 
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve attribute sets. Error: ' + err);
                 resolve(res.records);
             });
+
+            // , (SELECT Name, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeSetAttributes__r ORDER BY enxCPQ__Order__c)
         });
     }
 }

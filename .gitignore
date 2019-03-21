@@ -5,4 +5,5 @@
 /lib
 /package-lock.json
 /tmp
+/temp
 node_modules
