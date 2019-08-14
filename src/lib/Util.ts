@@ -55,10 +55,10 @@ export class Util {
 
         if (isObject) {
             for (let prop in obj) {
-                if (obj[prop] == null) { // cleaner structure in repo, but potentially dangerous (if someone will clear value)
-                    delete obj[prop];
-                    continue;
-                }
+                // if (obj[prop] == null) { // cleaner structure in repo, but potentially dangerous (if someone will clear value)
+                //     delete obj[prop];
+                //     continue;
+                // }
 
                 if (prop === 'attributes') {
                     delete obj[prop];

@@ -28,6 +28,7 @@
 import { Util } from './Util';
 import { Connection } from '@salesforce/core';
 import * as fs from 'fs';
+import { Queries } from './query';
 
 export class ProductExporter {
 
@@ -44,44 +45,57 @@ export class ProductExporter {
     private attributeSetIds:Set<String>;
     private provisioningPlanIds:Set<String>;
     private productList:Array<String>;
+    private parentCategoriesIds:Set<String>;
 
     public async all(conn: Connection) {            
         this.categoryIds = new Set<String>();
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
         this.provisioningPlanIds = new Set<String>();
-        
+        this.parentCategoriesIds = new Set<String>();
         // let pricebookIds = [];
         // let priceRuleIds = [];
 
         for (let prodname of this.productList) {
             await this.retrieveProduct(conn, prodname);
+            await this.retrieveChargeElementPricebookEntryIds(conn, prodname);
+            await this.retrieveProductAttributeIds(conn, prodname);
+            await this.retrieveProductIds(conn, prodname);
+            await this.retrievePriceBooks(conn, prodname);
+            await this.retrieveProductIdsBulk(conn, prodname);
+            await this.retrieveCharges(conn, prodname);
         }
-
+        await this.retrieveRecordTypes(conn);
+        await this.retrieveProvisioningPlans(conn);
+        await this.retrieveProvisioningTasks(conn);
+        await this.retrievePricebooksIds(conn);
+        await this.retrieveProvisioningTaskAssignmentIds(conn);
+        await this.retrieveProvisioningPlanAssignmentIds(conn);
         await this.retrieveCategories(conn);
         await this.retrieveAttributes(conn);
         await this.retrieveAttributeSets(conn);
-        await this.retrieveProvisioningPlans(conn);
+        await this.retrieveStdPricebookEntryIds(conn);
     } 
 
     private async retrieveProduct(conn: Connection, productName: String) {
         Util.showSpinner(productName + ' export');
 
-        let productDefinition = await ProductExporter.queryProduct(conn, productName);
-        let options = await ProductExporter.queryProductOptions(conn, productName);
-        let charges = await ProductExporter.queryProductCharges(conn, productName);
-        let productAttributes = await ProductExporter.queryProductAttributes(conn, productName);
-        let attributeValues = await ProductExporter.queryProductAttributeValues(conn, productName);
-        let attributeDefaultValues = await ProductExporter.queryAttributeDefaultValues(conn, productName);
-        let attributeValueDependencies = await ProductExporter.queryAttributeValueDependencies(conn, productName);
-        let attributeRules = await ProductExporter.queryAttributeRules(conn, productName);
-        let productRelationships = await ProductExporter.queryProductRelationships(conn, productName);
-        let provisioningPlanAssings = await ProductExporter.queryProvisioningPlanAssigns(conn, productName);
+        let productDefinition = await Queries.queryProduct(conn, productName);
+        console.log(productDefinition);
+        let options = await Queries.queryProductOptions(conn, productName);
+        let chargesIds = await Queries.queryProductChargesIds(conn, productName);
+        let productAttributes = await Queries.queryProductAttributes(conn, productName);
+        let attributeValues = await Queries.queryProductAttributeValues(conn, productName);
+        let attributeDefaultValues = await Queries.queryAttributeDefaultValues(conn, productName);
+        let attributeValueDependencies = await Queries.queryAttributeValueDependencies(conn, productName);
+        let attributeRules = await Queries.queryAttributeRules(conn, productName);
+        let productRelationships = await Queries.queryProductRelationships(conn, productName);
+        let provisioningPlanAssings = await Queries.queryProvisioningPlanAssigns(conn, productName);
 
         let product:any = {};
         product.root = productDefinition[0];
         product.options = options;
-        product.charges = charges;
+        product.chargesIds = chargesIds;
         product.productAttributes = productAttributes;
         product.attributeValues = attributeValues;
         product.attributeDefaultValues = attributeDefaultValues;
@@ -89,15 +103,13 @@ export class ProductExporter {
         product.attributeRules = attributeRules;
         product.productRelationships = productRelationships;
         product.provisioningPlanAssings = provisioningPlanAssings;
-
         this.extractIds(product);
-        
         var dir = './temp/products';
         if (!fs.existsSync(dir)){
-            fs.mkdirSync(dir);
+            fs.mkdirSync(dir, { recursive: true });
         }
 
-        await fs.writeFile("./temp/products/" + productName + ".json", JSON.stringify(Util.sanitizeJSON(product), null, 3), function(err) {
+        await fs.writeFile("./temp/products/" + productName + '_' + product.root['enxCPQ__TECH_External_Id__c'] + ".json", JSON.stringify(Util.sanitizeJSON(product), null, 3), function(err) {
             if(err) {
                 return console.log(err);
             }
@@ -130,15 +142,37 @@ export class ProductExporter {
     }
 
     private async retrieveCategories(conn: Connection) {
-        let categories = await ProductExporter.queryCategories(conn, this.categoryIds);
+        let categories = await Queries.queryCategories(conn, this.categoryIds);
         
-        var dir = './temp/categories';
-        if (!fs.existsSync(dir)){
-            fs.mkdirSync(dir);
-        }
 
         for (let category of categories) {
-            await fs.writeFile("./temp/categories/" + category['Name'] + ".json", JSON.stringify(Util.sanitizeJSON(category), null, 3), function(err) {
+            if(category['enxCPQ__Parent_Category__r'] !==null){
+                this.parentCategoriesIds.add(category['enxCPQ__Parent_Category__r']['enxCPQ__TECH_External_Id__c']);
+            }
+        }
+        let parentCategories = await Queries.queryCategories(conn, this.parentCategoriesIds);
+        
+        var dir1 = './temp/categories';
+        if (!fs.existsSync(dir1)){
+            fs.mkdirSync(dir1);
+        }
+
+        var dir2 = './temp/parentCategories';
+        if (!fs.existsSync(dir2)){
+            fs.mkdirSync(dir2);
+        }
+
+        for (let parentCategory of parentCategories) {
+            await fs.writeFile("./temp/parentCategories/" + parentCategory['Name'] +'_' +parentCategory['enxCPQ__TECH_External_Id__c']+ ".json", JSON.stringify(Util.sanitizeJSON(parentCategory), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
+            });
+        }
+
+
+        for (let category of categories) {    
+            await fs.writeFile("./temp/categories/" + category['Name'] +'_' +category['enxCPQ__TECH_External_Id__c']+ ".json", JSON.stringify(Util.sanitizeJSON(category), null, 3), function(err) {
                 if(err) {
                     return console.log(err);
                 }
@@ -147,8 +181,8 @@ export class ProductExporter {
     }
 
     private async retrieveAttributes(conn: Connection) {
-        let attributes = await ProductExporter.queryAttributes(conn, this.attributeIds);
-        let attributeValues = await ProductExporter.queryAttributeValues(conn, this.attributeIds);
+        let attributes = await Queries.queryAttributes(conn, this.attributeIds);
+        let attributeValues = await Queries.queryAttributeValues(conn, this.attributeIds);
 
         var dir = './temp/attributes';
         if (!fs.existsSync(dir)){
@@ -166,7 +200,7 @@ export class ProductExporter {
                 }
             }
 
-            await fs.writeFile("./temp/attributes/" + attribute['Name'] + ".json", JSON.stringify(Util.sanitizeJSON(attributeToSave), null, 3), function(err) {
+            await fs.writeFile("./temp/attributes/" + attribute['Name'] + '_' + attribute['enxCPQ__TECH_External_Id__c']+ ".json", JSON.stringify(Util.sanitizeJSON(attributeToSave), null, 3), function(err) {
                 if(err) {
                     return console.log(err);
                 }
@@ -175,8 +209,8 @@ export class ProductExporter {
     }
 
     private async retrieveAttributeSets(conn: Connection) {
-        let attributeSets = await ProductExporter.queryAttributeSets(conn, this.attributeSetIds);
-        let attributeSetAttributes = await ProductExporter.queryAttributeSetAttributes(conn, this.attributeSetIds);
+        let attributeSets = await Queries.queryAttributeSets(conn, this.attributeSetIds);
+        let attributeSetAttributes = await Queries.queryAttributeSetAttributes(conn, this.attributeSetIds);
         
         var dir = './temp/attributeSets';
         if (!fs.existsSync(dir)){
@@ -194,7 +228,7 @@ export class ProductExporter {
                 }
             }
 
-            await fs.writeFile("./temp/attributeSets/" + attributeSet['Name'] + ".json", JSON.stringify(Util.sanitizeJSON(attributeSetToSave), null, 3), function(err) {
+            await fs.writeFile("./temp/attributeSets/" + attributeSet['Name'] +'_' + attributeSet['enxCPQ__TECH_External_Id__c']+ ".json", JSON.stringify(Util.sanitizeJSON(attributeSetToSave), null, 3), function(err) {
                 if(err) {
                     return console.log(err);
                 }
@@ -203,8 +237,8 @@ export class ProductExporter {
     }
 
     private async retrieveProvisioningPlans(conn: Connection) {
-        let provisioningPlans = await ProductExporter.queryProvisioningPlans(conn, this.provisioningPlanIds);
-        // let attributeSetAttributes = await ProductExporter.queryAttributeSetAttributes(conn, this.attributeSetIds);
+        let provisioningPlans = await Queries.queryProvisioningPlans(conn);
+        let provisioningTaskAssignments = await Queries.queryProvisioningTaskAssignments(conn)
         
         var dir = './temp/provisioningPlans';
         if (!fs.existsSync(dir)){
@@ -214,15 +248,43 @@ export class ProductExporter {
         for (let provisioningPlan of provisioningPlans) {
             let provisioningPlanToSave:any = {};
             provisioningPlanToSave.root = provisioningPlan;
-        //     attributeSetToSave.values = new Array<any>();
+            provisioningPlanToSave.values = new Array<any>();
 
-        //     for (let attributeSetAttribute of attributeSetAttributes) {
-        //         if (attributeSetAttribute['enxCPQ__Attribute_Set__r']['enxCPQ__TECH_External_Id__c'] === attributeSet['enxCPQ__TECH_External_Id__c']) {
-        //             attributeSetToSave.values.push(attributeSetAttribute);
-        //         }
-        //     }
+            for (let provisioningTaskAssignment of provisioningTaskAssignments) {
+                if (provisioningTaskAssignment['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c'] === provisioningPlan['enxB2B__TECH_External_Id__c']) {
+                    provisioningPlanToSave.values.push(provisioningTaskAssignment);
+                }
+            }
 
-            await fs.writeFile("./temp/provisioningPlans/" + provisioningPlan['Name'] + ".json", JSON.stringify(Util.sanitizeJSON(provisioningPlanToSave), null, 3), function(err) {
+            await fs.writeFile("./temp/provisioningPlans/" + provisioningPlan['Name'] +'_' + provisioningPlan['enxB2B__TECH_External_Id__c']+ ".json", JSON.stringify(Util.sanitizeJSON(provisioningPlanToSave), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
+            });
+        }
+    }
+    
+    private async retrieveProvisioningTasks(conn: Connection){
+        let provisioningTasks = await Queries.queryProvisioningTasks(conn)
+        let provisioningTaskAssignments = await Queries.queryProvisioningTaskAssignments(conn)
+        var dir = './temp/provisioningTasks';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+
+
+        for (let provisioningTask of provisioningTasks) {
+            let provisioningTaskToSave:any = {};
+            provisioningTaskToSave.root = provisioningTask;
+            provisioningTaskToSave.values = new Array<any>();
+
+            for (let provisioningTaskAssignment of provisioningTaskAssignments) {
+                if (provisioningTaskAssignment['enxB2B__Provisioning_Task__r']['enxB2B__TECH_External_Id__c'] === provisioningTask['enxB2B__TECH_External_Id__c']) {
+                    provisioningTaskToSave.values.push(provisioningTaskAssignment);
+                }
+            }
+
+            await fs.writeFile("./temp/provisioningTasks/" + provisioningTask['Name'] +'_' + provisioningTask['enxB2B__TECH_External_Id__c']+ ".json", JSON.stringify(Util.sanitizeJSON(provisioningTaskToSave), null, 3), function(err) {
                 if(err) {
                     return console.log(err);
                 }
@@ -230,216 +292,285 @@ export class ProductExporter {
         }
     }
 
-    private static queryProduct(conn: Connection, productName: String): Promise<string> {
-        Util.log('--- exporting product definition ');
+    private async retrievePriceBooks(conn: Connection, productName: String){
+        let priceBooks = await Queries.queryPricebooks(conn);
+        let priceBookEntries = await Queries.queryPricebookEntries(conn, productName);
+        let stdPriceBookEntries = await Queries.queryStdPricebookEntries(conn, productName);
+        let chargeElementPricebookEntries = await Queries.bulkQueryChargeElementPricebookEntries(conn, productName);
+        let chargeElementStdPricebookEntries = await Queries.bulkQueryChargeElementStdPricebookEntries(conn, productName);
 
-        return new Promise<string>((resolve: Function, reject: Function) => {
+        var dir = './temp/priceBooks';
+        console.log(fs.existsSync(dir));
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir, { recursive: true });
+        }
 
-            conn.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Column_Dimension__c, enxCPQ__Column_Value__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Pricing_Method__c, enxCPQ__Row_Dimension__c, enxCPQ__Row_Value__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c,enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, enxCPQ__Save_Before_Calculation__c, RecordTypeId, enxCPQ__Dimension_1__c, enxCPQ__Dimension_1_Numeric__c, enxCPQ__Dimension_2__c, enxCPQ__Dimension_2_Numeric__c, enxCPQ__Dimension_3__c, enxCPQ__Dimension_3_Numeric__c, enxCPQ__Dimension_4__c, enxCPQ__Dimension_4_Numeric__c, enxCPQ__Dimension_5__c, enxCPQ__Dimension_5_Numeric__c FROM Product2 WHERE Name = '" + productName + "' LIMIT 1", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve product: ' + productName + '. Error: ' + err);
-                resolve(res.records);
+        for (let priceBook of priceBooks) {
+            let priceBookToSave:any = {};
+            priceBookToSave.root = priceBook;
+            priceBookToSave.entries = new Array<any>();
+            priceBookToSave.stdEntries = new Array<any>();
+            priceBookToSave.chargeElementPricebookEntries = new Array<any>();
+            priceBookToSave.chargeElementStdPricebookEntries = new Array<any>();
+
+            for (let priceBookEntry of priceBookEntries) {
+                if (priceBookEntry['Pricebook2Id']['enxB2B__TECH_External_Id__c'] === priceBook['enxB2B__TECH_External_Id__c']) {
+                    priceBookToSave.entries.push(priceBookEntry);
+                }
+            }
+            for (let stdPriceBookEntry of stdPriceBookEntries) {
+                if (stdPriceBookEntry['Pricebook2Id']['enxB2B__TECH_External_Id__c'] === priceBook['enxB2B__TECH_External_Id__c']) {
+                    priceBookToSave.stdEntries.push(stdPriceBookEntry);
+                }
+            }
+
+            for (let chargeElementPricebookEntry of chargeElementPricebookEntries) {
+                if (chargeElementPricebookEntry['Pricebook2Id']['enxB2B__TECH_External_Id__c'] === priceBook['enxB2B__TECH_External_Id__c']) {
+                    priceBookToSave.stdEntries.push(chargeElementPricebookEntry);
+                }
+            }
+
+            for (let chargeElementStdPricebookEntry of chargeElementStdPricebookEntries) {
+                if (chargeElementStdPricebookEntry['Pricebook2Id']['enxB2B__TECH_External_Id__c'] === priceBook['enxB2B__TECH_External_Id__c']) {
+                    priceBookToSave.stdEntries.push(chargeElementStdPricebookEntry);
+                }
+            }
+
+            await fs.writeFile("./temp/PriceBooks/" + priceBook['Name'] + ".json", JSON.stringify(Util.sanitizeJSON(priceBookToSave), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
             });
+        }
+    }
+
+
+    private async retrieveChargeElementPricebookEntryIds(conn: Connection, productName: String){
+        let chargeElementPricebookEntryIds = await Queries.bulkQueryChargeElementPricebookEntryIds(conn, productName)
+        var dir = './temp/ids/ChargeElementPricebookEntryIds';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir, { recursive: true });
+        }
+
+        await fs.writeFile("./temp/ids/ChargeElementPricebookEntryIds/" +productName + ".json", JSON.stringify(chargeElementPricebookEntryIds), function(err) {
+            if(err) {
+                return console.log(err);
+            }
+            Util.log("----- charge elements file was saved");          
         });
     }
 
-    private static queryProductOptions(conn: Connection, productName: String): Promise<string> {
-        Util.log('--- exporting product options ');
+    private async retrieveRecordTypes(conn: Connection){
+        let recordTypes = await Queries.queryRecordTypes(conn)
+        var dir = './temp/recordTypes';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
 
-        return new Promise<string>((resolve: Function, reject: Function) => {
-
-            conn.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Column_Dimension__c, enxCPQ__Column_Value__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Pricing_Method__c, enxCPQ__Row_Dimension__c, enxCPQ__Row_Value__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, enxCPQ__Save_Before_Calculation__c, RecordTypeId, enxCPQ__Dimension_1__c, enxCPQ__Dimension_1_Numeric__c, enxCPQ__Dimension_2__c, enxCPQ__Dimension_2_Numeric__c, enxCPQ__Dimension_3__c, enxCPQ__Dimension_3_Numeric__c, enxCPQ__Dimension_4__c, enxCPQ__Dimension_4_Numeric__c, enxCPQ__Dimension_5__c, enxCPQ__Dimension_5_Numeric__c FROM Product2 WHERE RecordType.Name = 'Option' AND enxCPQ__Parent_Product__r.Name = '" + productName + "' ORDER BY enxCPQ__Sorting_Order__c", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve options: ' + productName + '. Error: ' + err);
-                resolve(res.records);
+        for (let recordType of recordTypes) {
+            await fs.writeFile("./temp/recordTypes/" + recordType['Name'] +'_' + recordType['Id'] + ".json", JSON.stringify(Util.sanitizeJSON(recordType), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
             });
-        });
+        }
     }
 
-    private static queryProductCharges(conn: Connection, productName: String): Promise<string> {
-        Util.log('--- exporting product charges ');
-        return new Promise<string>((resolve: Function, reject: Function) => {
+    private async retrieveProductIds(conn: Connection, productName: String){
+        let productIds = await Queries.queryProductIds(conn, productName)
+        var dir = './temp/ids/productIds';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
 
-            conn.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Column_Dimension__c, enxCPQ__Column_Value__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Pricing_Method__c, enxCPQ__Row_Dimension__c, enxCPQ__Row_Value__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, enxCPQ__Save_Before_Calculation__c, RecordTypeId, enxCPQ__Dimension_1__c, enxCPQ__Dimension_1_Numeric__c, enxCPQ__Dimension_2__c, enxCPQ__Dimension_2_Numeric__c, enxCPQ__Dimension_3__c, enxCPQ__Dimension_3_Numeric__c, enxCPQ__Dimension_4__c, enxCPQ__Dimension_4_Numeric__c, enxCPQ__Dimension_5__c, enxCPQ__Dimension_5_Numeric__c FROM Product2 WHERE RecordType.Name = 'Charge' AND enxCPQ__Root_Product__r.Name = '" + productName + "' ORDER BY enxCPQ__Sorting_Order__c", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve charges: ' + productName + '. Error: ' + err);
-                console.log('fin charges');
-                resolve(res.records);
+    
+            await fs.writeFile("./temp/ids/productIds/" +productName + ".json", JSON.stringify(Util.sanitizeJSON(productIds), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
             });
-        });
+        
     }
 
-    private static queryProductAttributes(conn: Connection, productName: String): Promise<string> {
-        Util.log('--- exporting product attributes ');
-        return new Promise<string>((resolve: Function, reject: Function) => {
+    private async retrieveProductAttributeIds(conn: Connection, productName: String){
+        let productAttributeIds = await Queries.queryProductAttributeIds(conn, productName)
+        var dir = './temp/ids/productAttributeIds';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
 
-            conn.query("SELECT Name, enxCPQ__Active__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Option_Affecting__c, enxCPQ__Order__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product_Field_to_Update__c, RecordTypeId, enxCPQ__Role__c, enxCPQ__TECH_External_Id__c, enxCPQ__Value_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Value_Boolean__c, enxCPQ__Value_Currency__c, enxCPQ__Value_Date__c, enxCPQ__Value_Number__c, enxCPQ__Value_Percent__c, enxCPQ__Value_Text_Long__c, enxCPQ__Value_Text_Short__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__ProductAttribute__c WHERE enxCPQ__Product__r.Name = '" + productName + "' ORDER BY enxCPQ__Order__c", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve product attributes: ' + productName + '. Error: ' + err);
-                resolve(res.records);
+    
+            await fs.writeFile("./temp/ids/productAttributeIds/" +productName + ".json", JSON.stringify(Util.sanitizeJSON(productAttributeIds), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
             });
-        });
+        
+    }
+    private async retrievePricebooksIds(conn: Connection){
+        let pricebooksIds = await Queries.queryPricebooksIds(conn)
+        var dir = './temp/ids/pricebooksIds';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+
+            await fs.writeFile("./temp/ids/pricebooksIds/" + "pricebooksIds" + ".json", JSON.stringify(Util.sanitizeJSON(pricebooksIds), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
+            });
+        
+    } 
+
+  
+
+    private async retrieveCharges(conn: Connection, productName: String){
+        let root = await Queries.queryProductCharges(conn, productName);
+        let chargeName = root['enxCPQ__Charge_Reference__c'];
+        let chargeElements = await Queries.bulkQueryChargeElements(conn, productName, chargeName);
+        let chargeTier = await Queries.bulkQueryChargeTiers(conn, productName, chargeName);
+
+        let charge: any = {};
+        charge.root= root;
+        charge.chargeElements = chargeElements;
+        charge.chargeTier = chargeTier;
+        
+        var dir = './temp/charges';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+
+    
+            await fs.writeFile("./temp/charges/" +productName + ".json", JSON.stringify(Util.sanitizeJSON(charge), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
+            });
+        
     }
 
-    private static queryProductAttributeValues(conn: Connection, productName: String): Promise<string> {
-        Util.log('--- exporting product attribute values ');
-        return new Promise<string>((resolve: Function, reject: Function) => {
 
-            conn.query("SELECT Name, enxCPQ__Active__c, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c, enxCPQ__TECH_Definition_Id__c FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = false AND enxCPQ__Exclusive_for_Product__r.Name = '" + productName + "' ORDER BY enxCPQ__Order__c", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve product attribute values: ' + productName + '. Error: ' + err);
-                resolve(res.records);
+
+
+    private async retrieveProvisioningPlanAssignmentIds(conn: Connection){
+        let provisioningPlanAssignmentIds = await Queries.queryProvisioningPlanAssignmentIds(conn)
+        var dir = './temp/ids/provisioningPlanAssignmentIds';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+
+            await fs.writeFile("./temp/ids/provisioningPlanAssignmentIds/" + "provisioningPlanAssignmentIds" + ".json", JSON.stringify(Util.sanitizeJSON(provisioningPlanAssignmentIds), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
             });
-        });
+    }
+    private async retrieveProvisioningTaskAssignmentIds(conn: Connection){
+        let provisioningTaskAssignmentIds = await Queries.queryProvisioningTaskAssignmentIds(conn)
+        var dir = './temp/ids/provisioningTaskAssignmentIds';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+
+            await fs.writeFile("./temp/ids/provisioningTaskAssignmentIds/" + "provisioningTaskAssignmentIds" + ".json", JSON.stringify(Util.sanitizeJSON(provisioningTaskAssignmentIds), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
+            });
+        }
+    
+
+    private async retrieveProvisioningTaskAssignments(conn: Connection){
+        let provisioningTaskAssignments = await Queries.queryProvisioningTaskAssignments(conn)
+        var dir = './temp/provisioningTaskAssignments';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+
+        for (let provisioningTaskAssignment of provisioningTaskAssignments) {
+            await fs.writeFile("./temp/provisioningTaskAssignments/" + provisioningTaskAssignment['Name'] +'_' + provisioningTaskAssignment['enxB2B__TECH_External_Id__c'] + ".json", JSON.stringify(Util.sanitizeJSON(provisioningTaskAssignment), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
+            });
+        }
+    }
+    private async retrievePriceRules(conn: Connection){
+        let priceRules = await Queries.queryPriceRules(conn)
+        var dir = './temp/priceRules';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+
+        for (let priceRule of priceRules) {
+            await fs.writeFile("./temp/priceRules/" + priceRule['Name'] + ".json", JSON.stringify(Util.sanitizeJSON(priceRule), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
+            });
+        }
     }
 
-    private static queryAttributeValues(conn: Connection, attributeIds: Set<String>): Promise<string> {
-        Util.log('--- exporting product attribute values ');
-        return new Promise<string>((resolve: Function, reject: Function) => {
+    private async retrievePriceRuleConditions(conn: Connection){
+        let PriceRuleConditions = await Queries.queryPriceRules(conn)
+        var dir = './temp/PriceRuleConditions';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
 
-            conn.query("SELECT Name, enxCPQ__Active__c, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c, enxCPQ__TECH_Definition_Id__c FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve product attribute values: ' + attributeIds + '. Error: ' + err);
-                resolve(res.records);
+        for (let PriceRuleCondition of PriceRuleConditions) {
+            await fs.writeFile("./temp/PriceRuleConditions/" + PriceRuleCondition['Name'] + ".json", JSON.stringify(Util.sanitizeJSON(PriceRuleCondition), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
             });
-        });
+        }
     }
 
-    private static queryAttributeDefaultValues(conn: Connection, productName: String): Promise<string> {
-        Util.log('--- exporting attribute default values ');
-        return new Promise<string>((resolve: Function, reject: Function) => {
+    private async retrievePriceRuleActions(conn: Connection){
+        let priceRuleActions = await Queries.queryPriceRules(conn)
+        var dir = './temp/priceRuleActions';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
 
-            conn.query("SELECT enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Value_Text__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeDefaultValue__c WHERE enxCPQ__Product__r.Name = '" + productName + "' ORDER BY enxCPQ__TECH_External_Id__c", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve attribute default values: ' + productName + '. Error: ' + err);
-                resolve(res.records);
+        for (let PriceRuleAction of priceRuleActions) {
+            await fs.writeFile("./temp/priceRuleActions/" + PriceRuleAction['Name'] + ".json", JSON.stringify(Util.sanitizeJSON(PriceRuleAction), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
             });
-        });
+        }
+    }
+    private async retrieveProductIdsBulk(conn: Connection, productName: String){
+        let productIds = await Queries.bulkQueryProductIds(conn, productName)
+        var dir = './temp/ids/chargeElementProductIds';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+
+    
+            await fs.writeFile("./temp/ids/chargeElementProductIds/" +productName + ".json", JSON.stringify(Util.sanitizeJSON(productIds), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
+            });
     }
 
-    private static queryAttributeValueDependencies(conn: Connection, productName: String): Promise<string> {
-        Util.log('--- exporting attribute value dependency ');
-        return new Promise<string>((resolve: Function, reject: Function) => {
+    private async retrieveStdPricebookEntryIds(conn: Connection){
+        let stdPricebookEntryIds = await Queries.bulkQueryStdPricebookEntryIds(conn)
+        var dir = './temp/ids/stdPricebookEntryIds';
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
 
-            conn.query("SELECT enxCPQ__Dependent_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Dependent_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Execution_Order__c, enxCPQ__Master_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c, enxCPQ__TECH_Key__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Product__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeValueDependency__c WHERE enxCPQ__Product__r.Name = '" + productName + "' ORDER BY enxCPQ__TECH_External_Id__c", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve attribute value dependency: ' + productName + '. Error: ' + err);
-                resolve(res.records);
+        for (let stdPricebookEntryId of stdPricebookEntryIds) {
+            await fs.writeFile("./temp/ids/stdPricebookEntryIds/" + stdPricebookEntryId['Id'] + ".json", JSON.stringify(Util.sanitizeJSON(stdPricebookEntryId), null, 3), function(err) {
+                if(err) {
+                    return console.log(err);
+                }
             });
-        });
+        }
     }
 
-    private static queryAttributeRules(conn: Connection, productName: String): Promise<string> {
-        Util.log('--- exporting attribute rules ');
-        return new Promise<string>((resolve: Function, reject: Function) => {
-
-            conn.query("SELECT enxCPQ__Active__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Update_Logic__c, enxCPQ__Criteria__c, enxCPQ__Error_Message__c, enxCPQ__Order__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordTypeId, enxCPQ__Regexp__c, enxCPQ__Rule_Attribute_Update_Logic__c, enxCPQ__Rule_Criteria__c, enxCPQ__TECH_External_Id__c, enxCPQ__Validation_Type__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeRule__c WHERE enxCPQ__Product__r.Name = '" + productName + "' ORDER BY enxCPQ__Order__c", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve attribute rules: ' + productName + '. Error: ' + err);
-                resolve(res.records);
-            });
-        });
-    }
-
-    private static queryProductRelationships(conn: Connection, productName: String): Promise<string> {
-        Util.log('--- exporting product relationships ');
-        return new Promise<string>((resolve: Function, reject: Function) => {
-
-            conn.query("SELECT Name, enxCPQ__Max_Occurrences__c, enxCPQ__Min_Occurrences__c, enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Relationship_Type__c, enxCPQ__Secondary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__ProductRelationship__c WHERE enxCPQ__Primary_Product__r.Name = '" + productName + "' AND enxCPQ__Secondary_Product__c != null", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve product relationships: ' + productName + '. Error: ' + err);
-                resolve(res.records);
-            });
-        });
-    }
-
-    private static queryProvisioningPlanAssigns(conn: Connection, productName: String): Promise<string> {
-        Util.log('--- exporting provisioning plan assignments ');
-        return new Promise<string>((resolve: Function, reject: Function) => {
-
-            conn.query("SELECT enxB2B__Active__c, enxB2B__Criteria__c, enxB2B__Item_Action__c, enxB2B__Order__c, enxB2B__Product__r.enxCPQ__TECH_External_Id__c, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__TECH_External_ID__c FROM enxB2B__ProvisioningPlanAssignment__c WHERE enxB2B__Product__r.Name = '" + productName + "' ORDER BY enxB2B__Order__c", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve provisioning plan assignments: ' + productName + '. Error: ' + err);
-                resolve(res.records);
-            });
-        });
-    }
-
-    private static queryProvisioningPlans(conn: Connection, provisioningPlanIds: Set<String>): Promise<string> {
-        Util.log('--- exporting provisioning plans ' + provisioningPlanIds.size);
-        return new Promise<string>((resolve: Function, reject: Function) => {
-
-            conn.query("SELECT Name, enxB2B__Support_Plan__c, enxB2B__TECH_External_Id__c FROM enxB2B__ProvisioningPlan__c WHERE enxB2B__TECH_External_Id__c IN (" + Util.setToIdString(provisioningPlanIds) + ")",
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve provisioning plans: ' + provisioningPlanIds + '. Error: ' + err);
-                resolve(res.records);
-            });
-        });
-    }
-
-    private static queryCategories(conn: Connection, categoryIds: Set<String>): Promise<string> {
-        Util.log('--- exporting categories - ' + categoryIds.size);
-        return new Promise<string>((resolve: Function, reject: Function) => {
-
-            conn.query("SELECT Name, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c, enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__Category__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(categoryIds) + ") ", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve categories. Error: ' + err);
-                resolve(res.records);
-            });
-        });
-    }
-
-    private static queryAttributes(conn: Connection, attributeIds: Set<String>): Promise<string> {
-        Util.log('--- exporting attributes - ' + attributeIds.size);
-        return new Promise<string>((resolve: Function, reject: Function) => {
-
-            conn.query("SELECT Name, enxCPQ__Active__c, enxCPQ__Decimal_Places__c, enxCPQ__Description__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_PL__c, enxCPQ__Display_Disabled__c,enxCPQ__Display_in_Configurator__c, enxCPQ__Display_not_for_Item_Action__c, enxCPQ__Display_not_for_Profile__c, enxCPQ__Display_not_on_Quote_Stage__c, enxCPQ__Display_on_Configuration_Description__c, enxCPQ__Editable_not_for_Item_Action__c, enxCPQ__Editable_not_for_Profile__c, enxCPQ__Editable_not_on_Quote_Stage__c, enxCPQ__Helptext__c, enxCPQ__Item_Field_Type__c, enxCPQ__Lookup_Field__c, enxCPQ__Lookup_Field_Query__c, enxCPQ__Lookup_Filters__c, enxCPQ__Lookup_Object__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, enxCPQ__Product_Field_to_Update__c, enxCPQ__Required__c, enxCPQ__Required_on_Quote_Stage__c, enxCPQ__Source_Field_Cart__c, enxCPQ__Source_Field__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__Type__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__Attribute__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve attributes. Error: ' + err);
-                resolve(res.records);
-            });
-        });
-    }
-
-    private static queryAttributeSets(conn: Connection, attributeSetIds: Set<String>): Promise<string> {
-        Util.log('--- exporting attributes sets - ' + attributeSetIds.size);
-        return new Promise<string>((resolve: Function, reject: Function) => {
-
-            conn.query("SELECT Name, enxCPQ__Description__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeSet__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeSetIds) + ") ", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve attribute sets. Error: ' + err);
-                resolve(res.records);
-            });
-
-        });
-    }
-
-    private static queryAttributeSetAttributes(conn: Connection, attributeSetIds: Set<String>): Promise<string> {
-        Util.log('--- exporting attributes set attributes ');
-        return new Promise<string>((resolve: Function, reject: Function) => {
-
-            conn.query("SELECT Name, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeSetAttribute__c WHERE enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeSetIds) + ") ORDER BY enxCPQ__Order__c ", 
-            null,
-            function (err, res) {
-                if (err) reject('Failed to retrieve attribute set attributes. Error: ' + err);
-                resolve(res.records);
-            });
-
-        });
-    }
 }

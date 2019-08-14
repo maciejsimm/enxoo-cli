@@ -1,5 +1,6 @@
+
 var jsforce = require('jsforce');
-var config = require('../config/credentials');
+//var config = require('../config/credentials');
 var _ = require('lodash');
 
 const upsertAttributeSets = (conn, data) => {
