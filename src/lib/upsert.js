@@ -24,6 +24,7 @@ const deletePricebookEntries = (conn, data) => {
     });
 };
 
+
 const upsertPricebookEntries = (conn, data) => { 
     sanitize(data);
     fixIds(data);
@@ -218,8 +219,45 @@ const mapProducts = (sourceProducts, targetProducts) => {
     }
 }
 
+const disableTriggers = (conn) => {
+    var data = { Name: "G_CPQ_DISABLE_TRIGGERS_99",
+                 enxCPQ__Setting_Name__c: "CPQ_DISABLE_TRIGGERS",
+                 enxCPQ__Context__c: "Global",
+                 enxCPQ__Col1__c: conn.getUsername() };
+
+    return new Promise ((resolve, reject) => {
+        conn.sobject("enxCPQ__CPQ_Settings__c").insert(data, function(err, rets) {
+            if (err) {
+                reject('error disabling triggers: ' + err);
+                return;
+            }
+        console.log("--- trigers disabled. setting id: " + rets.id);
+        disableTriggerSettingId = rets.id;
+        resolve();
+        });
+    });      
+}
+
+const enableTriggers = (conn) => {
+    return new Promise ((resolve, reject) => {
+        conn.query("SELECT Id FROM enxCPQ__CPQ_Settings__c WHERE Name = 'G_CPQ_DISABLE_TRIGGERS_99'", function(err, res) {
+            if (res.records.length == 0) resolve();
+            conn.sobject("enxCPQ__CPQ_Settings__c").del(res.records[0].Id, function(err, rets) {
+                if (err) {
+                    reject('error enabling triggers: ' + err);
+                    return;
+                }
+                console.log("--- trigers enabled");
+                resolve();
+            }); 
+        });
+    });      
+}
+
 module.exports = {
     sanitize: sanitize,
+    enableTriggers: enableTriggers,
+    disableTriggers: disableTriggers,
     sanitizeDeep: sanitizeDeep,
     mapPricebooks: mapPricebooks,
     mapProducts: mapProducts,

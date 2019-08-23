@@ -82,6 +82,8 @@ export class ProductImporter {
         let productList = ['[x] Internet Access_PRD00INTACCESS'];
         let productNameList = ['[x] Internet Access'];
 
+        await upsert.enableTriggers(conn);
+        await upsert.disableTriggers(conn);
         
 
         for (let prodname of productList) {
@@ -240,15 +242,21 @@ export class ProductImporter {
     for(let stdPbeId of stdPbeIds){
          await this.deleteBulkObject(conn, 'PricebookEntry', stdPbeId);
      }
-    await this.stdPbes.forEach(stdPbe=> {
-        delete stdPbe.Pricebook2,
-        delete stdPbe.Product2,
-        upsert.upsertPricebookEntries(conn, stdPbe)});
-    await this.pbes.forEach(pbe=> {
+    
+
+for(let stdPbe of this.stdPbes){
+    delete stdPbe['Pricebook2'];
+    delete stdPbe['Product2'];
+    await upsert.upsertPricebookEntries(conn, stdPbe);
+}
+
+    this.pbes.forEach(pbe=> {
         delete pbe.Pricebook2,
         delete pbe.Product2,
-        upsert.upsertPricebookEntries(conn, pbe)});
-    
+        upsert.upsertPricebookEntries(conn, pbe)
+        });
+
+
     await this.upsertBulkObject(conn, 'enxCPQ__ProductRelationship__c', this.productRelationships);
     await this.upsertBulkObject(conn, 'enxCPQ__AttributeDefaultValue__c', this.productRelationships);
     Util.log('--- importing enxCPQ__AttributeValueDependency__c : '  + this.attributeValueDependencies.length + ' records');
@@ -256,7 +264,7 @@ export class ProductImporter {
     await this.upsertBulkObject(conn, 'enxCPQ__AttributeRule__c', this.attributeRules);
     await this.upsertBulkObject(conn, 'enxB2B__ProvisioningPlan__c', this.provisioningPlans);
     Util.log('--- importing enxB2B__ProvisioningTask__c : '  + this.attributeValueDependencies.length + ' records');
-    await this.provisioningTasks.forEach( provisioningTask => {this.upsertBulkObject(conn, 'enxB2B__ProvisioningTask__c', provisioningTask, true)});
+     await this.provisioningTasks.forEach( provisioningTask => {this.upsertBulkObject(conn, 'enxB2B__ProvisioningTask__c', provisioningTask, true)});
     let prvPlanIds = _.chunk(this.provisioningPlanAssignmentIds, 10);
     for(let prvPlanId of prvPlanIds){
         await this.deleteBulkObject(conn, 'enxB2B__ProvisioningPlanAssignment__c', prvPlanId);
@@ -266,11 +274,10 @@ export class ProductImporter {
         await this.deleteBulkObject(conn, 'enxB2B__ProvisioningTaskAssignment__c', prvtaskId);
     }
     Util.log('--- importing enxB2B__ProvisioningPlanAssignment__c : '  + this.provisioningPlanAssignments.length + ' records');
-    this.upsertBulkObject(conn, 'enxB2B__ProvisioningPlanAssignment__c', this.provisioningPlanAssignments)
     await this.provisioningPlanAssignments.forEach( provisioningPlanAssignment => {this.upsertBulkObject(conn, 'enxB2B__ProvisioningPlanAssignment__c', provisioningPlanAssignment, true)});
     Util.log('--- importing enxB2B__ProvisioningTaskAssignment__c : '  + this.provisioningTaskAssignments.length + ' records');
     await this.provisioningTaskAssignments.forEach( provisioningTaskAssignment => {this.upsertBulkObject(conn, 'enxB2B__ProvisioningTaskAssignment__c', provisioningTaskAssignment, true)});
-   
+    await upsert.enableTriggers(conn);
     
     } 
     
@@ -351,6 +358,7 @@ export class ProductImporter {
     }  
     
     private async upsertBulkObject(conn: Connection, sObjectName: string, data: Object[], isLoop?: boolean): Promise<string> {
+        //console.log(data);
         !isLoop ? Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records') : null;
         let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c', 'enxB2B__ProvisioningTaskAssignment__c'];
         let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
