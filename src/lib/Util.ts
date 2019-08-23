@@ -121,7 +121,7 @@ export class Util {
                 if (err) {
                     throw err;
                 }
-                filenames.forEach(async (fileName) => {
+                   filenames.filter(fileName => fileName.includes('.json')).forEach(async (fileName) => {
                     const fileReadPromise = Util.readFile(directoryName, fileName)
                     allFilePromiseArray.push(fileReadPromise);
                 });
@@ -132,6 +132,37 @@ export class Util {
                 
             });            
         });
+    }
+
+    public static async readDirNames(directoryName: String){
+        return new Promise<string>((resolve: Function, reject: Function) => {
+            let fileNamesToResolve = new Array<any>();
+            fs.readdir('./' + directoryName + '/', async (err, filenames) => {
+                if (err) {
+                    throw err;
+                }
+                filenames.filter(fileName => !fileName.includes('.json')).forEach((fileName) => {
+                    fileNamesToResolve.push(fileName)});
+                
+
+                resolve(fileNamesToResolve);
+                });
+               
+                
+            });            
+        }
+
+    public static async writeFile(path:string, dataToSanitaze:any){
+        await fs.writeFile(path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {
+            if(err) {
+                return Util.log(err);
+            }
+        });
+    }
+    public static createDir(dir:string, isRecursive: boolean){
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir, { recursive: isRecursive });
+        }
     }
 
 }
