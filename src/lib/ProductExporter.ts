@@ -26,7 +26,7 @@
 
 
 import { Util } from './Util';
-import { Connection } from '@salesforce/core';
+import {core} from '@salesforce/command';
 import { Queries } from './query';
 
 export class ProductExporter {
@@ -47,7 +47,7 @@ export class ProductExporter {
     private parentCategoriesIds:Set<String>;
     private currencyIsoCodes:Set<String>;
 
-    public async all(conn: Connection) {            
+    public async all(conn: core.Connection) {            
         this.categoryIds = new Set<String>();
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
@@ -68,7 +68,7 @@ export class ProductExporter {
         await this.retrieveAttributeSets(conn);
     } 
 
-    private async retrieveProduct(conn: Connection, productName: String) {
+    private async retrieveProduct(conn: core.Connection, productName: String) {
         Util.showSpinner(productName + ' export');
 
         let productDefinition = await Queries.queryProduct(conn, productName);
@@ -123,7 +123,7 @@ export class ProductExporter {
         }
     }
 
-    private async retrieveCategories(conn: Connection) {
+    private async retrieveCategories(conn: core.Connection) {
         let categories = await Queries.queryCategories(conn, this.categoryIds);
         for (let category of categories) {
             if(category['enxCPQ__Parent_Category__r'] !==null){
@@ -142,7 +142,7 @@ export class ProductExporter {
         }
     }
 
-    private async retrieveAttributes(conn: Connection) {
+    private async retrieveAttributes(conn: core.Connection) {
         let attributes = await Queries.queryAttributes(conn, this.attributeIds);
         let attributeValues = await Queries.queryAttributeValues(conn, this.attributeIds);
         Util.createDir('./temp/attributes', false);
@@ -161,7 +161,7 @@ export class ProductExporter {
         }
     }
 
-    private async retrieveAttributeSets(conn: Connection) {
+    private async retrieveAttributeSets(conn: core.Connection) {
         let attributeSets = await Queries.queryAttributeSets(conn, this.attributeSetIds);
         let attributeSetAttributes = await Queries.queryAttributeSetAttributes(conn, this.attributeSetIds);
         Util.createDir('./temp/attributeSets', false);
@@ -180,7 +180,7 @@ export class ProductExporter {
         }
     }
 
-    private async retrieveProvisioningPlans(conn: Connection) {
+    private async retrieveProvisioningPlans(conn: core.Connection) {
         let provisioningPlans = await Queries.queryProvisioningPlans(conn);
         let provisioningTaskAssignments = await Queries.queryProvisioningTaskAssignments(conn)
         Util.createDir('./temp/provisioningPlans', false);
@@ -199,14 +199,14 @@ export class ProductExporter {
         }
     }
     
-    private async retrieveProductIds(conn: Connection, prodName: String){
+    private async retrieveProductIds(conn: core.Connection, prodName: String){
         let productIds = await Queries.queryProductIds(conn, prodName);
         Util.createDir('./temp/productIds', false);
       
         Util.writeFile('./temp/productIds/' + prodName +'_' + productIds[0]['enxCPQ__TECH_External_Id__c']+ '.json', productIds);
         
     }
-    private async retrieveProvisioningTasks(conn: Connection){
+    private async retrieveProvisioningTasks(conn: core.Connection){
         let provisioningTasks = await Queries.queryProvisioningTasks(conn);
         Util.createDir('./temp/provisioningTasks', false);
         for (let provisioningTask of provisioningTasks) {
@@ -214,7 +214,7 @@ export class ProductExporter {
         }
     }
 
-    private async retrievePriceBooks(conn: Connection, productName: String){
+    private async retrievePriceBooks(conn: core.Connection, productName: String){
         let priceBooks = await Queries.queryPricebooks(conn);
         let currencies = await Queries.queryPricebookEntryCurrencies(conn, productName);
         let priceBookEntries = await Queries.queryPricebookEntries(conn, productName);
@@ -274,7 +274,7 @@ export class ProductExporter {
     }
 
 
-    private async retrieveCharges(conn: Connection, productName: String){
+    private async retrieveCharges(conn: core.Connection, productName: String){
         let charges = await Queries.queryProductCharges(conn, productName);
         Util.createDir('./temp/charges', false);
    
