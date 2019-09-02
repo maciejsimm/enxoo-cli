@@ -407,10 +407,7 @@ private extractIds(product:any) {
         if(data.length===0){
            return;
         }
-        if(sObjectName === 'Pricebook2'){
-            Util.log(data);
-        }
-        if(sObjectName === 'enxCPQ__Category__c'){
+        if(sObjectName === 'enxB2B__ProvisioningPlanAssignment__c'){
             Util.log(data);
         }
         !isLoop ? Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records') : null;
@@ -428,7 +425,6 @@ private extractIds(product:any) {
         }));
         }
         await Promise.all(promises);
-        ;
     }
 
     private async deleteBulkObject(conn: core.Connection, sObjectName: string, data: string[]): Promise<string> {
