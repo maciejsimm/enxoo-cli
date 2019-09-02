@@ -30,15 +30,6 @@ import {core} from '@salesforce/command';
 import { Queries } from './query';
 
 export class ProductExporter {
-
-    constructor(products: Array<String>) {
-        if (products[0] === '*ALL') {
-            this.productList = ['GEPL', 'IPLC', 'VPN']; // to-do -> query all products in the org and build the list
-        } else {
-            this.productList = products;
-        }
-    }
-
     private categoryIds:Set<String>;
     private attributeIds:Set<String>;
     private attributeSetIds:Set<String>;
@@ -47,13 +38,23 @@ export class ProductExporter {
     private parentCategoriesIds:Set<String>;
     private currencyIsoCodes:Set<String>;
 
-    public async all(conn: core.Connection) {            
+    constructor(products: Array<String>) {
         this.categoryIds = new Set<String>();
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
         this.provisioningPlanIds = new Set<String>();
         this.parentCategoriesIds = new Set<String>();
         this.currencyIsoCodes = new Set<String>();
+     
+        if (products[0] === '*ALL') {
+            this.productList = ['GEPL', 'IPLC', 'VPN']; // to-do -> query all products in the org and build the list
+        } else {
+            this.productList = products;
+        }
+    }
+
+
+    public async all(conn: core.Connection) {            
 
         for (let prodname of this.productList) {
             await this.retrieveProduct(conn, prodname);

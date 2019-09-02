@@ -45,89 +45,45 @@ export class ProductImporter {
     private provisioningPlanAssignments:Array<Object>;
     private provisioningTaskAssignments:Array<Object>;
 
-    constructor(provisioningPlanAssignments:Array<Object>, provisioningTaskAssignments:Array<Object>, targetPricebooksIds:Array<Object>, provisioningPlanAssignmentIds:Set<String>, provisioningTaskAssignmentIds: Set<String>,
-        provisioningTasks:Array<Object>,provisioningPlans:Array<Object>, attributeRules:Array<Object>, attributeValueDependencies:Array<Object>, attributeDefaultValues:Array<Object>,
-        productRelationships:Array<Object>,stdPbes: Array<Object>, pbes: Array<Object>, stdPricebookEntryIds:   Array<string>, pricebookEntryIds: Array<string>, categoryIds:  Set<String>,
-         productAttributesIds: Array<string>, attributeIds: Set<String>, attributeSetIds: Set<String>, products: Array<Object>, sourcePricebooksIds: Array<Object>, sourceProductIds : Array<Object>, 
-         targetProductIds:  Array<Object>, attributeSetAttributes:Array<Object>, categories: Array<Object>, attributes: Array<Object>, attributeSets: Array<Object> , attributeSetsRoot: Array<Object> ,
-         productsRoot : Array<Object> , attributeValues: Array<Object>, allCategoriesChild : Array<Object>, productAttributes: Array<Object>, pricebooks: Array<Object>
-        ){
-            this.targetProductIds=targetProductIds;
-            this.targetPricebooksIds=targetPricebooksIds;
-            this.attributeSetAttributes=attributeSetAttributes;
-            this.categories=categories;
-            this.attributes=attributes;
-            this.attributeSets=attributeSets;
-            this.attributeSetsRoot=attributeSetsRoot;
-            this.productsRoot=productsRoot;
-            this.attributeValues=attributeValues;
-            this.allCategoriesChild=allCategoriesChild;
-            this.productAttributes=productAttributes;
-            this.pricebooks=pricebooks;
-            this.provisioningPlanAssignments=provisioningPlanAssignments;
-            this.provisioningTaskAssignments=provisioningTaskAssignments;
-            this.provisioningPlanAssignmentIds=provisioningPlanAssignmentIds;
-            this.provisioningTaskAssignmentIds=provisioningTaskAssignmentIds;
-            this.provisioningTasks=provisioningTasks;
-            this.provisioningPlans=provisioningPlans;
-            this.attributeRules=attributeRules;
-            this.attributeValueDependencies=attributeValueDependencies;
-            this.attributeDefaultValues=attributeDefaultValues;
-            this.productRelationships=productRelationships;
-            this.stdPbes=stdPbes;
-            this.pbes=pbes;
-            this.stdPricebookEntryIds=stdPricebookEntryIds;
-            this.pricebookEntryIds=pricebookEntryIds;
-            this.categoryIds=categoryIds;
-            this.productAttributesIds=productAttributesIds;
-            this.attributeIds=attributeIds;
-            this.attributeSetIds=attributeSetIds;
-            this.targetProductIds=targetProductIds;
-            this.sourceProductIds=sourceProductIds;
-            this.sourcePricebooksIds=sourcePricebooksIds;
-            this.products=products;
-
-
+    constructor(){
+        this.products = new Array<Object>();
+        this.sourcePricebooksIds = new Array<Object>();
+        this.sourceProductIds = new Array<Object>();
+        this.targetProductIds = new Array<Object>();
+        this.targetPricebooksIds = new Array<Object>();
+        this.attributeSetAttributes = new Array<Object>();
+        this.categories = new Array<Object>();
+        this.attributes = new Array<Object>();
+        this.attributeSets = new Array<Object>();
+        this.attributeSetsRoot = new Array<Object>();
+        this.productsRoot = new Array<Object>();
+        this.attributeValues = new Array<Object>();
+        this.allCategoriesChild = new  Array<Object>();
+        this.productAttributes = new Array<Object>();
+        this.pricebooks = new Array<Object>();
+        this.provisioningPlanAssignments = new Array<Object>();
+        this.provisioningTaskAssignments = new Array<Object>();
+        this.provisioningPlanAssignmentIds= new Set<String>();
+        this.provisioningTaskAssignmentIds = new Set<String>();
+        this.provisioningTasks = new Array<Object>();
+        this.provisioningPlans = new Array<Object>();
+        this.attributeRules = new Array<Object>();
+        this.attributeValueDependencies = new Array<Object>();
+        this.attributeDefaultValues = new Array<Object>();
+        this.productRelationships = new Array<Object>();
+        this.stdPbes = new Array<Object>();
+        this.pbes = new Array<Object>();
+        this.stdPricebookEntryIds = new Array<string>();
+        this.pricebookEntryIds= new Array<string>();
+        this.categoryIds = new Set<String>();
+        this.productAttributesIds = new Array<string>(); 
+        this.attributeIds = new Set<String>();
+        this.attributeSetIds = new Set<String>();
     }
     
     public async all(conn: core.Connection) {       
         
         conn.setMaxListeners(100);
-
-        // Miejscem na ponisze rzeczy powinien być konstruktor tej klasy
-        // this.products = new Array<Object>();
-        // this.sourcePricebooksIds = new Array<Object>();
-        // this.sourceProductIds = new Array<Object>();
-        // this.targetProductIds = new Array<Object>();
-        // this.targetPricebooksIds = new Array<Object>();
-        // this.attributeSetAttributes = new Array<Object>();
-        // this.categories = new Array<Object>();
-        // this.attributes = new Array<Object>();
-        // this.attributeSets = new Array<Object>();
-        // this.attributeSetsRoot = new Array<Object>();
-        // this.productsRoot = new Array<Object>();
-        // this.attributeValues = new Array<Object>();
-        // this.allCategoriesChild = new  Array<Object>();
-        // this.productAttributes = new Array<Object>();
-        // this.pricebooks = new Array<Object>();
-        // this.provisioningPlanAssignments = new Array<Object>();
-        // this.provisioningTaskAssignments = new Array<Object>();
-        // this.provisioningPlanAssignmentIds= new Set<String>();
-        // this.provisioningTaskAssignmentIds = new Set<String>();
-        // this.provisioningTasks = new Array<Object>();
-        // this.provisioningPlans = new Array<Object>();
-        // this.attributeRules = new Array<Object>();
-        // this.attributeValueDependencies = new Array<Object>();
-        // this.attributeDefaultValues = new Array<Object>();
-        // this.productRelationships = new Array<Object>();
-        // this.stdPbes = new Array<Object>();
-        // this.pbes = new Array<Object>();
-        // this.stdPricebookEntryIds = new Array<string>();
-        // this.pricebookEntryIds= new Array<string>();
-        // this.categoryIds = new Set<String>();
-        // this.productAttributesIds = new Array<string>(); 
-        // this.attributeIds = new Set<String>();
-        // this.attributeSetIds = new Set<String>();
 
         let productList = ['[x] Internet Access_PRD00INTACCESS'];
         let productNameList = ['[x] Internet Access'];
@@ -210,7 +166,6 @@ export class ProductImporter {
         //TO VERIFY
         let planAssignmentsTarget = await Queries.queryProvisioningPlanAssignmentIds(conn);
         let taskAssignmentsTarget = await Queries.queryProvisioningTaskAssignmentIds(conn);
-            
         for(let planAssignmentTarget of planAssignmentsTarget){
             this.provisioningPlanAssignmentIds.add(planAssignmentTarget['Id']);
         }
@@ -280,92 +235,96 @@ export class ProductImporter {
         this.attributeSetAttributes.push(attrSetAttr);
     }
     
+    let attributesRoot = [];
+
+    for(let attr of allAttributes){
+        attributesRoot.push(attr['root']);
+    }
+
     this.categories.push(...this.extractObjects(allCategories, this.categoryIds));
-    this.attributes.push(...this.extractObjects(allAttributes, this.attributeIds));
+    this.attributes.push(...this.extractObjects(attributesRoot, this.attributeIds));
     this.attributeSets.push(...this.extractObjects( this.attributeSetsRoot, this.attributeSetIds));
 
     console.log('products to upsert: ' + this.products.length);
     console.log('categories to upsert: ' + this.categories.length);
     console.log('attributes to upsert: ' + this.attributes.length);      
     console.log('attributeSets to upsert: ' + this.attributeSets.length);      
-    
+   
     try {
         await this.upsertBulkObject(conn, 'enxCPQ__Category__c', this.allCategoriesChild);
         await this.upsertBulkObject(conn, 'enxCPQ__Category__c', this.categories);
         await this.upsertBulkObject(conn, 'enxCPQ__Attribute__c', this.attributes);
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeSet__c', this.attributeSetsRoot);
         await this.upsertBulkObject(conn, 'Product2', this.productsRoot);
-    } catch (ex) {
-        console.log(ex);
-    }
-    Util.log('--- importing enxCPQ__AttributeValue__c : '  + this.attributeValues.length + ' records');
-    await this.attributeValues.forEach( attributeValue =>  {this.upsertBulkObject(conn, 'enxCPQ__AttributeValue__c', attributeValue, true)});
-    Util.log('--- importing enxCPQ__AttributeSetAttribute__c : '  + this.attributeSetAttributes.length + ' records');
-    await this.attributeSetAttributes.forEach( attributeSetAttribute => {this.upsertBulkObject(conn, 'enxCPQ__AttributeSetAttribute__c', attributeSetAttribute, true)});
-    let prdAttributesArrs = _.chunk(this.productAttributesIds, 10);
-    for(let prdAttributesArr of prdAttributesArrs){
-        await this.deleteBulkObject(conn, 'enxCPQ__ProductAttribute__c', prdAttributesArr);
-    }
-    Util.log('--- importing enxCPQ__ProductAttribute__c : '  + this.productAttributes.length + ' records');
-    await this.productAttributes.forEach( productAttribute => {this.upsertBulkObject(conn, 'enxCPQ__ProductAttribute__c', productAttribute, true)});
-    Util.log('--- importing Pricebook2 : '  + (this.pricebooks.length-1) + ' records');
-    await this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book').forEach(
-        async pricebook => {this.upsertBulkObject(conn, 'Pricebook2', pricebook, true)});
-    
-    Upsert.mapPricebooks(this.sourcePricebooksIds,  this.targetPricebooksIds);
-    Upsert.mapProducts(this.sourceProductIds[0], this.targetProductIds);
-    let pbeIds = _.chunk(this.pricebookEntryIds, 10);
-    for(let pbeId of pbeIds){
-        await this.deleteBulkObject(conn, 'PricebookEntry', pbeId);
-    }
-    
-    let stdPbeIds = _.chunk(this.stdPricebookEntryIds, 10);
-    for(let stdPbeId of stdPbeIds){
-         await this.deleteBulkObject(conn, 'PricebookEntry', stdPbeId);
-     }
-     
-     for(let stdPbe of this.stdPbes){
-         delete stdPbe['Pricebook2'],
-         delete stdPbe['Product2']
+        await this.upsertBulkObject(conn, 'enxCPQ__AttributeValue__c', this.attributeValues, true);
+        Util.log('--- importing enxCPQ__AttributeSetAttribute__c : '  + this.attributeSetAttributes.length + ' records');
+        await this.upsertBulkObject(conn, 'enxCPQ__AttributeSetAttribute__c', this.attributeSetAttributes, true);
+        let prdAttributesArrs = _.chunk(this.productAttributesIds, 10);
+        for(let prdAttributesArr of prdAttributesArrs){
+            await this.deleteBulkObject(conn, 'enxCPQ__ProductAttribute__c', prdAttributesArr);
+        }
+        Util.log('--- importing enxCPQ__ProductAttribute__c : '  + this.productAttributes.length + ' records');
+        await this.upsertBulkObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributes, true)
+        Util.log('--- importing Pricebook2 : '  + (this.pricebooks.length-1) + ' records');
+        this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
+        this.upsertBulkObject(conn, 'Pricebook2', this.pricebooks, true);
+        
+        
+        Upsert.mapPricebooks(this.sourcePricebooksIds,  this.targetPricebooksIds);
+        Upsert.mapProducts(this.sourceProductIds[0], this.targetProductIds);
+        let pbeIds = _.chunk(this.pricebookEntryIds, 10);
+        for(let pbeId of pbeIds){
+            await this.deleteBulkObject(conn, 'PricebookEntry', pbeId);
+        }
+        
+        let stdPbeIds = _.chunk(this.stdPricebookEntryIds, 10);
+        for(let stdPbeId of stdPbeIds){
+            await this.deleteBulkObject(conn, 'PricebookEntry', stdPbeId);
+        }
+        
+        for(let stdPbe of this.stdPbes){
+            delete stdPbe['Pricebook2'],
+            delete stdPbe['Product2']
         }
         await Upsert.upsertBulkPricebookEntries(conn, this.stdPbes);
+            
+        
+        this.pbes.forEach(pbe=> {
+            delete pbe['Pricebook2'],
+            delete pbe['Product2']
+        });
+        await Upsert.upsertBulkPricebookEntries(conn, this.pbes)
+
         
 
-    this.pbes.forEach(pbe=> {
-        delete pbe.Pricebook2,
-        delete pbe.Product2
-    });
-   await Upsert.upsertBulkPricebookEntries(conn, this.pbes)
-
-        
-
-    await this.upsertBulkObject(conn, 'enxCPQ__ProductRelationship__c', this.productRelationships);
-    await this.upsertBulkObject(conn, 'enxCPQ__AttributeDefaultValue__c', this.productRelationships);
-    Util.log('--- importing enxCPQ__AttributeValueDependency__c : '  + this.attributeValueDependencies.length + ' records');
-    await this.attributeValueDependencies.forEach( attributeValueDependency => {this.upsertBulkObject(conn, 'enxCPQ__AttributeValueDependency__c', attributeValueDependency, true)});
-    await this.upsertBulkObject(conn, 'enxCPQ__AttributeRule__c', this.attributeRules);
-    await this.upsertBulkObject(conn, 'enxB2B__ProvisioningPlan__c', this.provisioningPlans);
-    Util.log('--- importing enxB2B__ProvisioningTask__c : '  + this.attributeValueDependencies.length + ' records');
-     await this.provisioningTasks.forEach( provisioningTask => {this.upsertBulkObject(conn, 'enxB2B__ProvisioningTask__c', provisioningTask, true)});
-    let prvPlanIds = _.chunk(this.provisioningPlanAssignmentIds, 10);
-    for(let prvPlanId of prvPlanIds){
-        await this.deleteBulkObject(conn, 'enxB2B__ProvisioningPlanAssignment__c', prvPlanId);
+        await this.upsertBulkObject(conn, 'enxCPQ__ProductRelationship__c', this.productRelationships);
+        await this.upsertBulkObject(conn, 'enxCPQ__AttributeDefaultValue__c', this.productRelationships);
+        await this.upsertBulkObject(conn, 'enxCPQ__AttributeValueDependency__c', this.attributeValueDependencies, true);
+        await this.upsertBulkObject(conn, 'enxCPQ__AttributeRule__c', this.attributeRules);
+        await this.upsertBulkObject(conn, 'enxB2B__ProvisioningPlan__c', this.provisioningPlans);
+        await this.upsertBulkObject(conn, 'enxB2B__ProvisioningTask__c', this.provisioningTasks, true)
+        let prvPlanIds = _.chunk(this.provisioningPlanAssignmentIds, 10);
+        for(let prvPlanId of prvPlanIds){
+            await this.deleteBulkObject(conn, 'enxB2B__ProvisioningPlanAssignment__c', prvPlanId);
+        }
+        let prvTaskIds = _.chunk(this.provisioningTaskAssignmentIds, 10);
+        for(let prvtaskId of prvTaskIds){
+            await this.deleteBulkObject(conn, 'enxB2B__ProvisioningTaskAssignment__c', prvtaskId);
+        }
+        Util.log('--- importing enxB2B__ProvisioningPlanAssignment__c : '  + this.provisioningPlanAssignments.length + ' records');
+        await this.upsertBulkObject(conn, 'enxB2B__ProvisioningPlanAssignment__c', this.provisioningPlanAssignments, true);
+        // Util.log('--- importing enxB2B__ProvisioningTaskAssignment__c : '  + this.provisioningTaskAssignments.length + ' records');
+        // await this.provisioningTaskAssignments.forEach( provisioningTaskAssignment => {this.upsertBulkObject(conn, 'enxB2B__ProvisioningTaskAssignment__c', provisioningTaskAssignment, true)});
+        await Upsert.enableTriggers(conn);
+    } catch (ex) {
+    Util.log(ex);
     }
-    let prvTaskIds = _.chunk(this.provisioningTaskAssignmentIds, 10);
-    for(let prvtaskId of prvTaskIds){
-        await this.deleteBulkObject(conn, 'enxB2B__ProvisioningTaskAssignment__c', prvtaskId);
-    }
-    Util.log('--- importing enxB2B__ProvisioningPlanAssignment__c : '  + this.provisioningPlanAssignments.length + ' records');
-    await this.provisioningPlanAssignments.forEach( provisioningPlanAssignment => {this.upsertBulkObject(conn, 'enxB2B__ProvisioningPlanAssignment__c', provisioningPlanAssignment, true)});
-    // Util.log('--- importing enxB2B__ProvisioningTaskAssignment__c : '  + this.provisioningTaskAssignments.length + ' records');
-    // await this.provisioningTaskAssignments.forEach( provisioningTaskAssignment => {this.upsertBulkObject(conn, 'enxB2B__ProvisioningTaskAssignment__c', provisioningTaskAssignment, true)});
-    await Upsert.enableTriggers(conn);
     
-    } 
-    
+} 
 
 
-    private extractIds(product:any) {
+
+private extractIds(product:any) {
         this.categoryIds.add(product.root.enxCPQ__Category__r.enxCPQ__TECH_External_Id__c);
         if (product.productAttributes != null) {
             for (let attr of product.productAttributes) {
@@ -405,7 +364,6 @@ export class ProductImporter {
                 }
             }
         }
-        // console.log('extract res len-'+ result.length);
         return result;
     }
 
@@ -454,7 +412,9 @@ export class ProductImporter {
         Util.sanitizeForImport(data);
 
         return new Promise<string>((resolve: Function, reject: Function) => {
-
+            if(sObjectName === 'Product2'){
+                console.log(typeof data)
+                console.log(data);}
             conn.bulk.load(sObjectName, "upsert", {"extIdField": techId}, data, function(err: any, rets: RecordResult[]) {
                 if (err) {
                     reject('error creating ' + sObjectName + ': ' + err);
