@@ -193,6 +193,9 @@ export function queryPricebookEntryCurrencies(conn: core.Connection, productName
     }
 
     export function queryAttributes(conn: core.Connection, attributeIds: Set<String>): Promise<string> {
+        if(attributeIds.size === 0){
+            return;
+        }
         Util.log('--- exporting attributes - ' + attributeIds.size);
         return new Promise<string>((resolve: Function, reject: Function) => {
 
@@ -332,6 +335,9 @@ export function queryAttributeValueDependencies(conn: core.Connection, productNa
 
     export function queryCategories(conn: core.Connection, categoryIds: Set<String>): Promise<string> {
         Util.log('--- exporting categories - ' + categoryIds.size);
+        if(categoryIds.size ===0){
+            return;
+        }
         return new Promise<string>((resolve: Function, reject: Function) => {
 
             conn.query("SELECT Name, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c, enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__Category__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(categoryIds) + ") ", 
@@ -345,6 +351,9 @@ export function queryAttributeValueDependencies(conn: core.Connection, productNa
 
     export function queryAttributeValues(conn: core.Connection, attributeIds: Set<String>): Promise<string> {
         Util.log('--- exporting product attribute values ');
+        if(attributeIds.size === 0){
+            return;
+        }
         return new Promise<string>((resolve: Function, reject: Function) => {
 
             conn.query("SELECT Name, enxCPQ__Active__c, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c, enxCPQ__TECH_Definition_Id__c FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c", 

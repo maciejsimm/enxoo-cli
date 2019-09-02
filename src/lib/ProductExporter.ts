@@ -105,7 +105,7 @@ export class ProductExporter {
     private extractIds(product:any) {
 
         // Category IDs
-        this.categoryIds.add(product.root.enxCPQ__Category__r.enxCPQ__TECH_External_Id__c);
+        if(product.root.enxCPQ__Category__r){this.categoryIds.add(product.root.enxCPQ__Category__r.enxCPQ__TECH_External_Id__c);}
         // Attribute & Attribute Set IDs
         if (product.productAttributes != null) {
             product.productAttributes.forEach( attr => {
@@ -126,28 +126,26 @@ export class ProductExporter {
 
     private async retrieveCategories(conn: core.Connection) {
         let categories = await Queries.queryCategories(conn, this.categoryIds);
+        if(categories){
         for (let category of categories) {
             if(category['enxCPQ__Parent_Category__r'] !==null){
                 this.parentCategoriesIds.add(category['enxCPQ__Parent_Category__r']['enxCPQ__TECH_External_Id__c']);
             }
-        }
+            Util.writeFile('./temp/categories/' + category['Name'] +'_' +category['enxCPQ__TECH_External_Id__c']+ '.json', category);
+        }}
         let parentCategories = await Queries.queryCategories(conn, this.parentCategoriesIds);
         Util.createDir('./temp/categories', false);
-
+        if(parentCategories){
         for (let parentCategory of parentCategories) {
             Util.writeFile('./temp/categories/' + parentCategory['Name'] +'_' +parentCategory['enxCPQ__TECH_External_Id__c']+ '.json', parentCategory);
-        }
-
-        for (let category of categories) {    
-            Util.writeFile('./temp/categories/' + category['Name'] +'_' +category['enxCPQ__TECH_External_Id__c']+ '.json', category);
-        }
+        }}
     }
 
     private async retrieveAttributes(conn: core.Connection) {
         let attributes = await Queries.queryAttributes(conn, this.attributeIds);
         let attributeValues = await Queries.queryAttributeValues(conn, this.attributeIds);
         Util.createDir('./temp/attributes', false);
-
+        if(attributes){
         for (let attribute of attributes) {
             let attributeToSave:any = {};
             attributeToSave.root = attribute;
@@ -159,7 +157,7 @@ export class ProductExporter {
                 }
             }
             Util.writeFile('./temp/attributes/' + attribute['Name'] + '_' + attribute['enxCPQ__TECH_External_Id__c']+ '.json', attributeToSave);
-        }
+        }}
     }
 
     private async retrieveAttributeSets(conn: core.Connection) {

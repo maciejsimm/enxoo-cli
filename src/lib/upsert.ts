@@ -1,5 +1,6 @@
 import { core, UX } from "@salesforce/command";
-
+import { RecordResult } from 'jsforce';
+import { Util } from './Util';
 export class Upsert {
     private static idMapping = {};
     public static async deletePricebookEntries(conn: core.Connection, data: any) { 
@@ -173,5 +174,22 @@ export class Upsert {
         });
     }
 
-    
+    public static async insertObject(conn: core.Connection, sObjectName:string, data: Object[]): Promise<string>{ 
+        Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
+        this.sanitize(data);
+        if(data.length===0){
+            return;
+         }
+        let promises:Array<Promise<RecordResult>> = new Array<Promise<RecordResult>>();
+        for (const record of data) {
+            promises.push(conn.sobject(sObjectName).create(record, function(err: any, rets: RecordResult) {
+                if (err) {
+                    Util.log('error creating ' + sObjectName + ': ' + err);
+                    return;
+                }   
+            }))
+        }
+        await Promise.all(promises);
+    };
+
 }
