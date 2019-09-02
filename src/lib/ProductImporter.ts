@@ -338,12 +338,13 @@ private extractIds(product:any) {
 
     private deleteJsonFields(object: any, firstPropertyToDelete: string, arrayToPush: any, secondPropertyToDelete?: string){
         if(object){
-        delete object[firstPropertyToDelete];
+        let cloneObject = {...object};
+        delete cloneObject[firstPropertyToDelete];
             if(secondPropertyToDelete){
-                delete object[secondPropertyToDelete];
+                delete cloneObject[secondPropertyToDelete];
             }
+            arrayToPush.push(cloneObject);
         }
-        arrayToPush.push(object);
     }
     
     private extractObjects(objectsArray:any, objectIds:Set<String>) {
