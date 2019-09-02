@@ -266,8 +266,8 @@ export class ProductImporter {
         Util.log('--- importing enxCPQ__ProductAttribute__c : '  + this.productAttributes.length + ' records');
         await this.upsertBulkObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributes, true)
         Util.log('--- importing Pricebook2 : '  + (this.pricebooks.length-1) + ' records');
-        this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
-        this.upsertBulkObject(conn, 'Pricebook2', this.pricebooks, true);
+        let pricebooks = this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
+        await this.upsertBulkObject(conn, 'Pricebook2', pricebooks, true);
         
         
         Upsert.mapPricebooks(this.sourcePricebooksIds,  this.targetPricebooksIds);
@@ -287,16 +287,16 @@ export class ProductImporter {
             delete stdPbe['Product2']
         }
         await Upsert.upsertBulkPricebookEntries(conn, this.stdPbes);
-            
+        
         
         this.pbes.forEach(pbe=> {
             delete pbe['Pricebook2'],
             delete pbe['Product2']
         });
         await Upsert.upsertBulkPricebookEntries(conn, this.pbes)
-
         
-
+        
+        
         await this.upsertBulkObject(conn, 'enxCPQ__ProductRelationship__c', this.productRelationships);
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeDefaultValue__c', this.productRelationships);
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeValueDependency__c', this.attributeValueDependencies, true);
@@ -407,31 +407,28 @@ private extractIds(product:any) {
         if(data.length===0){
            return;
         }
+        if(sObjectName === 'Pricebook2'){
+            Util.log(data);
+        }
+        if(sObjectName === 'enxCPQ__Category__c'){
+            Util.log(data);
+        }
         !isLoop ? Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records') : null;
         let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c', 'enxB2B__ProvisioningTaskAssignment__c'];
         let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
         Util.sanitizeForImport(data);
 
-        return new Promise<string>((resolve: Function, reject: Function) => {
-            if(sObjectName === 'Product2'){
-                console.log(typeof data)
-                console.log(data);}
-            conn.bulk.load(sObjectName, "upsert", {"extIdField": techId}, data, function(err: any, rets: RecordResult[]) {
-                if (err) {
-                    reject('error creating ' + sObjectName + ': ' + err);
-                    return;
-                }
-                resolve('OK');
-            });
-
-            // conn.sobject(sObjectName).bulkload("upsert").execute(data, function(err: any, rets: RecordResult) {
-            //     if (err) {
-            //         reject('error creating ' + sObjectName + ': ' + err);
-            //         return;
-            //     }
-            //     resolve('OK');
-            // });
-        });
+        let promises:Array<Promise<RecordResult>> = new Array<Promise<RecordResult>>();
+        for (const record of data) {
+        promises.push(conn.sobject(sObjectName).upsert(record, techId, {}, function(err: any, rets: RecordResult) {
+            if (err) {
+                Util.log('error creating ' + sObjectName + ': ' + err);
+                return;
+            }   
+        }));
+        }
+        await Promise.all(promises);
+        ;
     }
 
     private async deleteBulkObject(conn: core.Connection, sObjectName: string, data: string[]): Promise<string> {

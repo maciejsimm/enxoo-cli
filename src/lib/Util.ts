@@ -136,15 +136,12 @@ export class Util {
 
     public static async readDirNames(directoryName: String){
         return new Promise<string>((resolve: Function, reject: Function) => {
-            let fileNamesToResolve = new Array<any>();
             fs.readdir('./' + directoryName + '/', async (err, filenames) => {
                 if (err) {
                     throw err;
                 }
-                filenames.filter(fileName => !fileName.includes('.json')).forEach((fileName) => {
-                    fileNamesToResolve.push(fileName)});
+                let fileNamesToResolve = filenames.filter(fileName => !fileName.includes('.json'));
                 
-
                 resolve(fileNamesToResolve);
                 });
                
