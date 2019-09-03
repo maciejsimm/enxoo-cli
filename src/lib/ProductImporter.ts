@@ -25,6 +25,7 @@ export class ProductImporter {
     private attributeSets:Array<Object>;
     private attributeSetAttributes:Array<Object>;
     private attributeSetsRoot:Array<Object>;
+    private prdAttributeValues:Array<Object>;
     private attributeValues:Array<Object>;
     private allCategoriesChild:Array<Object>;
     private productAttributes:Array<Object>;
@@ -41,8 +42,10 @@ export class ProductImporter {
     private provisioningTaskAssignmentIds:Array<string>;
     private provisioningPlanAssignments:Array<Object>;
     private provisioningTaskAssignments:Array<Object>;
+    private productList:Array<string>;
 
-    constructor(){
+    constructor(products: Array<string>){
+        this.productList = products;
         this.products = new Array<Object>();
         this.sourcePricebooksIds = new Array<Object>();
         this.sourceProductIds = new Array<Object>();
@@ -54,6 +57,7 @@ export class ProductImporter {
         this.attributeSets = new Array<Object>();
         this.attributeSetsRoot = new Array<Object>();
         this.productsRoot = new Array<Object>();
+        this.prdAttributeValues = new Array<Object>();
         this.attributeValues = new Array<Object>();
         this.allCategoriesChild = new  Array<Object>();
         this.productAttributes = new Array<Object>();
@@ -80,21 +84,20 @@ export class ProductImporter {
     
     public async all(conn: core.Connection) {       
         
-     conn.setMaxListeners(100)   
-     let productList = ['[x] Internet Access_PRD00INTACCESS'];
-     let productNameList = ['[x] Internet Access']   
+     conn.setMaxListeners(100);
+
+     
      await Upsert.enableTriggers(conn);
-     await Upsert.disableTriggers(conn);
+     await Upsert.disableTriggers(conn);  
      
-     // 1. Collect all Ids' of products that will be inserted
-     for (let prodname of productList) {
-         const prod = await this.readProduct(prodname);
-         this.extractIds(prod);
-         this.products.push(prod);
-     }
-     
-    // 2. We need to query ID's of records in target org in order to delete or match ID's
-     for (let productName of productNameList){
+     // 1. We need to query ID's of records in target org in order to delete or match ID's
+     let productFileNameList = [];
+
+     for (let productName of this.productList){
+        let prdNames = await Util.matchFileNames(productName);
+        for(let prdName of  prdNames){
+            productFileNameList.push(prdName);
+        }
         let prdAttrsTarget = await Queries.queryProductAttributeIds(conn, productName);                 // for delete
         let prdIdsTarget = await Queries.queryProductIds(conn, productName);                            // for matching
         let allStdPricebookEntriesTarget = await Queries.queryStdPricebookEntryIds(conn, productName);  // for delete
@@ -122,12 +125,18 @@ export class ProductImporter {
             this.productAttributesIds.push(prdAttr['Id']);
         }
     }
+    // 2. Collect all Ids' of products that will be inserted
+    for (let prodname of productFileNameList) {
+        const prod = await this.readProduct(prodname);
+        this.extractIds(prod);
+        this.products.push(prod);
+    }
         
         // 3. Building lists of records to upsert on target org
     for (let product of this.products) {
         delete product['root']['Id'];
         this.productsRoot.push(product['root']);
-        this.attributeValues = [...this.attributeValues, ...product['attributeValues']];
+        this.prdAttributeValues = [...this.prdAttributeValues, ...product['attributeValues']];
         this.productAttributes = [...this.productAttributes, ...product['productAttributes']];
         this.productRelationships = [...this.productRelationships, ...product['productRelationships']];
         this.attributeDefaultValues = [...this.attributeDefaultValues, ...product['attributeDefaultValues']];
@@ -144,7 +153,7 @@ export class ProductImporter {
     let allProvisioningPlans = await Util.readAllFiles('temp/provisioningPlans');
     let allProvisioningTasks = await Util.readAllFiles('/temp/provisioningTasks');
     let pricebooksTarget = await Queries.queryPricebooksIds(conn);    
-
+    
         //TO VERIFY
     let planAssignmentsTarget = await Queries.queryProvisioningPlanAssignmentIds(conn);
     let taskAssignmentsTarget = await Queries.queryProvisioningTaskAssignmentIds(conn);
@@ -179,6 +188,7 @@ export class ProductImporter {
      let attributesRoot = [];
      for(let attr of allAttributes){
          attributesRoot.push(attr['root']);
+         this.attributeValues.push(attr['values']);
      }
     //5 reading data for every pricebook
     let dirNames = await Util.readDirNames('temp/pricebooks');
@@ -236,10 +246,11 @@ export class ProductImporter {
         await this.upsertBulkObject(conn, 'enxCPQ__Attribute__c', this.attributes);
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeSet__c', this.attributeSetsRoot);
         await this.upsertBulkObject(conn, 'Product2', this.productsRoot);
-        await this.upsertBulkObject(conn, 'enxCPQ__AttributeValue__c', this.attributeValues);
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeSetAttribute__c', this.attributeSetAttributes);
         await this.deleteBulkObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributesIds);
-        await this.upsertBulkObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributes)
+        await this.upsertBulkObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributes);
+        await this.upsertBulkObject(conn, 'enxCPQ__AttributeValue__c', this.prdAttributeValues);
+        await this.upsertBulkObject(conn, 'enxCPQ__AttributeValue__c', this.attributeValues);
         let pricebooks = this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
         await this.upsertBulkObject(conn, 'Pricebook2', pricebooks);
         
@@ -265,7 +276,7 @@ export class ProductImporter {
         
         
         await this.upsertBulkObject(conn, 'enxCPQ__ProductRelationship__c', this.productRelationships);
-        await this.upsertBulkObject(conn, 'enxCPQ__AttributeDefaultValue__c', this.productRelationships);
+        await this.upsertBulkObject(conn, 'enxCPQ__AttributeDefaultValue__c', this.attributeDefaultValues);
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeValueDependency__c', this.attributeValueDependencies);
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeRule__c', this.attributeRules);
         await this.upsertBulkObject(conn, 'enxB2B__ProvisioningPlan__c', this.provisioningPlans);
@@ -346,7 +357,7 @@ private extractIds(product:any) {
     private async readProduct(prodname:String) {
         let content;
         return new Promise<string>((resolve: Function, reject: Function) => {
-            fs.readFile('./temp/products/' + prodname +'.json', function read(err, data) {
+            fs.readFile('./temp/products/' + prodname, function read(err, data) {
                 if (err) {
                     reject(err);
                 }

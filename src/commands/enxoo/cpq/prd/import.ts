@@ -27,7 +27,7 @@ export default class Org extends SfdxCommand {
 
   protected static flagsConfig = {
     // flag with a value (-n, --name=VALUE)
-    name: flags.string({char: 'n', description: messages.getMessage('nameFlagDescription')}),
+    names: flags.array({char: 'n', description: messages.getMessage('namesFlagDescription')}),
     force: flags.boolean({char: 'f', description: messages.getMessage('forceFlagDescription')})
   };
 
@@ -45,10 +45,11 @@ export default class Org extends SfdxCommand {
 
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
     const conn = this.org.getConnection();
+    const names = this.flags.names;
 
     this.ux.log('*** Import Begin ***');
 
-    const exporter = new ProductImporter();
+    const exporter = new ProductImporter(names);
     await exporter.all(conn);
 
     this.ux.log('*** Finished ***');

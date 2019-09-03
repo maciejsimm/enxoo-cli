@@ -148,6 +148,19 @@ export class Util {
                 
             });            
         }
+        public static async matchFileNames(productName: string){
+            return new Promise<string>((resolve: Function, reject: Function) => {
+                fs.readdir('./temp/products/' , async (err, filenames) => {
+                    let fileNamesToResolve = filenames.filter(fileName => fileName.startsWith(productName));
+                    if(!fileNamesToResolve[0] || err){
+                        reject('Failed to find Product:'+ productName + err);
+                    }
+                    resolve(fileNamesToResolve);
+                    });
+                   
+                    
+                });            
+            }
 
     public static async writeFile(path:string, dataToSanitaze:any){
         await fs.writeFile(path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {

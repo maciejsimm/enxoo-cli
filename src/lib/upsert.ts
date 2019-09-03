@@ -7,15 +7,12 @@ export class Upsert {
        let extractedData = this.extractIds(data);
         return new Promise<string>((resolve: Function, reject: Function) => {
            
-            conn.sobject("PricebookEntry").del(extractedData,  function(err, rets) {
-                
-                
+            conn.sobject("PricebookEntry").del(extractedData,  function(err, rets) { 
                 if (err) {
                     reject('error deleting pricebook entries: ' + err);
                     return;
                 }
-             
-          
+
             });
         });
     }
