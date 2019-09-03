@@ -126,6 +126,8 @@ export class ProductExporter {
 
     private async retrieveCategories(conn: core.Connection) {
         let categories = await Queries.queryCategories(conn, this.categoryIds);
+        Util.createDir('./temp/categories', false);
+        
         if(categories){
         for (let category of categories) {
             if(category['enxCPQ__Parent_Category__r'] !==null){
@@ -134,7 +136,6 @@ export class ProductExporter {
             Util.writeFile('./temp/categories/' + category['Name'] +'_' +category['enxCPQ__TECH_External_Id__c']+ '.json', category);
         }}
         let parentCategories = await Queries.queryCategories(conn, this.parentCategoriesIds);
-        Util.createDir('./temp/categories', false);
         if(parentCategories){
         for (let parentCategory of parentCategories) {
             Util.writeFile('./temp/categories/' + parentCategory['Name'] +'_' +parentCategory['enxCPQ__TECH_External_Id__c']+ '.json', parentCategory);
