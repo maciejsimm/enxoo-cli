@@ -81,8 +81,8 @@ export class ProductImporter {
     public async all(conn: core.Connection) {       
         
      conn.setMaxListeners(100)   
-     let productList = ['testProd_PRD00LAWT3OKNG5'];
-     let productNameList = ['testProd']   
+     let productList = ['[x] Internet Access_PRD00INTACCESS'];
+     let productNameList = ['[x] Internet Access']   
      await Upsert.enableTriggers(conn);
      await Upsert.disableTriggers(conn);
      
@@ -93,7 +93,7 @@ export class ProductImporter {
          this.products.push(prod);
      }
      
-        // 2. We need to query ID's of records in target org in order to delete or match ID's
+    // 2. We need to query ID's of records in target org in order to delete or match ID's
      for (let productName of productNameList){
         let prdAttrsTarget = await Queries.queryProductAttributeIds(conn, productName);                 // for delete
         let prdIdsTarget = await Queries.queryProductIds(conn, productName);                            // for matching

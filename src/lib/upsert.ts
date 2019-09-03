@@ -1,4 +1,4 @@
-import { core, UX } from "@salesforce/command";
+import { core } from "@salesforce/command";
 import { RecordResult } from 'jsforce';
 import { Util } from './Util';
 export class Upsert {
