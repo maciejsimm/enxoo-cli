@@ -146,7 +146,7 @@ export function queryPricebookEntryCurrencies(conn: core.Connection, productName
             null,
             function (err, res) {
                 if (err) {reject('Failed to retrieve product: ' + productName + '. Error: ' + err)};
-                if(res.records.length === 0) {reject('Failed to retrieve product: ' + productName + 'Check if product exist on source env')};
+                if(res.records.length === 0) {reject('Failed to retrieve product: ' + productName + ' Check if product exist on source env')};
                 resolve(res.records);
             });
         });
