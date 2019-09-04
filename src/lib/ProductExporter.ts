@@ -95,6 +95,9 @@ export class ProductExporter {
         product.productRelationships = productRelationships;
         product.provisioningPlanAssings = provisioningPlanAssings;
         this.extractIds(product);
+
+        // myślę ze zapisywanie powinno być zrefaktorowane do jednej funkcji, 
+        // w tej chwili piszemy pliki w wielu miejscach, nie potrzebna duplikacja kodu
         Util.createDir('./temp/products', true);
         Util.writeFile('./temp/products/' + productName + '_' + product.root['enxCPQ__TECH_External_Id__c'] + '.json', product);
 
@@ -106,6 +109,7 @@ export class ProductExporter {
 
         // Category IDs
         if(product.root.enxCPQ__Category__r){this.categoryIds.add(product.root.enxCPQ__Category__r.enxCPQ__TECH_External_Id__c);}
+
         // Attribute & Attribute Set IDs
         if (product.productAttributes != null) {
             product.productAttributes.forEach( attr => {
@@ -123,16 +127,16 @@ export class ProductExporter {
             }
         }
     }
-    // private async retrieveCategoriesHelper(categories:any){
-    //     if()
-    // }
 
     private async retrieveCategories(conn: core.Connection) {
-        let allCategories= [];
+        // nie uzywana zmienna allCategories
+        let allCategories= [];  
         let categories = await Queries.queryCategories(conn, this.categoryIds);
         
         Util.createDir('./temp/categories', false);
         
+        // nie najładniej ta rekurencja jest zrobiona
+        // przydałyby się te jakieś komentarze w tym kodzie
         if(categories){
         for (let category of categories) {
             if(category['enxCPQ__Parent_Category__r'] !==null){

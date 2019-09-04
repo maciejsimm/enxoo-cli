@@ -8,6 +8,9 @@ import { Queries } from './query';
 import { Upsert } from './upsert';
 
 export class ProductImporter {
+    
+    // Strasznie duzo tych pól sie zrobilo na tej klasie, przez to jest ona bardzo mało czytelna
+    // Z perspektywy programowania obiektowego jest to jasny sygnał ze cos tu jest nie tak
     private categoryIds:Set<String>;
     private stdPricebookEntryIds:Array<string>;
     private pricebookEntryIds:Array<string>;
@@ -93,17 +96,28 @@ export class ProductImporter {
      // 1. We need to query ID's of records in target org in order to delete or match ID's
      let productFileNameList = [];
 
+     // Nie wiem czy robienie importu w pętli jest dobre i efektywne, nie powinnismy tez strzelac querkami w petlach
+     // Wiem ze tak jest robiony eksport (pytanie czy tam tez to jest ok), moim zdaniem nie
+     // Wyobraź sobie ze masz na srodowisku 200 produktow, taki import bedzie trwal lata swietlne
      for (let productName of this.productList){
+        // A) Czy miejscem które powinno się zająć matchFileNames'em nie jest konstruktor?
+        // B) Czy metoda matchFileNames jest odporna na przypadek gdzie importuję z flagą -p "Ethernet", w plikach mam zarówno "Ethernet", jak i "Ethernet Port"
+        //    Poązadany jest import tylko Ethernetu
         let prdNames = await Util.matchFileNames(productName);
         for(let prdName of  prdNames){
             productFileNameList.push(prdName);
         }
+
         let prdAttrsTarget = await Queries.queryProductAttributeIds(conn, productName);                 // for delete                           
         let allStdPricebookEntriesTarget = await Queries.queryStdPricebookEntryIds(conn, productName);  // for delete
         let allPricebookEntriesTarget = await Queries.queryPricebookEntryIds(conn, productName);        // for delete
         
        
-        
+        // Po co są te pętle?
+        // Kod jest mało czytelny nie rozumiem po co się to wykonuje, metoda all() tej klasy powinna tylko sterować procesem, 
+        // wykonywać kolejne polecenia a całe mięso (takie jak np. 3 ponizsze petle) powinno być schowane gdzieś pod spodem
+        // popatrz na metode all z klasy ProductExporter, czytajac kod widzę wywołanie tamtej metody jako główny entry point aplikacji
+        // widzę tez po kolei co się wykonuje, jak potrzebuje zajrzeć w szczegóły to zaglądam ponizej 
         for(let stdPricebookEntriesTarget of allStdPricebookEntriesTarget){
             this.stdPricebookEntryIds.push(stdPricebookEntriesTarget['Id']);
         }
@@ -145,6 +159,9 @@ export class ProductImporter {
     let allProvisioningTasks = await Util.readAllFiles('/temp/provisioningTasks');  
     
         //TO VERIFY
+
+    // Dalej blok kodu który nie rozumiem co robi, budowane są jakies listy, ale nie to jest miejse na tą logikę
+    // Duzo czytelniej byloby jakby to schowac gdzies nizej
     let planAssignmentsTarget = await Queries.queryProvisioningPlanAssignmentIds(conn);
     let taskAssignmentsTarget = await Queries.queryProvisioningTaskAssignmentIds(conn);
 
@@ -181,6 +198,7 @@ export class ProductImporter {
          this.attributeValues.push(attr['values']);
      }
     //5 reading data for every pricebook
+    // rowniez dobry kandydat na osobna metode
     let dirNames = await Util.readDirNames('temp/pricebooks');
     let allPbes = [];
     for(let dirName of dirNames){
@@ -227,6 +245,7 @@ export class ProductImporter {
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeSet__c', this.attributeSetsRoot);
         await this.upsertBulkObject(conn, 'Product2', this.productsRoot);
 
+        // Query w pętli
         for (let productName of this.productList){
             let prdIdsTarget = await Queries.queryProductIds(conn, productName); 
             for(let prdIdTarget of prdIdsTarget){
@@ -242,14 +261,19 @@ export class ProductImporter {
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeSetAttribute__c', this.attributeSetAttributes);
         await this.deleteBulkObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributesIds);
         await this.upsertBulkObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributes);
+        // dlaczego list prdAttributeValues i attributeValues nie połączyć i nie robić jednego upserta?
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeValue__c', this.prdAttributeValues);
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeValue__c', this.attributeValues);
+        // A) w metodzie all nie powinno się dziać zadne filtrowanie, czyste sterowanie przepływem dla czytelnosci
+        // B) a w zasadzie jest jakiś powód dla którego nie update'ujemy standard price booka?
         let pricebooks = this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
         await this.upsertBulkObject(conn, 'Pricebook2', pricebooks);
         
+        // logika do przeniesienia stąd
         let pricebooksTarget = await Queries.queryPricebooksIds(conn);
         for(let pricebookTarget of pricebooksTarget){
-        
+            
+            // w zasadzie skoro robisz sobie całkowicie swój obiekt, to zamiast nazywać pole enxCPQ__TECH_External_Id__c, monzna by je nazwac techId po prostu
             let pricebookDataToExtract =
             {
                 Id: pricebookTarget['Id'],
@@ -260,6 +284,7 @@ export class ProductImporter {
         }
         
         Upsert.mapPricebooks(this.sourcePricebooksIds,  this.targetPricebooksIds);
+        // Nie wiem po co jest to [0] ale śmierdzi mi ono na 100 kilometrow
         Upsert.mapProducts(this.sourceProductIds[0], this.targetProductIds);
        
         await this.deleteBulkObject(conn, 'PricebookEntry', this.pricebookEntryIds);
@@ -299,7 +324,13 @@ export class ProductImporter {
 } 
 
 
-
+// A) proponuje poswiecic troche czasu i pobawić się typami w typescript, zamiast wszędzie any zrobić coś sensownego
+//    to ze typescript wprowadza typowanie wbrew pozorom nie jest tylko po to zeby to obchodzic
+// B) sugerowałbym aby ponizsze funkcje zrefaktoryzować w taki sposob aby nie mialy skutków ubocznych
+//    https://pl.wikipedia.org/wiki/Skutek_uboczny_(informatyka)
+//    oznacza to ze funkcja powinna dostac obiekt i zwrocic tablice Stringów, 
+//    natomiast przypisanie tablicy do zmiennej this.categoryIds powinno się jednak zadziać poza nią
+//    tak będzie bardziej koszernie
 private extractIds(product:any) {
     if(product.root.enxCPQ__Category__r){
         this.categoryIds.add(product.root.enxCPQ__Category__r.enxCPQ__TECH_External_Id__c);
@@ -371,6 +402,9 @@ private extractIds(product:any) {
         });
     }  
     
+    // popraw formatowanie w tej metodzie bo słabo się to czyta
+    // zmieńmy nazwę tej metody, poniewaz nie korzysta ona juz z bulk api
+    // ponadto uwazam ze ta metoda powinna znalezc sie w klasie upsert
     private async upsertBulkObject(conn: core.Connection, sObjectName: string, data: Object[]): Promise<string> {
         if(data.length===0){
            return;
