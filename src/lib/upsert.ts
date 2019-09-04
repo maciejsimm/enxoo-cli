@@ -79,28 +79,36 @@ export class Upsert {
     public static fixIds (elemArray:any) {
  
         for (let elem of elemArray) {
-            if (elem['Pricebook2'] && elem['Pricebook2']['enxCPQ__TECH_External_Id__c'] !== null) {
-                elem['Pricebook2Id'] = this.idMapping[elem['Pricebook2']['enxCPQ__TECH_External_Id__c']];  
-            //  console.log('początek pricebook')
-            //  console.log( arr['Pricebook2']['enxCPQ__TECH_External_Id__c'])
-            //  console.log(this.idMapping[arr['enxCPQ__TECH_External_Id__c']])
-            console.log('koniec pricebook')
-            }else if (elem['Pricebook2']){
-                elem['Pricebook2Id'] = this.idMapping['std'];
-            // console.log('początek standard pricebook')
-            // console.log( arr['Pricebook2Id'])
-            // console.log( this.idMapping[arr['Pricebook2Id']])
-            // console.log('koniec standard pricebook')
+
+            if (elem['Pricebook2'] && elem['Pricebook2'] !== null) {
+                let pbookTechId = elem['Pricebook2']['enxCPQ__TECH_External_Id__c'];
+                
+                // workaround for standard pricebooks that do not have TECH External ID defined
+                if (pbookTechId === null) {
+                    pbookTechId = 'std';
+                }
+
+                let targetPricebookId = this.idMapping[pbookTechId];
+
+                if (targetPricebookId !== null) {
+                    elem['Pricebook2Id'] = targetPricebookId;
+                    delete elem['Pricebook2'];
+                } else {
+                    // TO_DO: console.log & remove from array
+                }
             }
-            if (elem['Product2']['enxCPQ__TECH_External_Id__c'] !== null) {
-            console.log(this.idMapping[elem['Product2']['enxCPQ__TECH_External_Id__c']]);
-            console.log(elem['Product2']['enxCPQ__TECH_External_Id__c'])
-            console.log(this.idMapping);
-                 elem['Product2Id']= this.idMapping[elem['Product2']['enxCPQ__TECH_External_Id__c']];   
-            console.log('początek product')
-            console.log(elem['Product2']['enxCPQ__TECH_External_Id__c'])
-            console.log( this.idMapping[elem['Product2']['enxCPQ__TECH_External_Id__c']])
-            console.log('koniec product')
+
+            if (elem['Product2'] && elem['Product2'] !== null) {
+                let productTechId = elem['Product2']['enxCPQ__TECH_External_Id__c'];
+
+                let targetProductId = this.idMapping[productTechId];
+
+                if (targetProductId !== null) {
+                    elem['Product2Id'] = targetProductId;
+                    delete elem['Product2'];
+                } else {
+                    // TO_DO: console.log & remove from array
+                }
             }
         }
     }
