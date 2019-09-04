@@ -98,20 +98,11 @@ export class ProductImporter {
         for(let prdName of  prdNames){
             productFileNameList.push(prdName);
         }
-        let prdAttrsTarget = await Queries.queryProductAttributeIds(conn, productName);                 // for delete
-        let prdIdsTarget = await Queries.queryProductIds(conn, productName);                            // for matching
+        let prdAttrsTarget = await Queries.queryProductAttributeIds(conn, productName);                 // for delete                           
         let allStdPricebookEntriesTarget = await Queries.queryStdPricebookEntryIds(conn, productName);  // for delete
         let allPricebookEntriesTarget = await Queries.queryPricebookEntryIds(conn, productName);        // for delete
         
-        for(let prdIdTarget of prdIdsTarget){
-            let productDataToExtract =
-            {
-                Id: prdIdTarget['Id'],
-                enxCPQ__TECH_External_Id__c: prdIdTarget['enxCPQ__TECH_External_Id__c']
-    
-            }
-        this.targetProductIds.push(productDataToExtract);
-        }
+       
         
         for(let stdPricebookEntriesTarget of allStdPricebookEntriesTarget){
             this.stdPricebookEntryIds.push(stdPricebookEntriesTarget['Id']);
@@ -151,8 +142,7 @@ export class ProductImporter {
     let allPricebooks = await Util.readAllFiles('temp/pricebooks');
     let sourceProductIds = await Util.readAllFiles('temp/productIds');
     let allProvisioningPlans = await Util.readAllFiles('temp/provisioningPlans');
-    let allProvisioningTasks = await Util.readAllFiles('/temp/provisioningTasks');
-    let pricebooksTarget = await Queries.queryPricebooksIds(conn);    
+    let allProvisioningTasks = await Util.readAllFiles('/temp/provisioningTasks');  
     
         //TO VERIFY
     let planAssignmentsTarget = await Queries.queryProvisioningPlanAssignmentIds(conn);
@@ -213,16 +203,6 @@ export class ProductImporter {
     }
     
     
-    for(let pricebookTarget of pricebooksTarget){
-        
-        let pricebookDataToExtract =
-        {
-            Id: pricebookTarget['Id'],
-            enxCPQ__TECH_External_Id__c: pricebookTarget['enxCPQ__TECH_External_Id__c'],
-            IsStandard: pricebookTarget['IsStandard']
-        }    
-        this.targetPricebooksIds.push(pricebookDataToExtract);
-    }
     
     for(let pricebook of allPricebooks){
         this.extractPricebookData(pricebook);
@@ -246,6 +226,19 @@ export class ProductImporter {
         await this.upsertBulkObject(conn, 'enxCPQ__Attribute__c', this.attributes);
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeSet__c', this.attributeSetsRoot);
         await this.upsertBulkObject(conn, 'Product2', this.productsRoot);
+
+        for (let productName of this.productList){
+            let prdIdsTarget = await Queries.queryProductIds(conn, productName); 
+            for(let prdIdTarget of prdIdsTarget){
+                let productDataToExtract =
+                {
+                    Id: prdIdTarget['Id'],
+                    enxCPQ__TECH_External_Id__c: prdIdTarget['enxCPQ__TECH_External_Id__c']
+        
+                }
+            this.targetProductIds.push(productDataToExtract);
+            }
+    }
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeSetAttribute__c', this.attributeSetAttributes);
         await this.deleteBulkObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributesIds);
         await this.upsertBulkObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributes);
@@ -254,23 +247,34 @@ export class ProductImporter {
         let pricebooks = this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
         await this.upsertBulkObject(conn, 'Pricebook2', pricebooks);
         
+        let pricebooksTarget = await Queries.queryPricebooksIds(conn);
+        for(let pricebookTarget of pricebooksTarget){
+        
+            let pricebookDataToExtract =
+            {
+                Id: pricebookTarget['Id'],
+                enxCPQ__TECH_External_Id__c: pricebookTarget['enxCPQ__TECH_External_Id__c'],
+                IsStandard: pricebookTarget['IsStandard']
+            }    
+            this.targetPricebooksIds.push(pricebookDataToExtract);
+        }
         
         Upsert.mapPricebooks(this.sourcePricebooksIds,  this.targetPricebooksIds);
         Upsert.mapProducts(this.sourceProductIds[0], this.targetProductIds);
        
         await this.deleteBulkObject(conn, 'PricebookEntry', this.pricebookEntryIds);
         await this.deleteBulkObject(conn, 'PricebookEntry', this.stdPricebookEntryIds);
-        for(let stdPbe of this.stdPbes){
-            delete stdPbe['Pricebook2'],
-            delete stdPbe['Product2']
-        }
+        // for(let stdPbe of this.stdPbes){
+        //     delete stdPbe['Pricebook2'],
+        //     delete stdPbe['Product2']
+        // }
         await Upsert.upsertBulkPricebookEntries(conn, this.stdPbes);
         
         
-        this.pbes.forEach(pbe=> {
-            delete pbe['Pricebook2'],
-            delete pbe['Product2']
-        });
+        // this.pbes.forEach(pbe=> {
+        //     delete pbe['Pricebook2'],
+        //     delete pbe['Product2']
+        // });
         await Upsert.upsertBulkPricebookEntries(conn, this.pbes)
         
         

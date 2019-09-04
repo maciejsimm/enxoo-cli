@@ -76,14 +76,31 @@ export class Upsert {
         } 
     }
 
-    public static fixIds (arrs:any) {
-
-        for (let arr of arrs) {
-            if (arr['Pricebook2Id'] !== undefined) {
-                arr['Pricebook2Id'] = this.idMapping[arr['Pricebook2Id']];   
+    public static fixIds (elemArray:any) {
+ 
+        for (let elem of elemArray) {
+            if (elem['Pricebook2'] && elem['Pricebook2']['enxCPQ__TECH_External_Id__c'] !== null) {
+                elem['Pricebook2Id'] = this.idMapping[elem['Pricebook2']['enxCPQ__TECH_External_Id__c']];  
+            //  console.log('początek pricebook')
+            //  console.log( arr['Pricebook2']['enxCPQ__TECH_External_Id__c'])
+            //  console.log(this.idMapping[arr['enxCPQ__TECH_External_Id__c']])
+            console.log('koniec pricebook')
+            }else if (elem['Pricebook2']){
+                elem['Pricebook2Id'] = this.idMapping['std'];
+            // console.log('początek standard pricebook')
+            // console.log( arr['Pricebook2Id'])
+            // console.log( this.idMapping[arr['Pricebook2Id']])
+            // console.log('koniec standard pricebook')
             }
-            if (arr['Product2Id'] !== undefined) {
-                arr['Product2Id'] = this.idMapping[arr['Product2Id']];   
+            if (elem['Product2']['enxCPQ__TECH_External_Id__c'] !== null) {
+            console.log(this.idMapping[elem['Product2']['enxCPQ__TECH_External_Id__c']]);
+            console.log(elem['Product2']['enxCPQ__TECH_External_Id__c'])
+            console.log(this.idMapping);
+                 elem['Product2Id']= this.idMapping[elem['Product2']['enxCPQ__TECH_External_Id__c']];   
+            console.log('początek product')
+            console.log(elem['Product2']['enxCPQ__TECH_External_Id__c'])
+            console.log( this.idMapping[elem['Product2']['enxCPQ__TECH_External_Id__c']])
+            console.log('koniec product')
             }
         }
     }
@@ -94,27 +111,30 @@ export class Upsert {
         for (let i = 0 ; i < sourcePricebooks.length; i++) {
             for (let j = 0; j < targetPricebooks.length; j++) {
                 if (sourcePricebooks[i].enxCPQ__TECH_External_Id__c != null && sourcePricebooks[i].enxCPQ__TECH_External_Id__c === targetPricebooks[j].enxCPQ__TECH_External_Id__c) {
-                    this.idMapping[sourcePricebooks[i].Id] = targetPricebooks[j].Id;
+                    this.idMapping[sourcePricebooks[i].enxCPQ__TECH_External_Id__c] = targetPricebooks[j].Id;
                     break;
                 }
                 if (sourcePricebooks[i].IsStandard && targetPricebooks[j].IsStandard) {
-                    this.idMapping[sourcePricebooks[i].Id] = targetPricebooks[j].Id;
+                    this.idMapping['std'] = targetPricebooks[j].Id;
                     break;
                 }
             }
         }
+        console.log(this.idMapping);
     }
 
     public static mapProducts (sourceProducts, targetProducts) {
-   
+        console.log("--- mapping products");
         for (let i = 0 ; i < sourceProducts.length; i++) {
             for (let j = 0; j < targetProducts.length; j++) {
                 if (sourceProducts[i].enxCPQ__TECH_External_Id__c === targetProducts[j].enxCPQ__TECH_External_Id__c) {
-                    this.idMapping[sourceProducts[i].Id] = targetProducts[j].Id;
+                    this.idMapping[sourceProducts[i].enxCPQ__TECH_External_Id__c] = targetProducts[j].Id;
+                    //console.log( this.idMapping[sourceProducts[i].enxCPQ__TECH_External_Id__c])
                     break;
                 }
             }
         }
+        console.log(this.idMapping);
     }
     public static disableTriggers(conn: core.Connection){
         let data = { Name: "G_CPQ_DISABLE_TRIGGERS_99",

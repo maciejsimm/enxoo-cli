@@ -123,9 +123,14 @@ export class ProductExporter {
             }
         }
     }
+    // private async retrieveCategoriesHelper(categories:any){
+    //     if()
+    // }
 
     private async retrieveCategories(conn: core.Connection) {
+        let allCategories= [];
         let categories = await Queries.queryCategories(conn, this.categoryIds);
+        
         Util.createDir('./temp/categories', false);
         
         if(categories){
