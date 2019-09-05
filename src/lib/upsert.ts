@@ -1,20 +1,18 @@
-import { core, UX } from "@salesforce/command";
-
+import { core } from "@salesforce/command";
+import { RecordResult } from 'jsforce';
+import { Util } from './Util';
 export class Upsert {
     private static idMapping = {};
     public static async deletePricebookEntries(conn: core.Connection, data: any) { 
        let extractedData = this.extractIds(data);
         return new Promise<string>((resolve: Function, reject: Function) => {
            
-            conn.sobject("PricebookEntry").del(extractedData,  function(err, rets) {
-                
-                
+            conn.sobject("PricebookEntry").del(extractedData,  function(err, rets) { 
                 if (err) {
                     reject('error deleting pricebook entries: ' + err);
                     return;
                 }
-             
-          
+
             });
         });
     }
@@ -78,14 +76,35 @@ export class Upsert {
         } 
     }
 
-    public static fixIds (arrs:any) {
+    public static fixIds (elemArray:any) {
+ 
+        for (let elem of elemArray) {
 
-        for (let arr of arrs) {
-            if (arr['Pricebook2Id'] !== undefined) {
-                arr['Pricebook2Id'] = this.idMapping[arr['Pricebook2Id']];   
+            if (elem['Pricebook2'] && elem['Pricebook2'] !== null) {
+                let pbookTechId = elem['Pricebook2']['enxCPQ__TECH_External_Id__c'];
+                
+                // workaround for standard pricebooks that do not have TECH External ID defined
+                if (pbookTechId === null) {
+                    pbookTechId = 'std';
+                }
+
+                let targetPricebookId = this.idMapping[pbookTechId];
+
+                if (targetPricebookId !== null) {
+                    elem['Pricebook2Id'] = targetPricebookId;
+                    delete elem['Pricebook2'];
+                }
             }
-            if (arr['Product2Id'] !== undefined) {
-                arr['Product2Id'] = this.idMapping[arr['Product2Id']];   
+
+            if (elem['Product2'] && elem['Product2'] !== null) {
+                let productTechId = elem['Product2']['enxCPQ__TECH_External_Id__c'];
+
+                let targetProductId = this.idMapping[productTechId];
+
+                if (targetProductId !== null) {
+                    elem['Product2Id'] = targetProductId;
+                    delete elem['Product2'];
+                }
             }
         }
     }
@@ -96,11 +115,11 @@ export class Upsert {
         for (let i = 0 ; i < sourcePricebooks.length; i++) {
             for (let j = 0; j < targetPricebooks.length; j++) {
                 if (sourcePricebooks[i].enxCPQ__TECH_External_Id__c != null && sourcePricebooks[i].enxCPQ__TECH_External_Id__c === targetPricebooks[j].enxCPQ__TECH_External_Id__c) {
-                    this.idMapping[sourcePricebooks[i].Id] = targetPricebooks[j].Id;
+                    this.idMapping[sourcePricebooks[i].enxCPQ__TECH_External_Id__c] = targetPricebooks[j].Id;
                     break;
                 }
                 if (sourcePricebooks[i].IsStandard && targetPricebooks[j].IsStandard) {
-                    this.idMapping[sourcePricebooks[i].Id] = targetPricebooks[j].Id;
+                    this.idMapping['std'] = targetPricebooks[j].Id;
                     break;
                 }
             }
@@ -108,11 +127,11 @@ export class Upsert {
     }
 
     public static mapProducts (sourceProducts, targetProducts) {
-   
+        console.log("--- mapping products");
         for (let i = 0 ; i < sourceProducts.length; i++) {
             for (let j = 0; j < targetProducts.length; j++) {
                 if (sourceProducts[i].enxCPQ__TECH_External_Id__c === targetProducts[j].enxCPQ__TECH_External_Id__c) {
-                    this.idMapping[sourceProducts[i].Id] = targetProducts[j].Id;
+                    this.idMapping[sourceProducts[i].enxCPQ__TECH_External_Id__c] = targetProducts[j].Id;
                     break;
                 }
             }
@@ -173,5 +192,22 @@ export class Upsert {
         });
     }
 
-    
+    public static async insertObject(conn: core.Connection, sObjectName:string, data: Object[]): Promise<string>{ 
+        Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
+        this.sanitize(data);
+        if(data.length===0){
+            return;
+         }
+        let promises:Array<Promise<RecordResult>> = new Array<Promise<RecordResult>>();
+        for (const record of data) {
+            promises.push(conn.sobject(sObjectName).create(record, function(err: any, rets: RecordResult) {
+                if (err) {
+                    Util.log('error creating ' + sObjectName + ': ' + err);
+                    return;
+                }   
+            }))
+        }
+        await Promise.all(promises);
+    };
+
 }

@@ -1,7 +1,7 @@
 {
   "name": "enxoo",
   "description": "enxoo sfdx cli extensions",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "Maciej Simm @maciejsimm-enxoo",
   "bugs": "https://github.com/maciejsimm/enxoo-cli/issues",
   "dependencies": {

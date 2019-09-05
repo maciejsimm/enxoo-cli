@@ -1,7 +1,7 @@
 {
   "commandDescription": "print a greeting and your org IDs",
   "productsFlagDescription": "comma separated list of product names, e.g.: 'GEPL,IPLC,VPN,Colocation Space'. Use '*ALL' keyword to take all products.",
-  "nameFlagDescription": "name to print",
+  "namesFlagDescription": "name to print",
   "forceFlagDescription": "example boolean flag",
   "errorNoOrgResults": "No results found for the org '%s'."
 }

@@ -119,7 +119,7 @@ export function queryPricebookEntryCurrencies(conn: core.Connection, productName
 
     export function queryPricebooks(conn: core.Connection) {
         return new Promise<string>((resolve: Function, reject: Function) => {
-        conn.query("SELECT Id, IsStandard, Name, IsActive, Description, enxCPQ__Master__c, enxCPQ__Reference_Master_field__c, enxCPQ__TECH_External_Id__c, enxCPQ__Use_UnitPrice__c, enxCPQ__Valid_From__c, enxCPQ__Valid_To__c FROM Pricebook2 WHERE IsActive = true OR IsStandard = true", 
+        conn.query("SELECT IsStandard, Name, IsActive, Description, enxCPQ__Master__c, enxCPQ__Reference_Master_field__c, enxCPQ__TECH_External_Id__c, enxCPQ__Use_UnitPrice__c, enxCPQ__Valid_From__c, enxCPQ__Valid_To__c FROM Pricebook2 WHERE IsActive = true OR IsStandard = true", 
         null,
         function (err, res) {
             if (err) reject('error retrieving pricebooks: ' + err);
@@ -142,11 +142,11 @@ export function queryPricebookEntryCurrencies(conn: core.Connection, productName
     export function queryProduct(conn: core.Connection, productName: String) {
         return new Promise<string>((resolve: Function, reject: Function) => {
 
-            conn.query("SELECT Id, Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Column_Dimension__c, enxCPQ__Column_Value__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Pricing_Method__c, enxCPQ__Row_Dimension__c, enxCPQ__Row_Value__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c,enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, enxCPQ__Save_Before_Calculation__c,  RecordType.Name, enxCPQ__Dimension_1__c, enxCPQ__Dimension_1_Numeric__c, enxCPQ__Dimension_2__c, enxCPQ__Dimension_2_Numeric__c, enxCPQ__Dimension_3__c, enxCPQ__Dimension_3_Numeric__c, enxCPQ__Dimension_4__c, enxCPQ__Dimension_4_Numeric__c, enxCPQ__Dimension_5__c, enxCPQ__Dimension_5_Numeric__c, enxCPQ__Sorting_Order__c FROM Product2 WHERE Name = '" + productName + "' LIMIT 1", 
+            conn.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Column_Dimension__c, enxCPQ__Column_Value__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Pricing_Method__c, enxCPQ__Row_Dimension__c, enxCPQ__Row_Value__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c,enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, enxCPQ__Save_Before_Calculation__c,  RecordType.Name, enxCPQ__Dimension_1__c, enxCPQ__Dimension_1_Numeric__c, enxCPQ__Dimension_2__c, enxCPQ__Dimension_2_Numeric__c, enxCPQ__Dimension_3__c, enxCPQ__Dimension_3_Numeric__c, enxCPQ__Dimension_4__c, enxCPQ__Dimension_4_Numeric__c, enxCPQ__Dimension_5__c, enxCPQ__Dimension_5_Numeric__c, enxCPQ__Sorting_Order__c FROM Product2 WHERE Name = '" + productName + "' LIMIT 1", 
             null,
             function (err, res) {
                 if (err) {reject('Failed to retrieve product: ' + productName + '. Error: ' + err)};
-                if(res.records.length === 0) {reject('Failed to retrieve product: ' + productName + 'Check if product exist on source env')};
+                if(res.records.length === 0) {reject('Failed to retrieve product: ' + productName + ' Check if product exist on source env')};
                 resolve(res.records);
             });
         });
@@ -193,6 +193,9 @@ export function queryPricebookEntryCurrencies(conn: core.Connection, productName
     }
 
     export function queryAttributes(conn: core.Connection, attributeIds: Set<String>): Promise<string> {
+        if(attributeIds.size === 0){
+            return;
+        }
         Util.log('--- exporting attributes - ' + attributeIds.size);
         return new Promise<string>((resolve: Function, reject: Function) => {
 
@@ -332,6 +335,9 @@ export function queryAttributeValueDependencies(conn: core.Connection, productNa
 
     export function queryCategories(conn: core.Connection, categoryIds: Set<String>): Promise<string> {
         Util.log('--- exporting categories - ' + categoryIds.size);
+        if(categoryIds.size ===0){
+            return;
+        }
         return new Promise<string>((resolve: Function, reject: Function) => {
 
             conn.query("SELECT Name, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c, enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__Category__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(categoryIds) + ") ", 
@@ -345,6 +351,9 @@ export function queryAttributeValueDependencies(conn: core.Connection, productNa
 
     export function queryAttributeValues(conn: core.Connection, attributeIds: Set<String>): Promise<string> {
         Util.log('--- exporting product attribute values ');
+        if(attributeIds.size === 0){
+            return;
+        }
         return new Promise<string>((resolve: Function, reject: Function) => {
 
             conn.query("SELECT Name, enxCPQ__Active__c, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c, enxCPQ__TECH_Definition_Id__c FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c", 
@@ -464,9 +473,34 @@ export function queryAttributeValueDependencies(conn: core.Connection, productNa
             });
     })
     }
+    export function queryChargeElements (conn: core.Connection, productName: String, chargeName: String): Promise<string> {
+        Util.log('--- exporting charge elements ');
+        return new Promise<string>((resolve: Function, reject: Function) => {
+            conn.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c,enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Column_Value__c, enxCPQ__Row_Value__c, enxCPQ__Dimension_1_Value__c, enxCPQ__Dimension_2_Value__c, enxCPQ__Dimension_3_Value__c,enxCPQ__Dimension_4_Value__c, enxCPQ__Dimension_5_Value__c FROM Product2 WHERE (enxCPQ__Root_Product__r.Name = '" + productName + "' or enxCPQ__Root_Product__r.Name= '" + chargeName + "')AND RecordType.Name = 'Charge Element' AND IsActive = true",
+            null,
+            function(err, res) {
+                if (err) reject('error retrieving charge elements: ' + err);
+                
+                resolve(res.records);
+            });
+        })    
+    }
+
+    export function queryChargeTiers (conn: core.Connection, productName: String, chargeName: String): Promise<string> {
+        Util.log('--- exporting charge Tiers ');
+        return new Promise<string>((resolve: Function, reject: Function) => {
+            conn.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c,enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Column_Value__c, enxCPQ__Row_Value__c, enxCPQ__Dimension_1_Value__c, enxCPQ__Dimension_2_Value__c, enxCPQ__Dimension_3_Value__c,enxCPQ__Dimension_4_Value__c, enxCPQ__Dimension_5_Value__c FROM Product2 WHERE (enxCPQ__Root_Product__r.Name = '" + productName + "' or enxCPQ__Root_Product__r.Name= '" + chargeName + "')AND RecordType.Name = 'Charge Tier' AND IsActive = true",
+            null,
+            function(err, res) {
+                if (err) reject('error retrieving charge Tiers: ' + err);
+                
+                resolve(res.records);
+            });
+        })    
+    }
 
     export function bulkQueryChargeTiers (conn: core.Connection, productName: String, chargeName: String): Promise<string> {
-        Util.log('--- exporting charge elements ');
+        Util.log('--- exporting charge Tiers ');
         return new Promise<string>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c,enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Column_Value__c, enxCPQ__Row_Value__c, enxCPQ__Dimension_1_Value__c, enxCPQ__Dimension_2_Value__c, enxCPQ__Dimension_3_Value__c,enxCPQ__Dimension_4_Value__c, enxCPQ__Dimension_5_Value__c FROM Product2 WHERE (enxCPQ__Root_Product__r.Name = '" + productName + "' or enxCPQ__Root_Product__r.Name= '" + chargeName + "')AND RecordType.Name = 'Charge Tier' AND IsActive = true")

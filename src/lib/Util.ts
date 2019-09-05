@@ -136,21 +136,31 @@ export class Util {
 
     public static async readDirNames(directoryName: String){
         return new Promise<string>((resolve: Function, reject: Function) => {
-            let fileNamesToResolve = new Array<any>();
             fs.readdir('./' + directoryName + '/', async (err, filenames) => {
                 if (err) {
                     throw err;
                 }
-                filenames.filter(fileName => !fileName.includes('.json')).forEach((fileName) => {
-                    fileNamesToResolve.push(fileName)});
+                let fileNamesToResolve = filenames.filter(fileName => !fileName.includes('.json'));
                 
-
                 resolve(fileNamesToResolve);
                 });
                
                 
             });            
         }
+        public static async matchFileNames(productName: string){
+            return new Promise<string>((resolve: Function, reject: Function) => {
+                fs.readdir('./temp/products/' , async (err, filenames) => {
+                    let fileNamesToResolve = filenames.filter(fileName => fileName.startsWith(productName));
+                    if(!fileNamesToResolve[0] || err){
+                        reject('Failed to find Product:'+ productName + err);
+                    }
+                    resolve(fileNamesToResolve);
+                    });
+                   
+                    
+                });            
+            }
 
     public static async writeFile(path:string, dataToSanitaze:any){
         await fs.writeFile(path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {
@@ -159,10 +169,16 @@ export class Util {
             }
         });
     }
-    public static createDir(dir:string, isRecursive: boolean){
+    public static createDir(dir:string){
         if (!fs.existsSync(dir)){
-            fs.mkdirSync(dir, { recursive: isRecursive });
+            fs.mkdirSync(dir, { recursive: true });
         }
+    }
+    public static createAllDirs(){
+        const dirs = ['./temp/products', './temp/categories', './temp/attributes', 
+                     './temp/attributeSets', './temp/provisioningPlans', './temp/productIds',
+                     './temp/provisioningTasks', './temp/priceBooks', './temp/charges' ];
+        dirs.forEach(dir => { this.createDir(dir) })
     }
 
 }
