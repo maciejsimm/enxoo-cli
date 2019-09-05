@@ -169,10 +169,16 @@ export class Util {
             }
         });
     }
-    public static createDir(dir:string, isRecursive: boolean){
+    public static createDir(dir:string){
         if (!fs.existsSync(dir)){
-            fs.mkdirSync(dir, { recursive: isRecursive });
+            fs.mkdirSync(dir, { recursive: true });
         }
+    }
+    public static createAllDirs(){
+        const dirs = ['./temp/products', './temp/categories', './temp/attributes', 
+                     './temp/attributeSets', './temp/provisioningPlans', './temp/productIds',
+                     './temp/provisioningTasks', './temp/priceBooks', './temp/charges' ];
+        dirs.forEach(dir => { this.createDir(dir) })
     }
 
 }

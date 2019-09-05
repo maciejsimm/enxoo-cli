@@ -43,9 +43,17 @@ export class ProductImporter {
     private provisioningPlanAssignments:Array<Object>;
     private provisioningTaskAssignments:Array<Object>;
     private productList:Array<string>;
+    private productOptions:Array<Object>;
+    private charges:Array<Object>;
+    private chargeElements:Array<Object>;
+    private chargeTiers:Array<Object>;
 
     constructor(products: Array<string>){
         this.productList = products;
+        this.productOptions = new Array<Object>();
+        this.charges = new Array<Object>();
+        this.chargeElements = new Array<Object>();
+        this.chargeTiers = new Array<Object>();
         this.products = new Array<Object>();
         this.sourcePricebooksIds = new Array<Object>();
         this.sourceProductIds = new Array<Object>();
@@ -128,6 +136,7 @@ export class ProductImporter {
         delete product['root']['Id'];
         this.productsRoot.push(product['root']);
         this.prdAttributeValues = [...this.prdAttributeValues, ...product['attributeValues']];
+        this.productOptions = [...this.productOptions, ...product['options']];
         this.productAttributes = [...this.productAttributes, ...product['productAttributes']];
         this.productRelationships = [...this.productRelationships, ...product['productRelationships']];
         this.attributeDefaultValues = [...this.attributeDefaultValues, ...product['attributeDefaultValues']];
@@ -136,7 +145,8 @@ export class ProductImporter {
         this.provisioningPlanAssignments = [...this.provisioningPlanAssignments, ...product['provisioningPlanAssings']];
     }
     // 4. Read all other objects from local store
-    let allCategories = await Util.readAllFiles('temp/categories');
+    const allCategories = await Util.readAllFiles('temp/categories');
+    let allCharges = await Util.readAllFiles('temp/charges');
     let allAttributes = await Util.readAllFiles('temp/attributes');
     let allAttributeSets = await Util.readAllFiles('temp/attributeSets');
     let allPricebooks = await Util.readAllFiles('temp/pricebooks');
@@ -165,57 +175,66 @@ export class ProductImporter {
     for(let sourceProductId of sourceProductIds){
         this.sourceProductIds.push(sourceProductId);
         }
-     for(let category of allCategories){
-         this.deleteJsonFields(category, 'enxCPQ__Parent_Category__r', this.allCategoriesChild);
-     }
-     
-     for(let attributeSet of allAttributeSets){
-         this.attributeSetsRoot.push(attributeSet['root']);
-         for(let attrSetAttr of attributeSet['values'])
-         this.attributeSetAttributes.push(attrSetAttr);
-     }
-     
-     let attributesRoot = [];
-     for(let attr of allAttributes){
-         attributesRoot.push(attr['root']);
-         this.attributeValues.push(attr['values']);
-     }
-    //5 reading data for every pricebook
-    let dirNames = await Util.readDirNames('temp/pricebooks');
-    let allPbes = [];
-    for(let dirName of dirNames){
-        if(dirName=== 'Standard Price Book' ){continue;}                        // <- to jest hardkod!!!
-        let pbes = await Util.readAllFiles('temp/pricebooks/' + dirName);
-        allPbes.push(pbes);
-    }
-    
-    for(let pbes of allPbes){
-        for(let pbe of pbes){
-            for(let pbeEntry of pbe['entries'])
-            this.pbes.push(pbeEntry);
-        }
+        
+        for(let charge of allCharges){
+            this.charges.push(charge['root']);
+        this.chargeElements.push(charge['chargeElements']);
+        this.chargeTiers.push(charge['chargeTier']);
     }    
-    let stdPbes = await Util.readAllFiles('temp/pricebooks/Standard Price Book');
-    for(let allstdpbe of stdPbes){
-        for(let stdpbe of allstdpbe['stdEntries']){
-          this.stdPbes.push(stdpbe);
+    
+    for(let attributeSet of allAttributeSets){
+        this.attributeSetsRoot.push(attributeSet['root']);
+        for(let attrSetAttr of attributeSet['values'])
+        this.attributeSetAttributes.push(attrSetAttr);
+    }
+    
+    let attributesRoot = [];
+    for(let attr of allAttributes){
+        attributesRoot.push(attr['root']);
+         this.attributeValues.push(attr['values']);
         }
-    }
+        //5 reading data for every pricebook
+        let dirNames = await Util.readDirNames('temp/pricebooks');
+        let allPbes = [];
+        for(let dirName of dirNames){
+            if(dirName=== 'Standard Price Book' ){continue;}                        // <- to jest hardkod!!!
+            let pbes = await Util.readAllFiles('temp/pricebooks/' + dirName);
+            allPbes.push(pbes);
+        }
     
-    
-    
-    for(let pricebook of allPricebooks){
-        this.extractPricebookData(pricebook);
-        this.deleteJsonFields(pricebook, 'Id',  this.pricebooks, 'IsStandard');
-    }
-    
+        for(let pbes of allPbes){
+            for(let pbe of pbes){
+                for(let pbeEntry of pbe['entries'])
+                this.pbes.push(pbeEntry);
+            }
+        }    
+        let stdPbes = await Util.readAllFiles('temp/pricebooks/Standard Price Book');
+        for(let allstdpbe of stdPbes){
+            for(let stdpbe of allstdpbe['stdEntries']){
+                this.stdPbes.push(stdpbe);
+            }
+        }
+        
+        
+        
+        for(let pricebook of allPricebooks){
+            this.extractPricebookData(pricebook);
+            this.deleteJsonFields(pricebook, 'Id',  this.pricebooks, 'IsStandard');
+        }
+        
+
 
     this.categories.push(...this.extractObjects(allCategories, this.categoryIds));
+    this.allCategoriesChild = [...this.categories];
+    this.extractParentCategories(this.categories, allCategories);
+
+    this.allCategoriesChild.forEach(category => {delete category['enxCPQ__Parent_Category__r']});
+
     this.attributes.push(...this.extractObjects(attributesRoot, this.attributeIds));
     this.attributeSets.push(...this.extractObjects( this.attributeSetsRoot, this.attributeSetIds));
 
     console.log('products to upsert: ' + this.products.length);
-    console.log('categories to upsert: ' + this.categories.length);
+    console.log('categories to upsert: ' + this.allCategoriesChild.length);
     console.log('attributes to upsert: ' + this.attributes.length);      
     console.log('attributeSets to upsert: ' + this.attributeSets.length);      
    
@@ -226,6 +245,10 @@ export class ProductImporter {
         await this.upsertBulkObject(conn, 'enxCPQ__Attribute__c', this.attributes);
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeSet__c', this.attributeSetsRoot);
         await this.upsertBulkObject(conn, 'Product2', this.productsRoot);
+        await this.upsertBulkObject(conn, 'Product2', this.productOptions);
+        await this.upsertBulkObject(conn, 'Product2', this.charges);
+        await this.upsertBulkObject(conn, 'Product2', this.chargeElements);
+        await this.upsertBulkObject(conn, 'Product2', this.chargeTiers);
 
         for (let productName of this.productList){
             let prdIdsTarget = await Queries.queryProductIds(conn, productName); 
@@ -264,20 +287,9 @@ export class ProductImporter {
        
         await this.deleteBulkObject(conn, 'PricebookEntry', this.pricebookEntryIds);
         await this.deleteBulkObject(conn, 'PricebookEntry', this.stdPricebookEntryIds);
-        // for(let stdPbe of this.stdPbes){
-        //     delete stdPbe['Pricebook2'],
-        //     delete stdPbe['Product2']
-        // }
+       
         await Upsert.upsertBulkPricebookEntries(conn, this.stdPbes);
-        
-        
-        // this.pbes.forEach(pbe=> {
-        //     delete pbe['Pricebook2'],
-        //     delete pbe['Product2']
-        // });
         await Upsert.upsertBulkPricebookEntries(conn, this.pbes)
-        
-        
         
         await this.upsertBulkObject(conn, 'enxCPQ__ProductRelationship__c', this.productRelationships);
         await this.upsertBulkObject(conn, 'enxCPQ__AttributeDefaultValue__c', this.attributeDefaultValues);
@@ -298,7 +310,28 @@ export class ProductImporter {
     
 } 
 
+private extractParentCategories(categories: any, allCategories:any ){
+    let parentCategoriesIds =  new Set<String>();
+    for (let category of categories) {
+        if(category['enxCPQ__Parent_Category__r'] !==null){
+            parentCategoriesIds.add(category['enxCPQ__Parent_Category__r']['enxCPQ__TECH_External_Id__c']);
+        }
+    }
+    let newCategories =[];
 
+    for (let i=0; i<allCategories.length; i++ ){
+        for(let parentCategoriesId of parentCategoriesIds){
+            if(allCategories[i]['enxCPQ__TECH_External_Id__c'] === parentCategoriesId){
+                newCategories.push(allCategories[i]);
+                this.allCategoriesChild.push(allCategories[i]);
+            }
+        }
+
+    }
+    if(newCategories.length > 0){
+        this.extractParentCategories(newCategories, allCategories);
+    }
+}
 
 private extractIds(product:any) {
     if(product.root.enxCPQ__Category__r){
@@ -349,7 +382,6 @@ private extractIds(product:any) {
     private extractPricebookData(pricebook: any){
         let pricebookDataToExtract =
         {
-            Id: pricebook.Id,
             enxCPQ__TECH_External_Id__c: pricebook.enxCPQ__TECH_External_Id__c,
             IsStandard: pricebook.IsStandard
         }

@@ -93,8 +93,6 @@ export class Upsert {
                 if (targetPricebookId !== null) {
                     elem['Pricebook2Id'] = targetPricebookId;
                     delete elem['Pricebook2'];
-                } else {
-                    // TO_DO: console.log & remove from array
                 }
             }
 
@@ -106,8 +104,6 @@ export class Upsert {
                 if (targetProductId !== null) {
                     elem['Product2Id'] = targetProductId;
                     delete elem['Product2'];
-                } else {
-                    // TO_DO: console.log & remove from array
                 }
             }
         }
@@ -128,7 +124,6 @@ export class Upsert {
                 }
             }
         }
-        console.log(this.idMapping);
     }
 
     public static mapProducts (sourceProducts, targetProducts) {
@@ -137,12 +132,10 @@ export class Upsert {
             for (let j = 0; j < targetProducts.length; j++) {
                 if (sourceProducts[i].enxCPQ__TECH_External_Id__c === targetProducts[j].enxCPQ__TECH_External_Id__c) {
                     this.idMapping[sourceProducts[i].enxCPQ__TECH_External_Id__c] = targetProducts[j].Id;
-                    //console.log( this.idMapping[sourceProducts[i].enxCPQ__TECH_External_Id__c])
                     break;
                 }
             }
         }
-        console.log(this.idMapping);
     }
     public static disableTriggers(conn: core.Connection){
         let data = { Name: "G_CPQ_DISABLE_TRIGGERS_99",

@@ -35,7 +35,6 @@ export class ProductExporter {
     private attributeSetIds:Set<String>;
     private provisioningPlanIds:Set<String>;
     private productList:Array<String>;
-    private parentCategoriesIds:Set<String>;
     private currencyIsoCodes:Set<String>;
 
     constructor(products: Array<String>) {
@@ -43,7 +42,6 @@ export class ProductExporter {
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
         this.provisioningPlanIds = new Set<String>();
-        this.parentCategoriesIds = new Set<String>();
         this.currencyIsoCodes = new Set<String>();
      
         if (products[0] === '*ALL') {
@@ -95,7 +93,7 @@ export class ProductExporter {
         product.productRelationships = productRelationships;
         product.provisioningPlanAssings = provisioningPlanAssings;
         this.extractIds(product);
-        Util.createDir('./temp/products', true);
+        Util.createAllDirs();
         Util.writeFile('./temp/products/' + productName + '_' + product.root['enxCPQ__TECH_External_Id__c'] + '.json', product);
 
         Util.hideSpinner(productName + ' export done'); 
@@ -123,34 +121,33 @@ export class ProductExporter {
             }
         }
     }
-    // private async retrieveCategoriesHelper(categories:any){
-    //     if()
-    // }
-
-    private async retrieveCategories(conn: core.Connection) {
-        let allCategories= [];
-        let categories = await Queries.queryCategories(conn, this.categoryIds);
-        
-        Util.createDir('./temp/categories', false);
-        
-        if(categories){
+    private async retrieveCategoriesHelper(conn: core.Connection, categories:any){
+        let parentCategoriesIds =  new Set<String>();
         for (let category of categories) {
             if(category['enxCPQ__Parent_Category__r'] !==null){
-                this.parentCategoriesIds.add(category['enxCPQ__Parent_Category__r']['enxCPQ__TECH_External_Id__c']);
+                parentCategoriesIds.add(category['enxCPQ__Parent_Category__r']['enxCPQ__TECH_External_Id__c']);
             }
             Util.writeFile('./temp/categories/' + category['Name'] +'_' +category['enxCPQ__TECH_External_Id__c']+ '.json', category);
-        }}
-        let parentCategories = await Queries.queryCategories(conn, this.parentCategoriesIds);
-        if(parentCategories){
-        for (let parentCategory of parentCategories) {
-            Util.writeFile('./temp/categories/' + parentCategory['Name'] +'_' +parentCategory['enxCPQ__TECH_External_Id__c']+ '.json', parentCategory);
-        }}
+        }
+        let newParentCategories = await Queries.queryCategories(conn, parentCategoriesIds);
+        
+        if(newParentCategories){
+            this.retrieveCategoriesHelper(conn, newParentCategories);
+        }
+    }
+
+    private async retrieveCategories(conn: core.Connection) {
+        
+        let categories = await Queries.queryCategories(conn, this.categoryIds);
+        
+        if(categories){
+            this.retrieveCategoriesHelper(conn, categories);
+        }
     }
 
     private async retrieveAttributes(conn: core.Connection) {
         let attributes = await Queries.queryAttributes(conn, this.attributeIds);
         let attributeValues = await Queries.queryAttributeValues(conn, this.attributeIds);
-        Util.createDir('./temp/attributes', false);
         if(attributes){
         for (let attribute of attributes) {
             let attributeToSave:any = {};
@@ -169,7 +166,6 @@ export class ProductExporter {
     private async retrieveAttributeSets(conn: core.Connection) {
         let attributeSets = await Queries.queryAttributeSets(conn, this.attributeSetIds);
         let attributeSetAttributes = await Queries.queryAttributeSetAttributes(conn, this.attributeSetIds);
-        Util.createDir('./temp/attributeSets', false);
 
         for (let attributeSet of attributeSets) {
             let attributeSetToSave:any = {};
@@ -188,7 +184,6 @@ export class ProductExporter {
     private async retrieveProvisioningPlans(conn: core.Connection) {
         let provisioningPlans = await Queries.queryProvisioningPlans(conn);
         let provisioningTaskAssignments = await Queries.queryProvisioningTaskAssignments(conn)
-        Util.createDir('./temp/provisioningPlans', false);
 
         for (let provisioningPlan of provisioningPlans) {
             let provisioningPlanToSave:any = {};
@@ -206,14 +201,12 @@ export class ProductExporter {
     
     private async retrieveProductIds(conn: core.Connection, prodName: String){
         let productIds = await Queries.queryProductIds(conn, prodName);
-        Util.createDir('./temp/productIds', false);
       
         Util.writeFile('./temp/productIds/' + prodName +'_' + productIds[0]['enxCPQ__TECH_External_Id__c']+ '.json', productIds);
         
     }
     private async retrieveProvisioningTasks(conn: core.Connection){
         let provisioningTasks = await Queries.queryProvisioningTasks(conn);
-        Util.createDir('./temp/provisioningTasks', false);
         for (let provisioningTask of provisioningTasks) {
         Util.writeFile('./temp/provisioningTasks/' + provisioningTask['Name'] +'_' + provisioningTask['enxB2B__TECH_External_Id__c']+ '.json', provisioningTask);
         }
@@ -227,10 +220,9 @@ export class ProductExporter {
         let chargeElementPricebookEntries = await Queries.bulkQueryChargeElementPricebookEntries(conn, productName);
         let chargeElementStdPricebookEntries = await Queries.bulkQueryChargeElementStdPricebookEntries(conn, productName);
 
-        Util.createDir('./temp/priceBooks', true);
         for (let priceBook of priceBooks) {
             const priceBookTechExtId = priceBook['enxCPQ__TECH_External_Id__c'];
-            Util.createDir('./temp/priceBooks/' + priceBook['Name'], true);
+            Util.createDir('./temp/priceBooks/' + priceBook['Name']);
             
             Util.writeFile('./temp/PriceBooks/' + priceBook['Name'] + '.json', priceBook)
             
@@ -281,13 +273,12 @@ export class ProductExporter {
 
     private async retrieveCharges(conn: core.Connection, productName: String){
         let charges = await Queries.queryProductCharges(conn, productName);
-        Util.createDir('./temp/charges', false);
    
         for(let charge of charges){
         let chargeName = charge['Name'];
         let chargeReference = charge['enxCPQ__Charge_Reference__c'];
-        let chargeElements = await Queries.bulkQueryChargeElements(conn, productName, chargeReference);
-        let chargeTier = await Queries.bulkQueryChargeTiers(conn, productName, chargeReference);
+        let chargeElements = await Queries.queryChargeElements(conn, productName, chargeReference);
+        let chargeTier = await Queries.queryChargeTiers(conn, productName, chargeReference);
         let chargeToSave: any = {};
         chargeToSave.root= charge;
         chargeToSave.chargeElements = chargeElements;
