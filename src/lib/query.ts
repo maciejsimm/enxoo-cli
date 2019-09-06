@@ -93,9 +93,9 @@ export module Queries {
         });
     })
 }
-    export function queryStdPricebookEntries(conn: core.Connection, productName: String) {
+    export function queryStdPricebookEntries(conn: core.Connection, productList: String) {
         return new Promise<string>((resolve: Function, reject: Function) => {
-        conn.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name = '" + productName + "' OR Product2.enxCPQ__Root_Product__r.Name = '" + productName + "') AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element' AND IsActive = true", 
+        conn.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name IN (" + productList + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + productList + ")) AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element' AND IsActive = true", 
         null,
         function (err, res) {
             if (err) reject('error retrieving pricebook entries: ' + err);
@@ -105,9 +105,9 @@ export module Queries {
     })
 }
 
-export function queryPricebookEntryCurrencies(conn: core.Connection, productName: String) {
+export function queryPricebookEntryCurrencies(conn: core.Connection, productList: String) {
     return new Promise<string>((resolve: Function, reject: Function) => {
-    conn.query("SELECT Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode FROM PricebookEntry WHERE (Product2.Name = '" + productName + "' OR Product2.enxCPQ__Root_Product__r.Name = '" + productName + "') AND (IsActive = true OR Pricebook2.IsStandard = true)", 
+    conn.query("SELECT Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode FROM PricebookEntry WHERE (Product2.Name IN (" + productList + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + productList + ")) AND (IsActive = true OR Pricebook2.IsStandard = true)", 
     null,
     function (err, res) {
         if (err) reject('error retrieving pricebook entries: ' + err);
@@ -128,9 +128,9 @@ export function queryPricebookEntryCurrencies(conn: core.Connection, productName
         });
     })
     }
-    export function queryPricebookEntries(conn: core.Connection, productName: String) {
+    export function queryPricebookEntries(conn: core.Connection, productList: String) {
         return new Promise<string>((resolve: Function, reject: Function) => {
-        conn.query("SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name = '" + productName + "' OR Product2.enxCPQ__Root_Product__r.Name = '" + productName + "') AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element' AND IsActive = true", 
+        conn.query("SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name IN (" + productList + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + productList + ")) AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element' AND IsActive = true", 
         null,
         function (err, res) {
             if (err) reject('error retrieving pricebook entries: ' + err);
@@ -311,7 +311,7 @@ export function queryAttributeValueDependencies(conn: core.Connection, productNa
         Util.log('--- exporting attribute rules ');
         return new Promise<string>((resolve: Function, reject: Function) => {
 
-            conn.query("SELECT enxCPQ__Active__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Update_Logic__c, enxCPQ__Criteria__c, enxCPQ__Error_Message__c, enxCPQ__Order__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Regexp__c, enxCPQ__Rule_Attribute_Update_Logic__c, enxCPQ__Rule_Criteria__c, enxCPQ__TECH_External_Id__c, enxCPQ__Validation_Type__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeRule__c WHERE enxCPQ__Product__r.Name = '" + productName + "' ORDER BY enxCPQ__Order__c", 
+            conn.query("SELECT enxCPQ__Active__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Criteria__c, enxCPQ__Error_Message__c, enxCPQ__Order__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Regexp__c, enxCPQ__Rule_Attribute_Update_Logic__c, enxCPQ__Rule_Criteria__c, enxCPQ__TECH_External_Id__c, enxCPQ__Validation_Type__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeRule__c WHERE enxCPQ__Product__r.Name = '" + productName + "' ORDER BY enxCPQ__Order__c", 
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve attribute rules: ' + productName + '. Error: ' + err);
@@ -523,11 +523,11 @@ export function queryAttributeValueDependencies(conn: core.Connection, productNa
     }
 
     // FIELDS removed from query because they were putting "0" instead of null -> enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c
-    export function bulkQueryChargeElementStdPricebookEntries (conn: core.Connection, productName: String): Promise<string> {
+    export function bulkQueryChargeElementStdPricebookEntries (conn: core.Connection, productList: String): Promise<string> {
         Util.log('--- exporting charge element pricebook entries ');
         return new Promise<string>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name = '" + productName + "' AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true")
+        conn.bulk.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + productList + ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true")
             .on('record', function(rec) { 
                 if (records.length % 100 == 0) {
                     process.stdout.write("--- querying charge element std pricebook entries. Retrieved: " + records.length + " records\r");
@@ -538,18 +538,18 @@ export function queryAttributeValueDependencies(conn: core.Connection, productNa
                 reject('error retrieving charge element std pricebook entries ' + err); 
             })
             .on('end', function(info) { 
-                Util.log("--- charge element pricebook entries: " + records.length + "                                ");
+                Util.log("--- charge element pricebook entries: " + records.length + "        ");
                 resolve(records); 
                 
             });
     })
     }
     // FIELDS removed from query because they were putting "0" instead of null -> enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c
-    export function bulkQueryChargeElementPricebookEntries (conn: core.Connection, productName: String): Promise<string> {
+    export function bulkQueryChargeElementPricebookEntries (conn: core.Connection, productList: String): Promise<string> {
         Util.log('--- exporting Charge Element Pricebook Entries ');
         return new Promise<string>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name = '" + productName + "' AND Pricebook2.IsStandard = false AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true")
+        conn.bulk.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + productList + ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true")
             .on('record', function(rec) { 
                 if (records.length % 100 == 0) {
                     process.stdout.write("--- querying charge element pricebook entries. Retrieved: " + records.length + " records\r");

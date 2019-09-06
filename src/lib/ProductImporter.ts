@@ -6,6 +6,7 @@ import { Util } from './Util';
 import { RecordResult } from 'jsforce';
 import { Queries } from './query';
 import { Upsert } from './upsert';
+import * as _ from 'lodash';
 
 export class ProductImporter {
     private categoryIds:Set<String>;
@@ -15,7 +16,7 @@ export class ProductImporter {
     private attributeSetIds:Set<String>;
     private productAttributesIds:Array<string>;
     private sourcePricebooksIds:Array<Object>;
-    private sourceProductIds:Array<Object>;
+    private sourceProductIds:Set<String>;
     private targetPricebooksIds:Array<Object>;
     private targetProductIds:Array<Object>;
     private products:Array<Object>;
@@ -45,18 +46,20 @@ export class ProductImporter {
     private productList:Array<string>;
     private productOptions:Array<Object>;
     private charges:Array<Object>;
+    private chargesIds:Set<String>;
     private chargeElements:Array<Object>;
     private chargeTiers:Array<Object>;
 
     constructor(products: Array<string>){
         this.productList = products;
+        this.chargesIds = new Set<String>();
         this.productOptions = new Array<Object>();
         this.charges = new Array<Object>();
         this.chargeElements = new Array<Object>();
         this.chargeTiers = new Array<Object>();
         this.products = new Array<Object>();
         this.sourcePricebooksIds = new Array<Object>();
-        this.sourceProductIds = new Array<Object>();
+        this.sourceProductIds = new Set<String>();
         this.targetProductIds = new Array<Object>();
         this.targetPricebooksIds = new Array<Object>();
         this.attributeSetAttributes = new Array<Object>();
@@ -150,7 +153,6 @@ export class ProductImporter {
     let allAttributes = await Util.readAllFiles('temp/attributes');
     let allAttributeSets = await Util.readAllFiles('temp/attributeSets');
     let allPricebooks = await Util.readAllFiles('temp/pricebooks');
-    let sourceProductIds = await Util.readAllFiles('temp/productIds');
     let allProvisioningPlans = await Util.readAllFiles('temp/provisioningPlans');
     let allProvisioningTasks = await Util.readAllFiles('/temp/provisioningTasks');  
     
@@ -172,16 +174,6 @@ export class ProductImporter {
         this.provisioningTaskAssignments.push(provisioningPlans['values']);
     }    
        // TO VERIFY
-    for(let sourceProductId of sourceProductIds){
-        this.sourceProductIds.push(sourceProductId);
-        }
-        
-        for(let charge of allCharges){
-            this.charges.push(charge['root']);
-        this.chargeElements.push(charge['chargeElements']);
-        this.chargeTiers.push(charge['chargeTier']);
-    }    
-    
     for(let attributeSet of allAttributeSets){
         this.attributeSetsRoot.push(attributeSet['root']);
         for(let attrSetAttr of attributeSet['values'])
@@ -191,38 +183,44 @@ export class ProductImporter {
     let attributesRoot = [];
     for(let attr of allAttributes){
         attributesRoot.push(attr['root']);
-         this.attributeValues.push(attr['values']);
-        }
-        //5 reading data for every pricebook
-        let dirNames = await Util.readDirNames('temp/pricebooks');
-        let allPbes = [];
-        for(let dirName of dirNames){
-            if(dirName=== 'Standard Price Book' ){continue;}                        // <- to jest hardkod!!!
-            let pbes = await Util.readAllFiles('temp/pricebooks/' + dirName);
-            allPbes.push(pbes);
-        }
+        this.attributeValues.push(attr['values']);
+    }
+    //5 reading data for every pricebook
+    let dirNames = await Util.readDirNames('temp/pricebooks');
+    let allPbes = [];
+    for(let dirName of dirNames){
+        if(dirName=== 'Standard Price Book' ){continue;}                        // <- to jest hardkod!!!
+        let pbes = await Util.readAllFiles('temp/pricebooks/' + dirName);
+        allPbes.push(pbes);
+    }
     
-        for(let pbes of allPbes){
-            for(let pbe of pbes){
-                for(let pbeEntry of pbe['entries'])
-                this.pbes.push(pbeEntry);
-            }
-        }    
-        let stdPbes = await Util.readAllFiles('temp/pricebooks/Standard Price Book');
-        for(let allstdpbe of stdPbes){
-            for(let stdpbe of allstdpbe['stdEntries']){
-                this.stdPbes.push(stdpbe);
-            }
+    for(let pbes of allPbes){
+        for(let pbe of pbes){
+            for(let pbeEntry of pbe['entries'])
+            this.pbes.push(pbeEntry);
         }
-        
-        
-        
-        for(let pricebook of allPricebooks){
-            this.extractPricebookData(pricebook);
-            this.deleteJsonFields(pricebook, 'Id',  this.pricebooks, 'IsStandard');
+    }    
+    let stdPbes = await Util.readAllFiles('temp/pricebooks/Standard Price Book');
+    for(let allstdpbe of stdPbes){
+        for(let stdpbe of allstdpbe['stdEntries']){
+            this.stdPbes.push(stdpbe);
         }
-        
-
+    }
+    
+    
+    
+    for(let pricebook of allPricebooks){
+        this.extractPricebookData(pricebook);
+        this.deleteJsonFields(pricebook, 'Id',  this.pricebooks, 'IsStandard');
+    }
+    let productCharges = [...this.extractObjects(allCharges, this.chargesIds)];
+    for(let charge of productCharges){
+        this.charges.push(charge['root']);
+        this.chargeElements.push(charge['chargeElements']);
+        this.chargeTiers.push(charge['chargeTier']);
+    }    
+    this.chargeElements.forEach(chargeElement => {chargeElement[0] ? this.sourceProductIds.add(chargeElement[0]['enxCPQ__TECH_External_Id__c']): null});
+    this.chargeTiers.forEach(chargeTier =>{chargeTier[0] ? this.sourceProductIds.add(chargeTier[0]['enxCPQ__TECH_External_Id__c']) : null});
 
     this.categories.push(...this.extractObjects(allCategories, this.categoryIds));
     this.allCategoriesChild = [...this.categories];
@@ -281,9 +279,8 @@ export class ProductImporter {
             }    
             this.targetPricebooksIds.push(pricebookDataToExtract);
         }
-        
         Upsert.mapPricebooks(this.sourcePricebooksIds,  this.targetPricebooksIds);
-        Upsert.mapProducts(this.sourceProductIds[0], this.targetProductIds);
+        Upsert.mapProducts(this.sourceProductIds, this.targetProductIds);
        
         await this.deleteBulkObject(conn, 'PricebookEntry', this.pricebookEntryIds);
         await this.deleteBulkObject(conn, 'PricebookEntry', this.stdPricebookEntryIds);
@@ -334,18 +331,34 @@ private extractParentCategories(categories: any, allCategories:any ){
 }
 
 private extractIds(product:any) {
-    if(product.root.enxCPQ__Category__r){
+    if(product.root && product.root.enxCPQ__Category__r){
         this.categoryIds.add(product.root.enxCPQ__Category__r.enxCPQ__TECH_External_Id__c);
     }
-        if (product.productAttributes != null) {
+    if (product.productAttributes != null) {
             for (let attr of product.productAttributes) {
                 this.attributeIds.add(attr.enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c);
                 if (attr['enxCPQ__Attribute_Set__r'] != undefined) {
                     this.attributeSetIds.add(attr.enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c);
                 }
             }
+    }
+    if (product.chargesIds != null) {
+        for(let chargesId of product.chargesIds){
+            this.chargesIds.add(chargesId['enxCPQ__TECH_External_Id__c']);
+            this.sourceProductIds.add(chargesId['enxCPQ__TECH_External_Id__c']);
+    }}
+
+    if (product.root){
+        this.sourceProductIds.add(product.root.enxCPQ__TECH_External_Id__c);
+    }
+    if (product.options != null){
+        for(let option of product.options){
+            this.sourceProductIds.add(option.enxCPQ__TECH_External_Id__c);
         }
     }
+}
+
+
 
     private deleteJsonFields(object: any, firstPropertyToDelete: string, arrayToPush: any, secondPropertyToDelete?: string){
         if(object){

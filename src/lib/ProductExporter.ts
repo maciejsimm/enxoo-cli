@@ -54,11 +54,11 @@ export class ProductExporter {
 
     public async all(conn: core.Connection) {            
 
+        await this.retrievePriceBooks(conn, this.productList);
+
         for (let prodname of this.productList) {
             await this.retrieveProduct(conn, prodname);
-            await this.retrievePriceBooks(conn, prodname);
             await this.retrieveCharges(conn, prodname);
-            await this.retrieveProductIds(conn, prodname);
         }
         await this.retrieveProvisioningPlans(conn);
         await this.retrieveProvisioningTasks(conn);
@@ -199,12 +199,7 @@ export class ProductExporter {
         }
     }
     
-    private async retrieveProductIds(conn: core.Connection, prodName: String){
-        let productIds = await Queries.queryProductIds(conn, prodName);
-      
-        Util.writeFile('./temp/productIds/' + prodName +'_' + productIds[0]['enxCPQ__TECH_External_Id__c']+ '.json', productIds);
-        
-    }
+    
     private async retrieveProvisioningTasks(conn: core.Connection){
         let provisioningTasks = await Queries.queryProvisioningTasks(conn);
         for (let provisioningTask of provisioningTasks) {
@@ -212,13 +207,14 @@ export class ProductExporter {
         }
     }
 
-    private async retrievePriceBooks(conn: core.Connection, productName: String){
+    private async retrievePriceBooks(conn: core.Connection, productList: Array<String>){
+        let joinedProductList = "'" + productList.join("','") + "'";
         let priceBooks = await Queries.queryPricebooks(conn);
-        let currencies = await Queries.queryPricebookEntryCurrencies(conn, productName);
-        let priceBookEntries = await Queries.queryPricebookEntries(conn, productName);
-        let stdPriceBookEntries = await Queries.queryStdPricebookEntries(conn, productName);
-        let chargeElementPricebookEntries = await Queries.bulkQueryChargeElementPricebookEntries(conn, productName);
-        let chargeElementStdPricebookEntries = await Queries.bulkQueryChargeElementStdPricebookEntries(conn, productName);
+        let currencies = await Queries.queryPricebookEntryCurrencies(conn, joinedProductList);
+        let priceBookEntries = await Queries.queryPricebookEntries(conn, joinedProductList);
+        let stdPriceBookEntries = await Queries.queryStdPricebookEntries(conn, joinedProductList);
+        let chargeElementPricebookEntries = await Queries.bulkQueryChargeElementPricebookEntries(conn, joinedProductList);
+        let chargeElementStdPricebookEntries = await Queries.bulkQueryChargeElementStdPricebookEntries(conn, joinedProductList);
 
         for (let priceBook of priceBooks) {
             const priceBookTechExtId = priceBook['enxCPQ__TECH_External_Id__c'];
