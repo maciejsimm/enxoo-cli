@@ -98,7 +98,6 @@ export class Upsert {
 
             if (elem['Product2'] && elem['Product2'] !== null) {
                 let productTechId = elem['Product2']['enxCPQ__TECH_External_Id__c'];
-
                 let targetProductId = this.idMapping[productTechId];
                 if (targetProductId !== null) {
                     elem['Product2Id'] = targetProductId;
@@ -108,10 +107,10 @@ export class Upsert {
         }
     }
     public static mapProducts (sourceProducts, targetProducts) {
-        for (let i = 0 ; i < sourceProducts.length; i++) {
+        for (let sourceProduct of sourceProducts) {
             for (let j = 0; j < targetProducts.length; j++) {
-                if (sourceProducts[i].enxCPQ__TECH_External_Id__c === targetProducts[j].enxCPQ__TECH_External_Id__c) {
-                    this.idMapping[sourceProducts[i].enxCPQ__TECH_External_Id__c] = targetProducts[j].Id;
+                if (sourceProduct === targetProducts[j].enxCPQ__TECH_External_Id__c) {
+                    this.idMapping[sourceProduct] = targetProducts[j].Id;
                     break;
                 }
             }

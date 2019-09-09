@@ -524,7 +524,7 @@ export function queryAttributeValueDependencies(conn: core.Connection, productNa
 
     // FIELDS removed from query because they were putting "0" instead of null -> enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c
     export function bulkQueryChargeElementStdPricebookEntries (conn: core.Connection, productList: String): Promise<string> {
-        Util.log('--- exporting charge element pricebook entries ');
+        Util.log('--- exporting charge element std pricebook entries ');
         return new Promise<string>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + productList + ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true")
@@ -538,7 +538,7 @@ export function queryAttributeValueDependencies(conn: core.Connection, productNa
                 reject('error retrieving charge element std pricebook entries ' + err); 
             })
             .on('end', function(info) { 
-                Util.log("--- charge element pricebook entries: " + records.length + "        ");
+                Util.log("--- charge element std pricebook entries: " + records.length + "        ");
                 resolve(records); 
                 
             });

@@ -215,7 +215,6 @@ export class ProductExporter {
         let stdPriceBookEntries = await Queries.queryStdPricebookEntries(conn, joinedProductList);
         let chargeElementPricebookEntries = await Queries.bulkQueryChargeElementPricebookEntries(conn, joinedProductList);
         let chargeElementStdPricebookEntries = await Queries.bulkQueryChargeElementStdPricebookEntries(conn, joinedProductList);
-
         for (let priceBook of priceBooks) {
             const priceBookTechExtId = priceBook['enxCPQ__TECH_External_Id__c'];
             Util.createDir('./temp/priceBooks/' + priceBook['Name']);
@@ -225,7 +224,7 @@ export class ProductExporter {
             for(let currency of currencies){
                 this.currencyIsoCodes.add(currency['CurrencyIsoCode']);
             }
-           
+            
             for(let currency of this.currencyIsoCodes.values()){
                 let currencyToSave:any = {};
                 currencyToSave.entries = new Array<any>();
@@ -233,7 +232,6 @@ export class ProductExporter {
                 currencyToSave.chargeElementPricebookEntries = new Array<any>();
                 currencyToSave.chargeElementStdPricebookEntries = new Array<any>();
                 
-            
             
             for (let pbe of priceBookEntries) {
                 if (pbe['Pricebook2'] && pbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId 
@@ -251,14 +249,15 @@ export class ProductExporter {
             for (let chargeElementPbe of chargeElementPricebookEntries) {
                 if (chargeElementPbe['Pricebook2'] && chargeElementPbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId
                     && currency === chargeElementPbe['CurrencyIsoCode']) {
-                    currencyToSave.stdEntries.push(chargeElementPbe);
+                    currencyToSave.chargeElementPricebookEntries.push(chargeElementPbe);
                 }
+                debugger;
             }
             
             for (let chargeElementStdPbe of chargeElementStdPricebookEntries) {
                 if (chargeElementStdPbe['Pricebook2'] && chargeElementStdPbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId
                     && currency === chargeElementStdPbe['CurrencyIsoCode']) {
-                    currencyToSave.stdEntries.push(chargeElementStdPbe);
+                    currencyToSave.chargeElementStdPricebookEntries.push(chargeElementStdPbe);
                 }
             }
             Util.writeFile('./temp/PriceBooks/' + priceBook['Name'] + '/' + currency + '.json', currencyToSave);
@@ -274,11 +273,26 @@ export class ProductExporter {
         let chargeName = charge['Name'];
         let chargeReference = charge['enxCPQ__Charge_Reference__c'];
         let chargeElements = await Queries.queryChargeElements(conn, productName, chargeReference);
-        let chargeTier = await Queries.queryChargeTiers(conn, productName, chargeReference);
+        let chargeTiers = await Queries.queryChargeTiers(conn, productName, chargeReference);
         let chargeToSave: any = {};
+        let chargeElementsToSave: any = [];
+        let chargeTierToSave: any = [];
         chargeToSave.root= charge;
-        chargeToSave.chargeElements = chargeElements;
-        chargeToSave.chargeTier = chargeTier;
+       
+        for(let chargeElement of chargeElements){
+            if(chargeElement['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c']){
+                chargeElementsToSave.push(chargeElement);
+            }
+        }
+
+        for(let chargeTier of chargeTiers){
+            if(chargeTier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c']){
+                chargeTierToSave.push(chargeTier);
+            }
+        }
+
+        chargeToSave.chargeElements = chargeElementsToSave;
+        chargeToSave.chargeTier = chargeTierToSave;
         Util.writeFile('./temp/charges/' +chargeName + '.json', chargeToSave);
         }
     }
