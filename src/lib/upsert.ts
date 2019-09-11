@@ -3,6 +3,7 @@ import { RecordResult } from 'jsforce';
 import { Util } from './Util';
 export class Upsert {
     private static idMapping = {};
+
     public static async deletePricebookEntries(conn: core.Connection, data: any) { 
        let extractedData = this.extractIds(data);
         return new Promise<string>((resolve: Function, reject: Function) => {
@@ -40,7 +41,7 @@ export class Upsert {
         return targetArr;
       }
 
-      public static sanitize  (arr:any)  {
+    public static sanitize  (arr:any)  {
         if (!(arr instanceof Array)) {
             for (let prop in arr) {
                 if (prop === 'attributes') delete arr[prop];
@@ -106,6 +107,7 @@ export class Upsert {
             }
         }
     }
+
     public static mapProducts (sourceProducts, targetProducts) {
         for (let sourceProduct of sourceProducts) {
             for (let j = 0; j < targetProducts.length; j++) {
@@ -168,14 +170,15 @@ export class Upsert {
             });
         });      
     }
+
     public static async upsertBulkPricebookEntries(conn, data)  {
         this.sanitize(data);
         this.fixIds(data);
         return new Promise((resolve, reject) => {
             conn.bulk.load("PricebookEntry", "insert", data, function(err, rets) {
                 if (err) { reject('error creating pbe' + err); }
-                let successCount = 0;
-                let errorsCount = 0;
+                    let successCount = 0;
+                    let errorsCount = 0;
                 for (let i=0; i < rets.length; i++) {
                     if (rets[i].success) {
                         successCount++;
@@ -205,6 +208,46 @@ export class Upsert {
             }))
         }
         await Promise.all(promises);
-    };
+    }
 
+    public static async upsertObject(conn: core.Connection, sObjectName: string, data: Object[]): Promise<string> {
+        if(data.length===0){
+           return;
+        }
+        if(sObjectName === 'enxB2B__ProvisioningPlanAssignment__c'){
+            Util.log(data);
+        }
+        Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
+        let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c', 'enxB2B__ProvisioningTaskAssignment__c'];
+        let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
+        Util.sanitizeForImport(data);
+
+        let promises:Array<Promise<RecordResult>> = new Array<Promise<RecordResult>>();
+        for (const record of data) {
+            promises.push(conn.sobject(sObjectName).upsert(record, techId, {}, function(err: any, rets: RecordResult) {
+            if (err) {
+                Util.log('error creating ' + sObjectName + ': ' + err);
+                return;
+            }   
+        }));
+        }
+        await Promise.all(promises);
+    }
+
+    public static async deleteObject(conn: core.Connection, sObjectName: string, data: string[]): Promise<string> {
+        if(data.length===0){
+            return;
+         }
+        Util.log('--- deleting ' + sObjectName + ': ' + data.length + ' records');
+        let promises:Array<Promise<RecordResult>> = new Array<Promise<RecordResult>>();
+        for (const record of data) {
+            promises.push(conn.sobject(sObjectName).del(record, function(err: any, rets) {
+                if (err) {
+                    Util.log('error creating ' + sObjectName + ': ' + err);
+                    return;
+                }   
+            }));
+        }
+        await Promise.all(promises);
+    }
 }
