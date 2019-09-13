@@ -266,7 +266,6 @@ export class ProductExporter {
             chargeElements.filter(chargeElement => chargeElement['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
                           .forEach(chargeElementToSave=>{ chargeElementsToSave.push(chargeElementToSave)});
       
-
              chargeTiers.filter(chargeTier => chargeTier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
                         .forEach(chargeTierToSave=>{ chargeTiersToSave.push(chargeTierToSave)});              
 

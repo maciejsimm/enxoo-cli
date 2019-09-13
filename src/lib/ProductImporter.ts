@@ -43,7 +43,7 @@ export class ProductImporter {
     private provisioningTaskAssignmentIds:Array<string>;
     private provisioningPlanAssignments:Array<Object>;
     private provisioningTaskAssignments:Array<Object>;
-    private productList:Array<string>;
+    private productList:Set<string>;
     private productOptions:Array<Object>;
     private charges:Array<Object>;
     private chargesIds:Set<String>;
@@ -52,7 +52,7 @@ export class ProductImporter {
     private provisionigPlansIds:Set<String>;
     private provisioningTaskIds:Set<String>;
 
-    constructor(products: Array<string>){
+    constructor(products: Set<string>){
         this.productList = products;
         this.chargesIds = new Set<String>();
         this.productOptions = new Array<Object>();
@@ -107,7 +107,9 @@ export class ProductImporter {
       await this.extractProduct(conn);
       await this.extractData(conn);
       await this.extractPricebooks();
-  
+      this.targetPricebooksIds = await this.retrieveTargetPricebookIds(conn);
+      this.targetProductIds = await this.retrieveTargerProductIds(conn);
+ 
       console.log('products to upsert: ' + this.products.length);
       console.log('categories to upsert: ' + this.allCategoriesChild.length);
       console.log('attributes to upsert: ' + this.attributes.length);      
@@ -124,37 +126,14 @@ export class ProductImporter {
           await Upsert.upsertObject(conn, 'Product2', this.charges);
           await Upsert.upsertObject(conn, 'Product2', this.chargeElements);
           await Upsert.upsertObject(conn, 'Product2', this.chargeTiers);
-  
-          for (let productName of this.productList){
-              let prdIdsTarget = await Queries.queryProductIds(conn, productName); 
-              for(let prdIdTarget of prdIdsTarget){
-                  let productDataToExtract =
-                  {
-                      Id: prdIdTarget['Id'],
-                      enxCPQ__TECH_External_Id__c: prdIdTarget['enxCPQ__TECH_External_Id__c']
-          
-                  }
-              this.targetProductIds.push(productDataToExtract);
-              }
-          }
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeSetAttribute__c', this.attributeSetAttributes);
           await Upsert.deleteObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributesIds);
           await Upsert.upsertObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributes);
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeValue__c', this.prdAttributeValues);
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeValue__c', this.attributeValues);
-          let pricebooks = this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
+          let pricebooks = this.retrieveNonStandardPricebooks();
           await Upsert.upsertObject(conn, 'Pricebook2', pricebooks);
           
-          let pricebooksTarget = await Queries.queryPricebooksIds(conn);
-          for(let pricebookTarget of pricebooksTarget){
-              let pricebookDataToExtract =
-              {
-                  Id: pricebookTarget['Id'],
-                  enxCPQ__TECH_External_Id__c: pricebookTarget['enxCPQ__TECH_External_Id__c'],
-                  IsStandard: pricebookTarget['IsStandard']
-              }    
-              this.targetPricebooksIds.push(pricebookDataToExtract);
-          }
           Upsert.mapPricebooks(this.sourcePricebooksIds,  this.targetPricebooksIds);
           Upsert.mapProducts(this.sourceProductIds, this.targetProductIds);
          
@@ -180,9 +159,43 @@ export class ProductImporter {
       } catch (ex) {
           Util.log(ex);
       }     
-} 
+}
 
-    private extractParentCategories(categories: any, allCategories:any ){
+    private retrieveNonStandardPricebooks(){
+        return this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
+    }
+
+    private async retrieveTargerProductIds(conn: core.Connection){
+        let targetProductIds = new Array<Object>();
+        let prdIdsTarget = await Queries.queryProductIds(conn, this.productList); 
+        prdIdsTarget.forEach(prdIdTarget =>{
+            let productDataToExtract =
+            {
+                Id: prdIdTarget['Id'],
+                techId: prdIdTarget['enxCPQ__TECH_External_Id__c']
+        
+            }
+        this.targetProductIds.push(productDataToExtract);
+        });
+        return targetProductIds;
+    }
+
+    private async retrieveTargetPricebookIds(conn: core.Connection){
+        let targetPricebooksIds = new Array<Object>();
+        let pricebooksTarget = await Queries.queryPricebooksIds(conn);
+        pricebooksTarget.forEach(pricebookTarget => {
+            let pricebookDataToExtract =
+            {
+                Id: pricebookTarget['Id'],
+                techId: pricebookTarget['enxCPQ__TECH_External_Id__c'],
+                IsStandard: pricebookTarget['IsStandard']
+            }    
+            targetPricebooksIds.push(pricebookDataToExtract);
+        });
+        return targetPricebooksIds;
+    }
+
+    private extractParentCategories(categories: any, allCategories:any){
         let parentCategoriesIds =  new Set<String>();
         categories.filter(category => category['enxCPQ__Parent_Category__r'])
                   .forEach(category => parentCategoriesIds.add(category['enxCPQ__Parent_Category__r']['enxCPQ__TECH_External_Id__c']));
@@ -201,23 +214,48 @@ export class ProductImporter {
             this.extractParentCategories(newCategories, allCategories);
         }
     }
-    
-    private extractIds(product:any) {
-        if(product.root.enxCPQ__Category__r){
-            this.categoryIds.add(product.root.enxCPQ__Category__r.enxCPQ__TECH_External_Id__c);
-        }
-       
-        for (let attr of product.productAttributes) {
-            this.attributeIds.add(attr.enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c);
-            if (attr['enxCPQ__Attribute_Set__r']) {
-                this.attributeSetIds.add(attr.enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c);
-            }
-        }
-        product.chargesIds.forEach(chargesId => {this.chargesIds.add(chargesId['enxCPQ__TECH_External_Id__c']),
-                                                 this.sourceProductIds.add(chargesId['enxCPQ__TECH_External_Id__c'])});
-        this.sourceProductIds.add(product.root.enxCPQ__TECH_External_Id__c);
-        product.options.forEach(option => {this.sourceProductIds.add(option.enxCPQ__TECH_External_Id__c)});
+
+    private extractProvisionigPlansIds(product:any){
+        let provisionigPlansIds = new Set<String>();
         product.provisioningPlanAssings.forEach(prvPlanAssing => {this.provisionigPlansIds.add(prvPlanAssing['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c'])});
+
+        return provisionigPlansIds;
+    }
+    private extractSourceProductIds(product:any){
+        let sourceProductIds = new Set<String>();
+        product.chargesIds.forEach(chargesId => {sourceProductIds.add(chargesId['enxCPQ__TECH_External_Id__c'])});
+        sourceProductIds.add(product.root.enxCPQ__TECH_External_Id__c);
+        product.options.forEach(option => {sourceProductIds.add(option.enxCPQ__TECH_External_Id__c)});
+
+        return sourceProductIds;
+    }
+    private extractChargesIds(product:any){
+        let chargesIds = new Set<String>();
+        product.chargesIds.forEach(chargesId => {chargesIds.add(chargesId['enxCPQ__TECH_External_Id__c'])});
+
+        return chargesIds;
+    }
+
+    private extractCategoryIds(product:any){
+        let categoryIds = new Set<String>();
+        if(product.root.enxCPQ__Category__r){
+            categoryIds.add(product.root.enxCPQ__Category__r.enxCPQ__TECH_External_Id__c);
+        }
+        return categoryIds;
+    }
+    private extractAttributeIds(product:any){
+        let attributeIds = new Set<String>();
+        product.productAttributes.forEach(attr => {attributeIds.add(attr.enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c)});
+
+        return attributeIds;
+    }
+    
+    private extractAttributeSetIds(product:any){
+        let attributeSetIds = new Set<String>();
+        product.productAttributes.filter(attr => attr['enxCPQ__Attribute_Set__r'])
+                                 .forEach(attr =>  attributeSetIds.add(attr.enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c));
+
+        return attributeSetIds;
     }
 
     private deleteJsonFields(object: any, firstPropertyToDelete: string, arrayToPush: any, secondPropertyToDelete?: string){
@@ -253,15 +291,17 @@ export class ProductImporter {
     }
 
     private extractPricebookData(pricebook: any){
+        let sourcePricebooksIds = Array<Object>();
         let pricebookDataToExtract =
         {
             enxCPQ__TECH_External_Id__c: pricebook.enxCPQ__TECH_External_Id__c,
             IsStandard: pricebook.IsStandard
         }
-        this.sourcePricebooksIds.push(pricebookDataToExtract);
-    
+        sourcePricebooksIds.push(pricebookDataToExtract);
 
+        return sourcePricebooksIds;
     }
+
     private extractObjects(objectsArray:any, objectIds:Set<String>, object?: string){
         let result:Array<any> = new Array<any>();
         
@@ -301,24 +341,30 @@ export class ProductImporter {
     private async extractProduct(conn: core.Connection) {
         let productFileNameList = [];
         // We need to query ID's of records in target org in order to delete or match ID's
+        let prdAttrsTarget = await Queries.queryProductAttributeIds(conn, this.productList);                 // for delete                           
+        let allStdPricebookEntriesTarget = await Queries.queryStdPricebookEntryIds(conn, this.productList);  // for delete
+        let allPricebookEntriesTarget = await Queries.queryPricebookEntryIds(conn, this.productList);        // for delete
+        
+        prdAttrsTarget.forEach(prdAttr => {this.productAttributesIds.push(prdAttr['Id'])});
+        allStdPricebookEntriesTarget.forEach(stdPbeTarget => {this.stdPricebookEntryIds.push(stdPbeTarget['Id'])})
+        allPricebookEntriesTarget.forEach(pbeTarget => {this.pricebookEntryIds.push(pbeTarget['Id'])});
+
         for (let productName of this.productList){
-           
             let prdNames = await Util.matchFileNames(productName);
-            productFileNameList = [...prdNames];
-            let prdAttrsTarget = await Queries.queryProductAttributeIds(conn, productName);                 // for delete                           
-            let allStdPricebookEntriesTarget = await Queries.queryStdPricebookEntryIds(conn, productName);  // for delete
-            let allPricebookEntriesTarget = await Queries.queryPricebookEntryIds(conn, productName);        // for delete
-            
-            allStdPricebookEntriesTarget.forEach(stdPbeTarget => {this.stdPricebookEntryIds.push(stdPbeTarget['Id'])})
-            allPricebookEntriesTarget.forEach(pbeTarget => {this.pricebookEntryIds.push(pbeTarget['Id'])});
-            prdAttrsTarget.forEach(prdAttr => {this.productAttributesIds.push(prdAttr['Id'])});
+            productFileNameList = [...productFileNameList, ...prdNames];
         }
         // Collect all Ids' of products that will be inserted
         for (let prodname of productFileNameList) {
             const prod = await this.readProduct(prodname);
-            this.extractIds(prod);
+            this.categoryIds = new Set([...this.categoryIds, ...this.extractCategoryIds(prod)]);
+            this.attributeIds = new Set([...this.attributeIds, ...this.extractAttributeIds(prod)]);
+            this.attributeSetIds = new Set([...this.attributeSetIds, ...this.extractAttributeSetIds(prod)]);
+            this.sourceProductIds = new Set([...this.sourceProductIds, ...this.extractSourceProductIds(prod)]);
+            this.chargesIds = new Set([...this.chargesIds, ...this.extractChargesIds(prod)]);
+            this.provisionigPlansIds = new Set([...this.provisionigPlansIds, ...this.extractProvisionigPlansIds(prod)]);
             this.products.push(prod);
         }
+ 
         // Building lists of records to upsert on target org
         for (let product of this.products) {
             delete product['root']['Id'];
@@ -326,7 +372,7 @@ export class ProductImporter {
             this.prdAttributeValues = [...this.prdAttributeValues, ...product['attributeValues']];
             this.productOptions = [...this.productOptions, ...product['options']];
             this.productAttributes = [...this.productAttributes, ...product['productAttributes']];
-            this.productRelationships = [ this.productRelationships, ...product['productRelationships']];
+            this.productRelationships = [...this.productRelationships, ...product['productRelationships']];
             this.attributeDefaultValues = [...this.attributeDefaultValues, ...product['attributeDefaultValues']];
             this.attributeValueDependencies = [...this.attributeValueDependencies, ...product['attributeValueDependencies']];
             this.attributeRules = [...this.attributeRules, ...product['attributeRules']];
@@ -353,7 +399,6 @@ export class ProductImporter {
        }    
        let stdPbes = await Util.readAllFiles('temp/pricebooks/Standard Price Book');
        stdPbes.forEach(allstdpbe => {this.stdPbes.push(...this.extractObjects(allstdpbe['stdEntries'], this.sourceProductIds, 'Product2'))});
-       debugger;
        stdPbes.forEach(allstdpbe => {this.stdPbes.push(...this.extractObjects(allstdpbe['chargeElementStdPricebookEntries'], this.sourceProductIds, 'Product2'))});
     }
 
@@ -384,22 +429,22 @@ export class ProductImporter {
         allAttributes.forEach(attr => {attributesRoot.push(attr['root']),
                                        this.attributeValues = [...this.attributeValues, ...attr['values']]});
        
-        allPricebooks.forEach(pricebook=>{this.extractPricebookData(pricebook),
+        allPricebooks.forEach(pricebook=>{this.sourcePricebooksIds = [...this.sourcePricebooksIds,...this.extractPricebookData(pricebook)],
                                           this.deleteJsonFields(pricebook, 'Id',  this.pricebooks, 'IsStandard')});
-    
+
         let productCharges = [...this.extractProductObjects(allCharges, this.chargesIds)];
     
         productCharges.forEach(charge=>{this.charges.push(charge['root']);
                                         this.chargeElements = [...this.chargeElements, ...charge['chargeElements']];
-                                        this.chargeTiers = [...this.chargeTiers, ...charge['chargeTier']]});  
-                                        
-        this.chargeElements.forEach(chargeElement => {chargeElement[0] ? this.sourceProductIds.add(chargeElement[0]['enxCPQ__TECH_External_Id__c']): null});
-        this.chargeTiers.forEach(chargeTier =>{chargeTier[0] ? this.sourceProductIds.add(chargeTier[0]['enxCPQ__TECH_External_Id__c']) : null});
+                                        this.chargeTiers = [...this.chargeTiers, ...charge['chargeTier']]});                      
+        this.chargeElements.forEach(chargeElement => {this.sourceProductIds.add(chargeElement['enxCPQ__TECH_External_Id__c'])});
+        this.chargeTiers.forEach(chargeTier =>{this.sourceProductIds.add(chargeTier['enxCPQ__TECH_External_Id__c'])});
         this.categories.push(...this.extractProductObjects(allCategories, this.categoryIds));
+ 
         this.allCategoriesChild = [...this.categories];
         this.extractParentCategories(this.categories, allCategories);
         this.allCategoriesChild.forEach(category => {delete category['enxCPQ__Parent_Category__r']});
-        this.attributes.push(...this.extractProductObjects(attributesRoot, this.attributeIds));
+        this.attributes.push(...this.extractProductObjects(attributesRoot, this.attributeIds)); 
         this.attributeSets.push(...this.extractProductObjects( this.attributeSetsRoot, this.attributeSetIds));
     }
 }

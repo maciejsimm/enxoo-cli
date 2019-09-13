@@ -111,7 +111,7 @@ export class Upsert {
     public static mapProducts (sourceProducts, targetProducts) {
         for (let sourceProduct of sourceProducts) {
             for (let j = 0; j < targetProducts.length; j++) {
-                if (sourceProduct === targetProducts[j].enxCPQ__TECH_External_Id__c) {
+                if (sourceProduct === targetProducts[j].techId) {
                     this.idMapping[sourceProduct] = targetProducts[j].Id;
                     break;
                 }
@@ -124,7 +124,7 @@ export class Upsert {
         console.log("--- mapping pricebooks");
         for (let i = 0 ; i < sourcePricebooks.length; i++) {
             for (let j = 0; j < targetPricebooks.length; j++) {
-                if (sourcePricebooks[i].enxCPQ__TECH_External_Id__c != null && sourcePricebooks[i].enxCPQ__TECH_External_Id__c === targetPricebooks[j].enxCPQ__TECH_External_Id__c) {
+                if (sourcePricebooks[i].enxCPQ__TECH_External_Id__c != null && sourcePricebooks[i].enxCPQ__TECH_External_Id__c === targetPricebooks[j].techId) {
                     this.idMapping[sourcePricebooks[i].enxCPQ__TECH_External_Id__c] = targetPricebooks[j].Id;
                     break;
                 }
@@ -185,8 +185,9 @@ export class Upsert {
                     } else {
                         errorsCount++;
                     }
-                    process.stdout.write("--- insert success: " + successCount + " errors: " + errorsCount + "\r");
-                }
+                    if(i===rets.length-1){
+                        Util.log("--- Pbe insert success: " + successCount + " errors: " + errorsCount + "\r");
+                }}
                 resolve();
             });
         });
