@@ -294,7 +294,7 @@ export class ProductImporter {
         let sourcePricebooksIds = Array<Object>();
         let pricebookDataToExtract =
         {
-            enxCPQ__TECH_External_Id__c: pricebook.enxCPQ__TECH_External_Id__c,
+            techId: pricebook.enxCPQ__TECH_External_Id__c,
             IsStandard: pricebook.IsStandard
         }
         sourcePricebooksIds.push(pricebookDataToExtract);

@@ -13,7 +13,6 @@ export class Upsert {
                     reject('error deleting pricebook entries: ' + err);
                     return;
                 }
-
             });
         });
     }
@@ -124,8 +123,8 @@ export class Upsert {
         console.log("--- mapping pricebooks");
         for (let i = 0 ; i < sourcePricebooks.length; i++) {
             for (let j = 0; j < targetPricebooks.length; j++) {
-                if (sourcePricebooks[i].enxCPQ__TECH_External_Id__c != null && sourcePricebooks[i].enxCPQ__TECH_External_Id__c === targetPricebooks[j].techId) {
-                    this.idMapping[sourcePricebooks[i].enxCPQ__TECH_External_Id__c] = targetPricebooks[j].Id;
+                if (sourcePricebooks[i].techId != null && sourcePricebooks[i].techId === targetPricebooks[j].techId) {
+                    this.idMapping[sourcePricebooks[i].techId] = targetPricebooks[j].Id;
                     break;
                 }
                 if (sourcePricebooks[i].IsStandard && targetPricebooks[j].IsStandard) {
