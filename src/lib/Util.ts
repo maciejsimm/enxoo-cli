@@ -169,5 +169,9 @@ export class Util {
         }
         dirs.forEach(dir => { this.createDir(dir) })
     }
-
+    public static removeB2BFields(object: any){
+        delete object['enxB2B__MRC_List__c'];
+        delete object['enxB2B__OTC_List__c'];
+        delete object['enxB2B__Service_Capex__c'];
+    }
 }

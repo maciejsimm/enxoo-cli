@@ -117,7 +117,7 @@ public static async queryPricebookEntryCurrencies(conn: core.Connection, product
     conn.query("SELECT Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode FROM PricebookEntry WHERE (Product2.Name IN (" + productList + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + productList + ")) AND (IsActive = true OR Pricebook2.IsStandard = true)", 
     null,
     function (err, res) {
-        if (err) reject('error retrieving pricebook entries: ' + err);
+        if (err) reject('error retrieving pricebook entry currencies: ' + err);
         Util.log("--- pricebook entry currencies: " + res.records.length);
         resolve(res.records);
     });
@@ -138,9 +138,9 @@ public static async queryPricebookEntryCurrencies(conn: core.Connection, product
     public static async queryPricebookEntries(conn: core.Connection, productList: String) {
         let queryString = this.isB2B
         ? "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name IN ("
-        : "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxCPQ__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name IN (" + productList + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + productList + ")) AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element' AND IsActive = true"
+        : "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxCPQ__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name IN (";
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-        conn.query(queryString, 
+        conn.query(queryString + productList + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + productList + ")) AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element' AND IsActive = true", 
         null,
         function (err, res) {
             if (err) reject('error retrieving pricebook entries: ' + err);
@@ -475,19 +475,6 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
             resolve(res.records);
         });
     })    
-    }
-
-     public static async queryIsB2B(conn: core.Connection){
-        let isB2B;
-        return new Promise<boolean>((resolve: Function) => {
-            conn.query("SELECT Id FROM enxB2B__ProvisioningPlan__c", 
-            null,
-            function(err) {
-                isB2B = err ? false: true;
-                resolve(isB2B);
-            });
-        }
-        );
     }
 
     public static async queryChargeElementPricebookEntries (conn: core.Connection, productList: String): Promise<String[]> {

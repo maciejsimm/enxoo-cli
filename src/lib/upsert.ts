@@ -178,7 +178,7 @@ export class Upsert {
                 if (err) { reject('error creating pbe' + err); }
                     let successCount = 0;
                     let errorsCount = 0;
-                for (let i=0; i < rets.length; i++) {
+                    for (let i=0; i < rets.length; i++) {
                     if (rets[i].success) {
                         successCount++;
                     } else {

@@ -35,14 +35,15 @@ export class ProductExporter {
     private provisioningPlanIds:Set<String>;
     private productList:Array<String>;
     private currencyIsoCodes:Set<String>;
+    private isB2B: boolean;
 
-    constructor(products: Array<String>) {
+    constructor(products: Array<String>, isB2B: boolean) {
         this.categoryIds = new Set<String>();
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
         this.provisioningPlanIds = new Set<String>();
         this.currencyIsoCodes = new Set<String>();
-     
+        this.isB2B= isB2B;
         if (products[0] === '*ALL') {
             this.productList = ['GEPL', 'IPLC', 'VPN']; // to-do -> query all products in the org and build the list
         } else {
@@ -50,17 +51,16 @@ export class ProductExporter {
         }
     }
 
-    public async all(conn: core.Connection) {            
-        const isB2B = await Queries.queryIsB2B(conn);
-        Util.createAllDirs(isB2B);
-        Queries.setIsB2B(isB2B);
+    public async all(conn: core.Connection) {         
+        Util.createAllDirs(this.isB2B);
+        Queries.setIsB2B(this.isB2B);
         await this.retrievePriceBooks(conn, this.productList);
 
         for (let prodname of this.productList) {
-            await this.retrieveProduct(conn, prodname, isB2B);
+            await this.retrieveProduct(conn, prodname);
             await this.retrieveCharges(conn, prodname);
         }
-        if(isB2B){
+        if(this.isB2B){
         await this.retrieveProvisioningPlans(conn);
         await this.retrieveProvisioningTasks(conn);
         }
@@ -69,7 +69,7 @@ export class ProductExporter {
         await this.retrieveAttributeSets(conn);
     } 
 
-    private async retrieveProduct(conn: core.Connection, productName: String, isB2B: boolean) {
+    private async retrieveProduct(conn: core.Connection, productName: String) {
         let product:any = {};
         Util.showSpinner(productName + ' export');
 
@@ -83,7 +83,7 @@ export class ProductExporter {
         let attributeRules = await Queries.queryAttributeRules(conn, productName);
         let productRelationships = await Queries.queryProductRelationships(conn, productName);
         
-        if(isB2B){
+        if(this.isB2B){
         let provisioningPlanAssings = await Queries.queryProvisioningPlanAssigns(conn, productName);
         product.provisioningPlanAssings = provisioningPlanAssings;
         }
