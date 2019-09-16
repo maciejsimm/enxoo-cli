@@ -161,10 +161,12 @@ export class Util {
             fs.mkdirSync(dir, { recursive: true });
         }
     }
-    public static createAllDirs(){
+    public static createAllDirs(isB2B: boolean){
         const dirs = ['./temp/products', './temp/categories', './temp/attributes', 
-                     './temp/attributeSets', './temp/provisioningPlans',
-                     './temp/provisioningTasks', './temp/priceBooks', './temp/charges' ];
+                     './temp/attributeSets', './temp/priceBooks', './temp/charges' ];
+        if(isB2B){
+            dirs.push('./temp/provisioningPlans', './temp/provisioningTasks');
+        }
         dirs.forEach(dir => { this.createDir(dir) })
     }
 
