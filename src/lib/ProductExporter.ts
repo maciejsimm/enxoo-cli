@@ -51,21 +51,25 @@ export class ProductExporter {
     }
 
     public async all(conn: core.Connection) {            
-
+        const isB2B = await Queries.queryIsB2B(conn);
+        Queries.setIsB2B(isB2B);
         await this.retrievePriceBooks(conn, this.productList);
 
         for (let prodname of this.productList) {
-            await this.retrieveProduct(conn, prodname);
+            await this.retrieveProduct(conn, prodname, isB2B);
             await this.retrieveCharges(conn, prodname);
         }
+        if(isB2B){
         await this.retrieveProvisioningPlans(conn);
         await this.retrieveProvisioningTasks(conn);
+        }
         await this.retrieveCategories(conn);
         await this.retrieveAttributes(conn);
         await this.retrieveAttributeSets(conn);
     } 
 
-    private async retrieveProduct(conn: core.Connection, productName: String) {
+    private async retrieveProduct(conn: core.Connection, productName: String, isB2B: boolean) {
+        let product:any = {};
         Util.showSpinner(productName + ' export');
 
         let productDefinition = await Queries.queryProduct(conn, productName);
@@ -77,9 +81,12 @@ export class ProductExporter {
         let attributeValueDependencies = await Queries.queryAttributeValueDependencies(conn, productName);
         let attributeRules = await Queries.queryAttributeRules(conn, productName);
         let productRelationships = await Queries.queryProductRelationships(conn, productName);
+        
+        if(isB2B){
         let provisioningPlanAssings = await Queries.queryProvisioningPlanAssigns(conn, productName);
-
-        let product:any = {};
+        product.provisioningPlanAssings = provisioningPlanAssings;
+        }
+        
         product.root = productDefinition[0];
         product.options = options;
         product.chargesIds = chargesIds;
@@ -89,7 +96,6 @@ export class ProductExporter {
         product.attributeValueDependencies = attributeValueDependencies;
         product.attributeRules = attributeRules;
         product.productRelationships = productRelationships;
-        product.provisioningPlanAssings = provisioningPlanAssings;
         this.extractIds(product);
         Util.createAllDirs();
         Util.writeFile('./temp/products/' + productName + '_' + product.root['enxCPQ__TECH_External_Id__c'] + '.json', product);
@@ -97,6 +103,7 @@ export class ProductExporter {
         Util.hideSpinner(productName + ' export done'); 
     }
 
+   
     private extractIds(product:any) {
         // Category IDs
         if(product.root.enxCPQ__Category__r){this.categoryIds.add(product.root.enxCPQ__Category__r.enxCPQ__TECH_External_Id__c);}

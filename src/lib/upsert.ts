@@ -215,9 +215,6 @@ export class Upsert {
         if(data.length===0){
            return;
         }
-        if(sObjectName === 'enxB2B__ProvisioningPlanAssignment__c'){
-            Util.log(data);
-        }
         Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
         let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c', 'enxB2B__ProvisioningTaskAssignment__c'];
         let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
