@@ -52,6 +52,7 @@ export class ProductExporter {
 
     public async all(conn: core.Connection) {            
         const isB2B = await Queries.queryIsB2B(conn);
+        Util.createAllDirs(isB2B);
         Queries.setIsB2B(isB2B);
         await this.retrievePriceBooks(conn, this.productList);
 
@@ -97,7 +98,6 @@ export class ProductExporter {
         product.attributeRules = attributeRules;
         product.productRelationships = productRelationships;
         this.extractIds(product);
-        Util.createAllDirs();
         Util.writeFile('./temp/products/' + productName + '_' + product.root['enxCPQ__TECH_External_Id__c'] + '.json', product);
 
         Util.hideSpinner(productName + ' export done'); 
