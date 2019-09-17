@@ -14,8 +14,7 @@ export class Util {
         UX.create()
             .then((ux) => {
                 ux.startSpinner(msg);
-            })
-        
+            })    
     }
 
     public static hideSpinner(msg: any) {
@@ -23,7 +22,6 @@ export class Util {
             .then((ux) => {
                 ux.stopSpinner(msg);
             })
-        
     }
 
     public static log(msg: any) {
@@ -55,11 +53,6 @@ export class Util {
 
         if (isObject) {
             for (let prop in obj) {
-                // if (obj[prop] == null) { // cleaner structure in repo, but potentially dangerous (if someone will clear value)
-                //     delete obj[prop];
-                //     continue;
-                // }
-
                 if (prop === 'attributes') {
                     delete obj[prop];
                     continue;
@@ -67,7 +60,6 @@ export class Util {
                 this.sanitizeJSON(obj[prop]);
             }
         }
-
         return obj;
     }
 
@@ -101,7 +93,7 @@ export class Util {
     }
 
     public static async readFile(directoryName: String, fileName: String) {
-        return new Promise<string>((resolve: Function, reject: Function) => {
+        return new Promise<String[]>((resolve: Function, reject: Function) => {
             let content;
             fs.readFile('./' + directoryName + '/' + fileName, function read(err, data) {
                 if (err) {
@@ -114,7 +106,7 @@ export class Util {
     }
 
     public static async readAllFiles(directoryName: String) {
-        return new Promise<string>((resolve: Function, reject: Function) => {
+        return new Promise<String[]>((resolve: Function, reject: Function) => {
             let allFilePromiseArray = new Array<any>();
 
             fs.readdir('./' + directoryName + '/', async (err, filenames) => {
@@ -126,7 +118,6 @@ export class Util {
                     allFilePromiseArray.push(fileReadPromise);
                 });
                 await Promise.all(allFilePromiseArray).then((allFileContents) => {
-                    // console.log('all file contents-' + allFileContents.length);
                     resolve(allFileContents);
                 })
                 
@@ -135,7 +126,7 @@ export class Util {
     }
 
     public static async readDirNames(directoryName: String){
-        return new Promise<string>((resolve: Function, reject: Function) => {
+        return new Promise<String[]>((resolve: Function, reject: Function) => {
             fs.readdir('./' + directoryName + '/', async (err, filenames) => {
                 if (err) {
                     throw err;
@@ -144,23 +135,19 @@ export class Util {
                 
                 resolve(fileNamesToResolve);
                 });
-               
-                
             });            
         }
-        public static async matchFileNames(productName: string){
-            return new Promise<string>((resolve: Function, reject: Function) => {
-                fs.readdir('./temp/products/' , async (err, filenames) => {
-                    let fileNamesToResolve = filenames.filter(fileName => fileName.startsWith(productName));
-                    if(!fileNamesToResolve[0] || err){
-                        reject('Failed to find Product:'+ productName + err);
-                    }
-                    resolve(fileNamesToResolve);
-                    });
-                   
-                    
-                });            
-            }
+    public static async matchFileNames(productName: string){
+        return new Promise<String[]>((resolve: Function, reject: Function) => {
+            fs.readdir('./temp/products/' , async (err, filenames) => {
+                let fileNamesToResolve = filenames.filter(fileName => fileName.startsWith(productName));
+                if(!fileNamesToResolve[0] || err){
+                    reject('Failed to find Product:'+ productName + err);
+                }
+                resolve(fileNamesToResolve);
+                });   
+            });            
+        }
 
     public static async writeFile(path:string, dataToSanitaze:any){
         await fs.writeFile(path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {
@@ -174,11 +161,17 @@ export class Util {
             fs.mkdirSync(dir, { recursive: true });
         }
     }
-    public static createAllDirs(){
+    public static createAllDirs(isB2B: boolean){
         const dirs = ['./temp/products', './temp/categories', './temp/attributes', 
-                     './temp/attributeSets', './temp/provisioningPlans', './temp/productIds',
-                     './temp/provisioningTasks', './temp/priceBooks', './temp/charges' ];
+                     './temp/attributeSets', './temp/priceBooks', './temp/charges' ];
+        if(isB2B){
+            dirs.push('./temp/provisioningPlans', './temp/provisioningTasks');
+        }
         dirs.forEach(dir => { this.createDir(dir) })
     }
-
+    public static removeB2BFields(object: any){
+        delete object['enxB2B__MRC_List__c'];
+        delete object['enxB2B__OTC_List__c'];
+        delete object['enxB2B__Service_Capex__c'];
+    }
 }

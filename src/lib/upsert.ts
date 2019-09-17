@@ -3,6 +3,7 @@ import { RecordResult } from 'jsforce';
 import { Util } from './Util';
 export class Upsert {
     private static idMapping = {};
+
     public static async deletePricebookEntries(conn: core.Connection, data: any) { 
        let extractedData = this.extractIds(data);
         return new Promise<string>((resolve: Function, reject: Function) => {
@@ -12,7 +13,6 @@ export class Upsert {
                     reject('error deleting pricebook entries: ' + err);
                     return;
                 }
-
             });
         });
     }
@@ -40,7 +40,7 @@ export class Upsert {
         return targetArr;
       }
 
-      public static sanitize  (arr:any)  {
+    public static sanitize  (arr:any)  {
         if (!(arr instanceof Array)) {
             for (let prop in arr) {
                 if (prop === 'attributes') delete arr[prop];
@@ -98,12 +98,21 @@ export class Upsert {
 
             if (elem['Product2'] && elem['Product2'] !== null) {
                 let productTechId = elem['Product2']['enxCPQ__TECH_External_Id__c'];
-
                 let targetProductId = this.idMapping[productTechId];
-
                 if (targetProductId !== null) {
                     elem['Product2Id'] = targetProductId;
                     delete elem['Product2'];
+                }
+            }
+        }
+    }
+
+    public static mapProducts (sourceProducts, targetProducts) {
+        for (let sourceProduct of sourceProducts) {
+            for (let j = 0; j < targetProducts.length; j++) {
+                if (sourceProduct === targetProducts[j].techId) {
+                    this.idMapping[sourceProduct] = targetProducts[j].Id;
+                    break;
                 }
             }
         }
@@ -114,8 +123,8 @@ export class Upsert {
         console.log("--- mapping pricebooks");
         for (let i = 0 ; i < sourcePricebooks.length; i++) {
             for (let j = 0; j < targetPricebooks.length; j++) {
-                if (sourcePricebooks[i].enxCPQ__TECH_External_Id__c != null && sourcePricebooks[i].enxCPQ__TECH_External_Id__c === targetPricebooks[j].enxCPQ__TECH_External_Id__c) {
-                    this.idMapping[sourcePricebooks[i].enxCPQ__TECH_External_Id__c] = targetPricebooks[j].Id;
+                if (sourcePricebooks[i].techId != null && sourcePricebooks[i].techId === targetPricebooks[j].techId) {
+                    this.idMapping[sourcePricebooks[i].techId] = targetPricebooks[j].Id;
                     break;
                 }
                 if (sourcePricebooks[i].IsStandard && targetPricebooks[j].IsStandard) {
@@ -126,17 +135,6 @@ export class Upsert {
         }
     }
 
-    public static mapProducts (sourceProducts, targetProducts) {
-        console.log("--- mapping products");
-        for (let i = 0 ; i < sourceProducts.length; i++) {
-            for (let j = 0; j < targetProducts.length; j++) {
-                if (sourceProducts[i].enxCPQ__TECH_External_Id__c === targetProducts[j].enxCPQ__TECH_External_Id__c) {
-                    this.idMapping[sourceProducts[i].enxCPQ__TECH_External_Id__c] = targetProducts[j].Id;
-                    break;
-                }
-            }
-        }
-    }
     public static disableTriggers(conn: core.Connection){
         let data = { Name: "G_CPQ_DISABLE_TRIGGERS_99",
                      enxCPQ__Setting_Name__c: "CPQ_DISABLE_TRIGGERS",
@@ -171,22 +169,24 @@ export class Upsert {
             });
         });      
     }
+
     public static async upsertBulkPricebookEntries(conn, data)  {
         this.sanitize(data);
         this.fixIds(data);
         return new Promise((resolve, reject) => {
             conn.bulk.load("PricebookEntry", "insert", data, function(err, rets) {
-                if (err) { reject(err); }
-                var successCount = 0;
-                var errorsCount = 0;
-                for (var i=0; i < rets.length; i++) {
+                if (err) { reject('error creating pbe' + err); }
+                    let successCount = 0;
+                    let errorsCount = 0;
+                    for (let i=0; i < rets.length; i++) {
                     if (rets[i].success) {
                         successCount++;
                     } else {
                         errorsCount++;
                     }
-                    process.stdout.write("--- insert success: " + successCount + " errors: " + errorsCount + "\r");
-                }
+                    if(i===rets.length-1){
+                        Util.log("--- Pbe insert success: " + successCount + " errors: " + errorsCount + "\r");
+                }}
                 resolve();
             });
         });
@@ -208,6 +208,43 @@ export class Upsert {
             }))
         }
         await Promise.all(promises);
-    };
+    }
 
+    public static async upsertObject(conn: core.Connection, sObjectName: string, data: Object[]): Promise<string> {
+        if(data.length===0){
+           return;
+        }
+        Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
+        let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c', 'enxB2B__ProvisioningTaskAssignment__c'];
+        let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
+        Util.sanitizeForImport(data);
+
+        let promises:Array<Promise<RecordResult>> = new Array<Promise<RecordResult>>();
+        for (const record of data) {
+            promises.push(conn.sobject(sObjectName).upsert(record, techId, {}, function(err: any, rets: RecordResult) {
+            if (err) {
+                Util.log('error creating ' + sObjectName + ': ' + err);
+                return;
+            }   
+        }));
+        }
+        await Promise.all(promises);
+    }
+
+    public static async deleteObject(conn: core.Connection, sObjectName: string, data: string[]): Promise<string> {
+        if(data.length===0){
+            return;
+         }
+        Util.log('--- deleting ' + sObjectName + ': ' + data.length + ' records');
+        let promises:Array<Promise<RecordResult>> = new Array<Promise<RecordResult>>();
+        for (const record of data) {
+            promises.push(conn.sobject(sObjectName).del(record, function(err: any, rets) {
+                if (err) {
+                    Util.log('error creating ' + sObjectName + ': ' + err);
+                    return;
+                }   
+            }));
+        }
+        await Promise.all(promises);
+    }
 }
