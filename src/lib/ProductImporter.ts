@@ -111,11 +111,6 @@ export class ProductImporter {
       await this.extractPricebooks();
       this.targetPricebooksIds = await this.retrieveTargetPricebookIds(conn);
       this.targetProductIds = await this.retrieveTargerProductIds(conn);
- 
-      console.log('products to upsert: ' + this.products.length);
-      console.log('categories to upsert: ' + this.allCategoriesChild.length);
-      console.log('attributes to upsert: ' + this.attributes.length);      
-      console.log('attributeSets to upsert: ' + this.attributeSets.length);      
      
       //Perform an upsert of data
       try {
