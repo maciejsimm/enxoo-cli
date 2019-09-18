@@ -25,7 +25,7 @@
 // priceRuleActions
 
 import { Util } from './Util';
-import {core} from '@salesforce/command';
+import { Connection } from 'jsforce';
 import { Queries } from './query';
 
 export class ProductExporter {
@@ -47,7 +47,7 @@ export class ProductExporter {
         this.productList = products;
     }
 
-    public async all(conn: core.Connection) {         
+    public async all(conn: Connection) {         
         Util.createAllDirs(this.isB2B);
         Queries.setIsB2B(this.isB2B);
         await this.retrievePriceBooks(conn, this.productList);
@@ -64,7 +64,7 @@ export class ProductExporter {
         await this.retrieveAttributeSets(conn);
     } 
 
-    private async retrieveProduct(conn: core.Connection, productList: Set<string>) {
+    private async retrieveProduct(conn: Connection, productList: Set<string>) {
         Util.showSpinner('products export');
 
         let productDefinitions = await Queries.queryProduct(conn, productList);
@@ -151,7 +151,7 @@ export class ProductExporter {
             }
         }
     }
-    private async retrieveCategoriesHelper(conn: core.Connection, categories:any){
+    private async retrieveCategoriesHelper(conn: Connection, categories:any){
         let parentCategoriesIds =  new Set<String>();
 
         for (let category of categories) {
@@ -169,7 +169,7 @@ export class ProductExporter {
         }
     }
 
-    private async retrieveCategories(conn: core.Connection) {
+    private async retrieveCategories(conn: Connection) {
         let categories = await Queries.queryCategories(conn, this.categoryIds);
         
         if(categories){
@@ -177,7 +177,7 @@ export class ProductExporter {
         }
     }
 
-    private async retrieveAttributes(conn: core.Connection) {
+    private async retrieveAttributes(conn: Connection) {
         let attributes = await Queries.queryAttributes(conn, this.attributeIds);
         let attributeValues = await Queries.queryAttributeValues(conn, this.attributeIds);
         
@@ -195,7 +195,7 @@ export class ProductExporter {
         })};
     }
 
-    private async retrieveAttributeSets(conn: core.Connection) {
+    private async retrieveAttributeSets(conn: Connection) {
         let attributeSets = await Queries.queryAttributeSets(conn, this.attributeSetIds);
         let attributeSetAttributes = await Queries.queryAttributeSetAttributes(conn, this.attributeSetIds);
         if (attributeSets){
@@ -212,7 +212,7 @@ export class ProductExporter {
         });}
     }
 
-    private async retrieveProvisioningPlans(conn: core.Connection) {
+    private async retrieveProvisioningPlans(conn: Connection) {
         let provisioningPlans = await Queries.queryProvisioningPlans(conn);
         let prvTaskAssignments = await Queries.queryProvisioningTaskAssignments(conn)
 
@@ -229,7 +229,7 @@ export class ProductExporter {
         });
     }
     
-    private async retrieveProvisioningTasks(conn: core.Connection){
+    private async retrieveProvisioningTasks(conn: Connection){
         let provisioningTasks = await Queries.queryProvisioningTasks(conn);
 
         provisioningTasks.forEach(provisioningTask => {
@@ -237,7 +237,7 @@ export class ProductExporter {
         });
     }
 
-    private async retrievePriceBooks(conn: core.Connection, productList: Set<String>){
+    private async retrievePriceBooks(conn: Connection, productList: Set<String>){
         let priceBooks = await Queries.queryPricebooks(conn);
         let currencies = await Queries.queryPricebookEntryCurrencies(conn, productList);
         let priceBookEntries = await Queries.queryPricebookEntries(conn, productList);
@@ -283,7 +283,7 @@ export class ProductExporter {
         });}
     }
 
-    private async retrieveCharges(conn: core.Connection, productList: Set<string>){
+    private async retrieveCharges(conn: Connection, productList: Set<string>){
         let charges = await Queries.queryProductCharges(conn, productList);
         let chargeList = new Set<String>();
         charges.forEach(charge => {chargeList.add(charge['Name'])});

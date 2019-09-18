@@ -1,9 +1,8 @@
 // Class responsible for Importing product data into an org
 
-import {core} from '@salesforce/command';
 import * as fs from 'fs';
 import { Util } from './Util';
-import { RecordResult } from 'jsforce';
+import { Connection } from 'jsforce';
 import { Queries } from './query';
 import { Upsert } from './upsert';
 import * as _ from 'lodash';
@@ -52,8 +51,10 @@ export class ProductImporter {
     private provisionigPlansIds:Set<String>;
     private provisioningTaskIds:Set<String>;
     private isB2B: boolean;
+    private userName: string;
 
-    constructor(products: Set<string>, isB2B: boolean){
+    constructor(products: Set<string>, isB2B: boolean, userName: string){
+        this.userName = userName;
         this.productList = products;
         this.isB2B = isB2B;
         this.chargesIds = new Set<String>();
@@ -99,12 +100,12 @@ export class ProductImporter {
         this.provisioningTaskIds = new Set<String>();
     }
     
-    public async all(conn: core.Connection) {       
-        
+    public async all(conn: Connection) {       
       conn.setMaxListeners(100);
   
       await Upsert.enableTriggers(conn);
-      await Upsert.disableTriggers(conn);  
+      console.log('mmmmmmmmmmmmm')
+      await Upsert.disableTriggers(conn, this.userName);  
   
       await this.extractProduct(conn);
       await this.extractData(conn);
@@ -164,7 +165,7 @@ export class ProductImporter {
         return this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
     }
 
-    private async retrieveTargerProductIds(conn: core.Connection){
+    private async retrieveTargerProductIds(conn: Connection){
         let targetProductIds = new Array<Object>();
         let prdIdsTarget = await Queries.queryProductIds(conn, this.productList); 
         prdIdsTarget.forEach(prdIdTarget =>{
@@ -179,7 +180,7 @@ export class ProductImporter {
         return targetProductIds;
     }
 
-    private async retrieveTargetPricebookIds(conn: core.Connection){
+    private async retrieveTargetPricebookIds(conn: Connection){
         let targetPricebooksIds = new Array<Object>();
         let pricebooksTarget = await Queries.queryPricebooksIds(conn);
         pricebooksTarget.forEach(pricebookTarget => {
@@ -335,7 +336,7 @@ export class ProductImporter {
         });
     }
     
-    private async extractProduct(conn: core.Connection) {
+    private async extractProduct(conn: Connection) {
         let productFileNameList = [];
         // We need to query ID's of records in target org in order to delete or match ID's
         let prdAttrsTarget = await Queries.queryProductAttributeIds(conn, this.productList);                 // for delete                           
@@ -410,7 +411,7 @@ export class ProductImporter {
                                      this.stdPbes.push(...this.extractObjects(allstdpbe['chargeElementStdPricebookEntries'], this.sourceProductIds, 'Product2'))});
     }
 
-    private async extractData(conn: core.Connection) {
+    private async extractData(conn: Connection) {
         //  Read all other than pricebook and product objects from local store
         const allCategories = await Util.readAllFiles('temp/categories');
         let allCharges = await Util.readAllFiles('temp/charges');
@@ -447,7 +448,7 @@ export class ProductImporter {
         this.attributeSets.push(...this.extractProductObjects( this.attributeSetsRoot, this.attributeSetIds));
     }
 
-    private async extractB2BObjects(conn: core.Connection){
+    private async extractB2BObjects(conn: Connection){
         //reading B2B objects from local store
         let allProvisioningPlans = await Util.readAllFiles('temp/provisioningPlans');
         let allProvisioningTasks = await Util.readAllFiles('/temp/provisioningTasks');     

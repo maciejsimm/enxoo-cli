@@ -1,6 +1,8 @@
 import {core, flags, SfdxCommand} from '@salesforce/command';
 import {AnyJson} from '@salesforce/ts-types';
 import { ProductImporter } from '../../../../lib/ProductImporter';
+import {getJsforceConnection } from '../../../../lib/jsforceHelper';
+import { Connection } from 'jsforce';
 
 // Initialize Messages with the current plugin directory
 core.Messages.importMessagesDirectory(__dirname);
@@ -45,15 +47,17 @@ export default class Org extends SfdxCommand {
     // const name = this.flags.name || 'world';
 
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
-    const conn = this.org.getConnection();
-    conn.bulk.pollInterval = 5000; // 5 sec
-    conn.bulk.pollTimeout = 120000; // 120 sec
+    let conn: Connection;
+    conn = await getJsforceConnection(this.org.getConnection().getConnectionOptions());
+    console.log(conn)
+    let userName = this.org.getUsername();
+    console.log(userName);
     const products = this.flags.products;
     const b2b = this.flags.b2b;
 
     this.ux.log('*** Import Begin ***');
 
-    const exporter = new ProductImporter(products, b2b);
+    const exporter = new ProductImporter(products, b2b, userName);
     await exporter.all(conn);
 
     this.ux.log('*** Finished ***');
