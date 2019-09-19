@@ -26,7 +26,7 @@ export default class Org extends SfdxCommand {
   `
   ];
 
-  public static args = [{name: 'file'}];
+  // public static args = [{name: 'file'}];
 
   protected static flagsConfig = {
     products: flags.array({char: 'p', required: true, description: messages.getMessage('productsFlagDescription')}),

@@ -33,6 +33,7 @@ export class Util {
 
     public static setToIdString(aSet: Set<String>):String {
         let result = '';
+        if (aSet.size === 0 || aSet === null || aSet === undefined) return "''";
         for (let elem of aSet) {
             result += "'" + elem + "',";
         }
