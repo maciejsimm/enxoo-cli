@@ -30,7 +30,8 @@ export default class Org extends SfdxCommand {
 
   protected static flagsConfig = {
     products: flags.array({char: 'p', required: true, description: messages.getMessage('productsFlagDescription')}),
-    b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('productsFlagDescription')})
+    b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('b2bFlagDescription')}),
+    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')})
   };
 
   // Comment this out if your command does not require an org username
@@ -47,12 +48,15 @@ export default class Org extends SfdxCommand {
 
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
     const conn = this.org.getConnection();
+    conn.bulk.pollInterval = 5000; // 5 sec
+    conn.bulk.pollTimeout = 120000; // 120 sec
     const products = this.flags.products;
     const b2b = this.flags.b2b;
+    const dir = this.flags.dir;
 
     this.ux.log('*** Begin exporting ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
 
-    const exporter = new ProductExporter(products, b2b);
+    const exporter = new ProductExporter(products, b2b, dir);
     await exporter.all(conn);
 
     this.ux.log('*** Finished ***');

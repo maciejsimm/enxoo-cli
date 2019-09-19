@@ -2,7 +2,7 @@
 
 import { core, UX } from "@salesforce/command";
 import * as fs from 'fs';
-// import { type } from "os";
+import * as fsExtra from 'fs-extra'
 
 export class Util {
 
@@ -136,18 +136,19 @@ export class Util {
                 resolve(fileNamesToResolve);
                 });
             });            
-        }
-    public static async matchFileNames(productName: string){
+    }
+
+    public static async matchFileNames(productName: string, dir: string){
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-            fs.readdir('./temp/products/' , async (err, filenames) => {
+            fs.readdir('./' + dir +'/products/' , async (err, filenames) => {
                 let fileNamesToResolve = filenames.filter(fileName => fileName.startsWith(productName));
                 if(!fileNamesToResolve[0] || err){
                     reject('Failed to find Product:'+ productName + err);
                 }
                 resolve(fileNamesToResolve);
-                });   
-            });            
-        }
+            });   
+        });            
+    }
 
     public static async writeFile(path:string, dataToSanitaze:any){
         await fs.writeFile(path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {
@@ -156,22 +157,36 @@ export class Util {
             }
         });
     }
+
     public static createDir(dir:string){
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir, { recursive: true });
         }
     }
-    public static createAllDirs(isB2B: boolean){
-        const dirs = ['./temp/products', './temp/categories', './temp/attributes', 
-                     './temp/attributeSets', './temp/priceBooks', './temp/charges' ];
+
+    public static createAllDirs(isB2B: boolean, dir: string){
+        const dirs = ['/products', '/categories', '/attributes', 
+                     '/attributeSets', '/priceBooks', '/charges' ];
+        const dirsToCreate = dirs.map(singleDir => './' + dir + singleDir);
         if(isB2B){
-            dirs.push('./temp/provisioningPlans', './temp/provisioningTasks');
+            dirsToCreate.push('./'+dir+'/provisioningPlans', './'+dir+'/provisioningTasks');
         }
-        dirs.forEach(dir => { this.createDir(dir) })
+        dirsToCreate.forEach(dir => { this.createDir(dir) })
     }
+
     public static removeB2BFields(object: any){
         delete object['enxB2B__MRC_List__c'];
         delete object['enxB2B__OTC_List__c'];
         delete object['enxB2B__Service_Capex__c'];
+    }
+
+    public static removeDir(dir: string){
+        fsExtra.remove('./' + dir, err => {
+             Util.log(err);
+         });
+    }
+
+    public static sanitizeFileName(fileName: string){
+        return fileName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g,'_');
     }
 }

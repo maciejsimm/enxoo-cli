@@ -3,7 +3,6 @@
 import {core} from '@salesforce/command';
 import * as fs from 'fs';
 import { Util } from './Util';
-import { RecordResult } from 'jsforce';
 import { Queries } from './query';
 import { Upsert } from './upsert';
 import * as _ from 'lodash';
@@ -25,7 +24,6 @@ export class ProductImporter {
     private attributes:Array<Object>;
     private attributeSets:Array<Object>;
     private attributeSetAttributes:Array<Object>;
-    private attributeSetsRoot:Array<Object>;
     private prdAttributeValues:Array<Object>;
     private attributeValues:Array<Object>;
     private allCategoriesChild:Array<Object>;
@@ -51,11 +49,15 @@ export class ProductImporter {
     private chargeTiers:Array<Object>;
     private provisionigPlansIds:Set<String>;
     private provisioningTaskIds:Set<String>;
+    private attributeDefaultValuesIds:Set<String>;
     private isB2B: boolean;
+    private dir: string;
 
-    constructor(products: Set<string>, isB2B: boolean){
+    constructor(products: Set<string>, isB2B: boolean, dir: string){
+        this.dir = dir;
         this.productList = products;
         this.isB2B = isB2B;
+        this.attributeDefaultValuesIds = new Set<String>();
         this.chargesIds = new Set<String>();
         this.productOptions = new Array<Object>();
         this.charges = new Array<Object>();
@@ -70,7 +72,6 @@ export class ProductImporter {
         this.categories = new Array<Object>();
         this.attributes = new Array<Object>();
         this.attributeSets = new Array<Object>();
-        this.attributeSetsRoot = new Array<Object>();
         this.productsRoot = new Array<Object>();
         this.prdAttributeValues = new Array<Object>();
         this.attributeValues = new Array<Object>();
@@ -111,23 +112,19 @@ export class ProductImporter {
       await this.extractPricebooks();
       this.targetPricebooksIds = await this.retrieveTargetPricebookIds(conn);
       this.targetProductIds = await this.retrieveTargerProductIds(conn);
- 
-      console.log('products to upsert: ' + this.products.length);
-      console.log('categories to upsert: ' + this.allCategoriesChild.length);
-      console.log('attributes to upsert: ' + this.attributes.length);      
-      console.log('attributeSets to upsert: ' + this.attributeSets.length);      
      
       //Perform an upsert of data
       try {
           await Upsert.upsertObject(conn, 'enxCPQ__Category__c', this.allCategoriesChild);
           await Upsert.upsertObject(conn, 'enxCPQ__Category__c', this.categories);
           await Upsert.upsertObject(conn, 'enxCPQ__Attribute__c', this.attributes);
-          await Upsert.upsertObject(conn, 'enxCPQ__AttributeSet__c', this.attributeSetsRoot);
+          await Upsert.upsertObject(conn, 'enxCPQ__AttributeSet__c', this.attributeSets);
           await Upsert.upsertObject(conn, 'Product2', this.productsRoot);
           await Upsert.upsertObject(conn, 'Product2', this.productOptions);
           await Upsert.upsertObject(conn, 'Product2', this.charges);
           await Upsert.upsertObject(conn, 'Product2', this.chargeElements);
           await Upsert.upsertObject(conn, 'Product2', this.chargeTiers);
+          await this.checkLengthOfTargetPrdIds(conn)
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeSetAttribute__c', this.attributeSetAttributes);
           await Upsert.deleteObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributesIds);
           await Upsert.upsertObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributes);
@@ -135,15 +132,15 @@ export class ProductImporter {
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeValue__c', this.attributeValues);
           let pricebooks = this.retrieveNonStandardPricebooks();
           await Upsert.upsertObject(conn, 'Pricebook2', pricebooks);
-          
+          await this.checkLengthOfTargetPricebookIds(conn);
           Upsert.mapPricebooks(this.sourcePricebooksIds,  this.targetPricebooksIds);
           Upsert.mapProducts(this.sourceProductIds, this.targetProductIds);
          
           await Upsert.deleteObject(conn, 'PricebookEntry', this.pricebookEntryIds);
           await Upsert.deleteObject(conn, 'PricebookEntry', this.stdPricebookEntryIds);
          
-          await Upsert.upsertBulkPricebookEntries(conn, this.stdPbes);
-          await Upsert.upsertBulkPricebookEntries(conn, this.pbes)
+          await Upsert.insertBulkPricebookEntries(conn, this.stdPbes);
+          await Upsert.insertBulkPricebookEntries(conn, this.pbes)
           
           await Upsert.upsertObject(conn, 'enxCPQ__ProductRelationship__c', this.productRelationships);
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeDefaultValue__c', this.attributeDefaultValues);
@@ -164,7 +161,16 @@ export class ProductImporter {
           Util.log(ex);
       }     
 }
-
+    private async checkLengthOfTargetPrdIds(conn: core.Connection){
+        if(this.targetProductIds.length === 0){
+            this.targetProductIds = await this.retrieveTargerProductIds(conn);
+          }
+    }
+    private async checkLengthOfTargetPricebookIds(conn: core.Connection){
+        if(this.targetPricebooksIds.length < 2){
+            this.targetPricebooksIds = await this.retrieveTargetPricebookIds(conn);
+          }
+    }
     private retrieveNonStandardPricebooks(){
         return this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
     }
@@ -221,9 +227,15 @@ export class ProductImporter {
 
     private extractProvisionigPlansIds(product:any){
         let provisionigPlansIds = new Set<String>();
-        product.provisioningPlanAssings.forEach(prvPlanAssing => {this.provisionigPlansIds.add(prvPlanAssing['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c'])});
+        product.provisioningPlanAssings.forEach(prvPlanAssing => {provisionigPlansIds.add(prvPlanAssing['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c'])});
 
         return provisionigPlansIds;
+    }
+    private extractAttributeDefaultValuesIds(product:any){
+        let attributeDefaultValuesIds = new Set<String>();
+        product.attributeValueDependencies.forEach(atrValueDependency => {attributeDefaultValuesIds.add(atrValueDependency['enxCPQ__Master_Attribute__r']['enxCPQ__TECH_External_Id__c'])});
+
+        return attributeDefaultValuesIds;
     }
     private extractSourceProductIds(product:any){
         let sourceProductIds = new Set<String>();
@@ -304,7 +316,7 @@ export class ProductImporter {
         return sourcePricebooksIds;
     }
 
-    private extractObjects(objectsArray:any, objectIds:Set<String>, object?: string){
+    private extractObjects(objectsArray:any, objectIds:Set<String>, object?: string, isBreak: Boolean = true){
         let result:Array<any> = new Array<any>();
         
         for (let objectId of objectIds) {
@@ -312,7 +324,9 @@ export class ProductImporter {
                 if (object && objectsArray[i][object] && objectsArray[i][object].enxCPQ__TECH_External_Id__c === objectId) {
                     let object:any = objectsArray[i];
                     result.push(object);
-                    break;
+                    if(isBreak){
+                       break;
+                    }
                 }else if(objectsArray[i].enxB2B__TECH_External_Id__c === objectId){
                     let object:any = objectsArray[i];
                     result.push(object);
@@ -330,7 +344,7 @@ export class ProductImporter {
     private async readProduct(prodname:String) {
         let content;
         return new Promise<string>((resolve: Function, reject: Function) => {
-            fs.readFile('./temp/products/' + prodname, function read(err, data) {
+            fs.readFile('./'+this.dir +'/products/' + prodname, function read(err, data) {
                 if (err) {
                     reject(err);
                 }
@@ -351,13 +365,14 @@ export class ProductImporter {
         allPricebookEntriesTarget.forEach(pbeTarget => {this.pricebookEntryIds.push(pbeTarget['Id'])});
 
         for (let productName of this.productList){
-            let prdNames = await Util.matchFileNames(productName);
+            let prdNames = await Util.matchFileNames(productName, this.dir);
             productFileNameList = [...productFileNameList, ...prdNames];
         }
         // Collect all Ids' of products that will be inserted
         for (let prodname of productFileNameList) {
             const prod = await this.readProduct(prodname);
             this.categoryIds = new Set([...this.categoryIds, ...this.extractCategoryIds(prod)]);
+            this.attributeDefaultValuesIds = new Set([...this.attributeDefaultValuesIds, ...this.extractAttributeDefaultValuesIds(prod)]);
             this.attributeIds = new Set([...this.attributeIds, ...this.extractAttributeIds(prod)]);
             this.attributeSetIds = new Set([...this.attributeSetIds, ...this.extractAttributeSetIds(prod)]);
             this.sourceProductIds = new Set([...this.sourceProductIds, ...this.extractSourceProductIds(prod)]);
@@ -425,13 +440,15 @@ export class ProductImporter {
         if(this.isB2B){
             await this.extractB2BObjects(conn);
         }
-
-        allAttributeSets.forEach(attributeSet => {this.attributeSetsRoot.push(attributeSet['root']),
-                                                  attributeSet['values'].forEach(attrSetAttr => {this.attributeSetAttributes.push(attrSetAttr)})});
+        let attributeSetsRoot:any = [];
+        let attributeSetAttributes:any = [];
+        allAttributeSets.forEach(attributeSet => {attributeSetsRoot.push(attributeSet['root']),
+                                                  attributeSet['values'].forEach(attrSetAttr => {attributeSetAttributes.push(attrSetAttr)})});
         
-        let attributesRoot = [];
+        let attributesRoot:any = [];
+        let attributeValues:any = [];
         allAttributes.forEach(attr => {attributesRoot.push(attr['root']),
-                                       this.attributeValues = [...this.attributeValues, ...attr['values']]});
+                                       attributeValues.push(attr['values'])});
        
         allPricebooks.forEach(pricebook=>{this.sourcePricebooksIds = [...this.sourcePricebooksIds,...this.extractPricebookData(pricebook)],
                                           this.deleteJsonFields(pricebook, 'Id',  this.pricebooks, 'IsStandard')});
@@ -448,22 +465,26 @@ export class ProductImporter {
         this.allCategoriesChild = [...this.categories];
         this.extractParentCategories(this.categories, allCategories);
         this.allCategoriesChild.forEach(category => {delete category['enxCPQ__Parent_Category__r']});
-        this.attributes.push(...this.extractProductObjects(attributesRoot, this.attributeIds)); 
-        this.attributeSets.push(...this.extractProductObjects( this.attributeSetsRoot, this.attributeSetIds));
+        this.attributes.push(...this.extractProductObjects(attributesRoot, this.attributeIds));
+        debugger;
+        attributeValues.forEach(attributeValue => {  this.attributeValues.push(...this.extractObjects(attributeValue, this.attributeIds, 'enxCPQ__Attribute__r', false))} )
+        //this.attributeValues.push(...this.extractObjects(attributeValues, this.attributeIds, 'enxCPQ__Attribute__r'));
+        this.attributeSets.push(...this.extractProductObjects(attributeSetsRoot, this.attributeSetIds));
+        this.attributeSetAttributes.push(...this.extractObjects(attributeSetAttributes, this.attributeSetIds, 'enxCPQ__Attribute_Set__r', false))
     }
 
     private async extractB2BObjects(conn: core.Connection){
         //reading B2B objects from local store
-        let allProvisioningPlans = await Util.readAllFiles('temp/provisioningPlans');
-        let allProvisioningTasks = await Util.readAllFiles('/temp/provisioningTasks');     
+        let allProvisioningPlans = await Util.readAllFiles('./'+this.dir +'/provisioningPlans');
+        let allProvisioningTasks = await Util.readAllFiles('./'+this.dir +'/provisioningTasks');     
         let planAssignmentsTarget = await Queries.queryProvisioningPlanAssignmentIds(conn);
         let taskAssignmentsTarget = await Queries.queryProvisioningTaskAssignmentIds(conn);
     
         planAssignmentsTarget.forEach(planAssignmentTarget => {this.provisioningPlanAssignmentIds.push(planAssignmentTarget['Id'])});
         taskAssignmentsTarget.forEach(taskAssignmentTarget => {this.provisioningTaskAssignmentIds.push(taskAssignmentTarget['Id'])});
         let provisioningPlans = [...this.extractObjects(allProvisioningPlans, this.provisionigPlansIds)];
-        provisioningPlans.forEach(provisioningPlans => {this.provisioningPlans.push(provisioningPlans['root']),
-                                                        this.provisioningTaskAssignments = [...this.provisioningTaskAssignments, ...provisioningPlans['values']]});
+        provisioningPlans.forEach(provisioningPlan => {this.provisioningPlans.push(provisioningPlan['root']),
+                                                        this.provisioningTaskAssignments = [...this.provisioningTaskAssignments, ...provisioningPlan['values']]});
         this.provisioningTaskAssignments.forEach(prvTaskAssignment => {this.provisioningTaskIds.add(prvTaskAssignment['enxB2B__Provisioning_Task__r']['enxB2B__TECH_External_Id__c'])})
         this.provisioningTasks.push(...this.extractObjects(allProvisioningTasks, this.provisioningTaskIds));
     }
