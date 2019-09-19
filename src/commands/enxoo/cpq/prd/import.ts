@@ -29,7 +29,8 @@ export default class Org extends SfdxCommand {
     // flag with a value (-p, --product=VALUE)
     products: flags.array({char: 'p', required: true, description: messages.getMessage('productsFlagDescription')}),
     force: flags.boolean({char: 'f', description: messages.getMessage('forceFlagDescription')}),
-    b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('productsFlagDescription')})
+    b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('b2bFlagDescription')}),
+    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')})
   };
 
   // Comment this out if your command does not require an org username
@@ -49,10 +50,11 @@ export default class Org extends SfdxCommand {
     conn.bulk.pollTimeout = 120000; // 120 sec
     const products = this.flags.products;
     const b2b = this.flags.b2b;
+    const dir = this.flags.dir;
 
     this.ux.log('*** Import Begin ***');
 
-    const exporter = new ProductImporter(products, b2b);
+    const exporter = new ProductImporter(products, b2b, dir);
     await exporter.all(conn);
 
     this.ux.log('*** Finished ***');

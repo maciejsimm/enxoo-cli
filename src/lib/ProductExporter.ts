@@ -36,22 +36,24 @@ export class ProductExporter {
     private productList:Set<string>;
     private currencyIsoCodes:Set<String>;
     private isB2B: boolean;
+    private dir: string;
 
-    constructor(products: Set<string>, isB2B: boolean) {
+    constructor(products: Set<string>, isB2B: boolean, dir: string) {
         this.categoryIds = new Set<String>();
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
         this.provisioningPlanIds = new Set<String>();
         this.currencyIsoCodes = new Set<String>();
-        this.isB2B= isB2B;
+        this.dir = dir;
+        this.isB2B = isB2B;
         this.productList = products;
     }
 
     public async all(conn: core.Connection) {     
-        Util.removeDir();    
+        Util.removeDir(this.dir);    
         Queries.setIsB2B(this.isB2B);
         await this.retrievePriceBooks(conn, this.productList);
-        Util.createAllDirs(this.isB2B);
+        Util.createAllDirs(this.isB2B, this.dir);
 
         await this.retrieveProduct(conn, this.productList);
         await this.retrieveCharges(conn, this.productList);
@@ -126,7 +128,7 @@ export class ProductExporter {
                                        .forEach(provisioningPlanAssing => {product.provisioningPlanAssings.push(provisioningPlanAssing)});
             }
            this.extractIds(product);
-           Util.writeFile('./temp/products/' +  Util.sanitizeFileName(product.root['Name']) + '_' + product.root['enxCPQ__TECH_External_Id__c'] + '.json', product);
+           Util.writeFile('./'+this.dir +'/products/' +  Util.sanitizeFileName(product.root['Name']) + '_' + product.root['enxCPQ__TECH_External_Id__c'] + '.json', product);
    
            Util.hideSpinner('products export done'); 
       }
@@ -161,7 +163,7 @@ export class ProductExporter {
                 parentCategoriesIds.add(category['enxCPQ__Parent_Category__r']['enxCPQ__TECH_External_Id__c']);
             }
 
-            Util.writeFile('./temp/categories/' + category['Name'] +'_' +category['enxCPQ__TECH_External_Id__c']+ '.json', category);
+            Util.writeFile('./'+this.dir +'/categories/' + category['Name'] +'_' +category['enxCPQ__TECH_External_Id__c']+ '.json', category);
         }
         let newParentCategories = await Queries.queryCategories(conn, parentCategoriesIds);
         
@@ -192,7 +194,7 @@ export class ProductExporter {
             attributeValues.filter(attributeValue => attributeValue['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] === attribute['enxCPQ__TECH_External_Id__c'])
                            .forEach(attributeValue=>{attributeToSave.values.push(attributeValue)});     
 
-            Util.writeFile('./temp/attributes/' + Util.sanitizeFileName(attribute['Name']) + '_' + attribute['enxCPQ__TECH_External_Id__c']+ '.json', attributeToSave);
+            Util.writeFile('./'+this.dir +'/attributes/' + Util.sanitizeFileName(attribute['Name']) + '_' + attribute['enxCPQ__TECH_External_Id__c']+ '.json', attributeToSave);
         })};
     }
 
@@ -209,7 +211,7 @@ export class ProductExporter {
             attributeSetAttributes.filter(attributeSetAttribute => attributeSetAttribute['enxCPQ__Attribute_Set__r']['enxCPQ__TECH_External_Id__c'] === attributeSet['enxCPQ__TECH_External_Id__c'])
                                   .forEach(attributeSetAttribute => {attributeSetToSave.values.push(attributeSetAttribute)});     
 
-            Util.writeFile('./temp/attributeSets/' + Util.sanitizeFileName(attributeSet['Name']) +'_' + attributeSet['enxCPQ__TECH_External_Id__c']+ '.json', attributeSetToSave);
+            Util.writeFile('./'+this.dir +'/attributeSets/' + Util.sanitizeFileName(attributeSet['Name']) +'_' + attributeSet['enxCPQ__TECH_External_Id__c']+ '.json', attributeSetToSave);
         });}
     }
 
@@ -234,7 +236,7 @@ export class ProductExporter {
         let provisioningTasks = await Queries.queryProvisioningTasks(conn);
 
         provisioningTasks.forEach(provisioningTask => {
-            Util.writeFile('./temp/provisioningTasks/' + Util.sanitizeFileName(provisioningTask['Name']) +'_' + provisioningTask['enxB2B__TECH_External_Id__c']+ '.json', provisioningTask);
+            Util.writeFile('./'+this.dir +'/provisioningTasks/' + Util.sanitizeFileName(provisioningTask['Name']) +'_' + provisioningTask['enxB2B__TECH_External_Id__c']+ '.json', provisioningTask);
         });
     }
 
@@ -250,8 +252,8 @@ export class ProductExporter {
         priceBooks.forEach(priceBook => {
 
             const priceBookTechExtId = priceBook['enxCPQ__TECH_External_Id__c'];
-            Util.createDir('./temp/priceBooks/' + Util.sanitizeFileName(priceBook['Name']));
-            Util.writeFile('./temp/PriceBooks/' + Util.sanitizeFileName(priceBook['Name']) + '.json', priceBook)
+            Util.createDir('./' + this.dir +'/priceBooks/' + Util.sanitizeFileName(priceBook['Name']));
+            Util.writeFile('./' + this.dir +'/priceBooks/' + Util.sanitizeFileName(priceBook['Name']) + '.json', priceBook)
             
             currencies.forEach(currency =>{this.currencyIsoCodes.add(currency['CurrencyIsoCode'])});
             
@@ -279,7 +281,7 @@ export class ProductExporter {
                                                 && currency === chargeElementStdPbe['CurrencyIsoCode'])
                                                 .forEach(chargeElementStdPbe=>{currencyToSave.chargeElementStdPricebookEntries.push(chargeElementStdPbe)});
 
-                Util.writeFile('./temp/PriceBooks/' + Util.sanitizeFileName(priceBook['Name']) + '/' + currency + '.json', currencyToSave);
+                Util.writeFile('./' + this.dir +'/priceBooks/' + Util.sanitizeFileName(priceBook['Name']) + '/' + currency + '.json', currencyToSave);
             });
         });}
     }
@@ -308,7 +310,7 @@ export class ProductExporter {
 
             chargeToSave.chargeElements = chargeElementsToSave;
             chargeToSave.chargeTier = chargeTiersToSave;
-            Util.writeFile('./temp/charges/' + Util.sanitizeFileName(chargeName) + '.json', chargeToSave);
+            Util.writeFile('./'+this.dir +'/charges/' + Util.sanitizeFileName(chargeName) + '.json', chargeToSave);
         }
     }
 }

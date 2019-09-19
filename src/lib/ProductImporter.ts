@@ -51,8 +51,10 @@ export class ProductImporter {
     private provisioningTaskIds:Set<String>;
     private attributeDefaultValuesIds:Set<String>;
     private isB2B: boolean;
+    private dir: string;
 
-    constructor(products: Set<string>, isB2B: boolean){
+    constructor(products: Set<string>, isB2B: boolean, dir: string){
+        this.dir = dir;
         this.productList = products;
         this.isB2B = isB2B;
         this.attributeDefaultValuesIds = new Set<String>();
@@ -342,7 +344,7 @@ export class ProductImporter {
     private async readProduct(prodname:String) {
         let content;
         return new Promise<string>((resolve: Function, reject: Function) => {
-            fs.readFile('./temp/products/' + prodname, function read(err, data) {
+            fs.readFile('./'+this.dir +'/products/' + prodname, function read(err, data) {
                 if (err) {
                     reject(err);
                 }
@@ -363,7 +365,7 @@ export class ProductImporter {
         allPricebookEntriesTarget.forEach(pbeTarget => {this.pricebookEntryIds.push(pbeTarget['Id'])});
 
         for (let productName of this.productList){
-            let prdNames = await Util.matchFileNames(productName);
+            let prdNames = await Util.matchFileNames(productName, this.dir);
             productFileNameList = [...productFileNameList, ...prdNames];
         }
         // Collect all Ids' of products that will be inserted
@@ -473,8 +475,8 @@ export class ProductImporter {
 
     private async extractB2BObjects(conn: core.Connection){
         //reading B2B objects from local store
-        let allProvisioningPlans = await Util.readAllFiles('temp/provisioningPlans');
-        let allProvisioningTasks = await Util.readAllFiles('/temp/provisioningTasks');     
+        let allProvisioningPlans = await Util.readAllFiles('./'+this.dir +'/provisioningPlans');
+        let allProvisioningTasks = await Util.readAllFiles('./'+this.dir +'/provisioningTasks');     
         let planAssignmentsTarget = await Queries.queryProvisioningPlanAssignmentIds(conn);
         let taskAssignmentsTarget = await Queries.queryProvisioningTaskAssignmentIds(conn);
     
