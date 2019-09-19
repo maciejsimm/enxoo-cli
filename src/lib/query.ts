@@ -450,7 +450,7 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
     });
     }
     public static async queryPriceRuleActions (conn: core.Connection): Promise<string>  {
-        Util.log('--- exporting Provisioning Plan Assignment Ids ');
+        Util.log('--- exporting Price Rules ');
         return new Promise<string>((resolve: Function, reject: Function) => {
         conn.query("SELECT Name, enxCPQ__Action_Type__c, enxCPQ__Charge__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Field_Name__c, enxCPQ__Order__c, enxCPQ__Price_Rule__r.enxCPQ__TECH_External_Id__c, enxCPQ__Target_Field_Name__c, enxCPQ__Target_Value__c, enxCPQ__TECH_External_Id__c, enxCPQ__Tier_Value_From__c, enxCPQ__Tier_Value_To__c FROM enxCPQ__PriceRuleAction__c", 
         null,
@@ -465,12 +465,12 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
         let queryString = this.isB2B
         ? "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN ("
         : "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxCPQ__OTC_List__c, Pricebook2Id, Product2Id, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN ("
-        Util.log('--- exporting Provisioning Plan Assignment Ids ');
+        Util.log('--- exporting Charge Elements Std Entries ');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query(queryString + Util.setToIdString(productList) + ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true", 
         null,
         function(err, res) {
-            if (err) reject('error retrieving price rule actions: ' + err);
+            if (err) reject('error retrieving Charge Elements Std Entries: ' + err);
             
             resolve(res.records);
         });
@@ -665,7 +665,7 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
     })
     }
     public static async bulkQueryPricebookEntryIds (conn: core.Connection): Promise<string> {
-        Util.log('--- exporting Provisioning Plan Assignment Ids ');
+        Util.log('--- exporting  pbe ids ');
         return new Promise<string>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query("SELECT Id FROM PricebookEntry WHERE Pricebook2Id != null AND Pricebook2.IsStandard = false AND product2.isactive = true AND Product2.RecordType.Name = 'Charge Element'")
