@@ -50,7 +50,7 @@ export class ProductExporter {
     }
 
     public async all(conn: core.Connection) {     
-        Util.removeDir(this.dir);    
+        // Util.removeDir(this.dir);    <- ziom nie usuwaj katalogu
         Queries.setIsB2B(this.isB2B);
         await this.retrievePriceBooks(conn, this.productList);
         Util.createAllDirs(this.isB2B, this.dir);

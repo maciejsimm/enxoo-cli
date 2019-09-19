@@ -177,8 +177,9 @@ export class Upsert {
     public static async insertBulkPricebookEntries(conn, data)  {
         this.sanitize(data);
         this.fixIds(data);
-        Util.log("---inserting pbe");
+        Util.log("---inserting pbe " + data.length);
         return new Promise((resolve, reject) => {
+            if (data.length === 0) resolve(); // temporary workaround to eliminate blocker
             conn.bulk.load("PricebookEntry", "insert", data, function(err, rets) {
                 if (err) { reject('error creating pbe' + err); }
                     let successCount = 0;

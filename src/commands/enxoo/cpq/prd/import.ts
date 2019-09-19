@@ -23,7 +23,7 @@ export default class Org extends SfdxCommand {
   `
   ];
 
-  public static args = [{product: 'file'}];
+  // public static args = [{product: 'file'}];
 
   protected static flagsConfig = {
     // flag with a value (-p, --product=VALUE)
