@@ -108,6 +108,8 @@ export class Upsert {
     }
 
     public static mapProducts (sourceProducts, targetProducts) {
+
+        Util.log("--- mapping products");
         for (let sourceProduct of sourceProducts) {
             for (let j = 0; j < targetProducts.length; j++) {
                 if (sourceProduct === targetProducts[j].techId) {
@@ -120,7 +122,7 @@ export class Upsert {
 
     public static mapPricebooks  (sourcePricebooks:any, targetPricebooks:any){
     
-        console.log("--- mapping pricebooks");
+        Util.log("--- mapping pricebooks");
         for (let i = 0 ; i < sourcePricebooks.length; i++) {
             for (let j = 0; j < targetPricebooks.length; j++) {
                 if (sourcePricebooks[i].techId != null && sourcePricebooks[i].techId === targetPricebooks[j].techId) {
@@ -136,6 +138,7 @@ export class Upsert {
     }
 
     public static disableTriggers(conn: core.Connection){
+        Util.log("---disabling triggers");
         let data = { Name: "G_CPQ_DISABLE_TRIGGERS_99",
                      enxCPQ__Setting_Name__c: "CPQ_DISABLE_TRIGGERS",
                      enxCPQ__Context__c: "Global",
@@ -155,6 +158,7 @@ export class Upsert {
     }
 
     public static enableTriggers(conn){
+        Util.log("---enabling triggers");
         return new Promise<string>((resolve: Function, reject: Function) => {
             conn.query("SELECT Id FROM enxCPQ__CPQ_Settings__c WHERE Name = 'G_CPQ_DISABLE_TRIGGERS_99'", function(err, res) {
                 if (res.records.length == 0) resolve();
@@ -170,23 +174,26 @@ export class Upsert {
         });      
     }
 
-    public static async upsertBulkPricebookEntries(conn, data)  {
+    public static async insertBulkPricebookEntries(conn, data)  {
         this.sanitize(data);
         this.fixIds(data);
+        Util.log("---inserting pbe");
         return new Promise((resolve, reject) => {
             conn.bulk.load("PricebookEntry", "insert", data, function(err, rets) {
                 if (err) { reject('error creating pbe' + err); }
                     let successCount = 0;
                     let errorsCount = 0;
-                    for (let i=0; i < rets.length; i++) {
-                    if (rets[i].success) {
-                        successCount++;
-                    } else {
-                        errorsCount++;
-                    }
-                    if(i===rets.length-1){
-                        Util.log("--- Pbe insert success: " + successCount + " errors: " + errorsCount + "\r");
-                }}
+                    if(rets){
+                         for (let i=0; i < rets.length; i++) {
+                             if (rets[i].success) {
+                                successCount++;
+                             } else {
+                                Util.log('error:' + rets[i].errors)
+                                errorsCount++;
+                             }       
+                         if(i===rets.length-1){
+                             Util.log("--- Pbe insert success: " + successCount + " errors: " + errorsCount + "\r");
+                }}}
                 resolve();
             });
         });

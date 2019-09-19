@@ -2,7 +2,7 @@
 
 import { core, UX } from "@salesforce/command";
 import * as fs from 'fs';
-// import { type } from "os";
+import * as fsExtra from 'fs-extra'
 
 export class Util {
 
@@ -173,5 +173,13 @@ export class Util {
         delete object['enxB2B__MRC_List__c'];
         delete object['enxB2B__OTC_List__c'];
         delete object['enxB2B__Service_Capex__c'];
+    }
+    public static removeDir(){
+        fsExtra.remove('./temp', err => {
+             Util.log(err);
+         });
+    }
+    public static sanitizeFileName(fileName: string){
+        return fileName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g,'_');
     }
 }

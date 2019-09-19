@@ -47,10 +47,11 @@ export class ProductExporter {
         this.productList = products;
     }
 
-    public async all(conn: core.Connection) {         
-        Util.createAllDirs(this.isB2B);
+    public async all(conn: core.Connection) {     
+        Util.removeDir();    
         Queries.setIsB2B(this.isB2B);
         await this.retrievePriceBooks(conn, this.productList);
+        Util.createAllDirs(this.isB2B);
 
         await this.retrieveProduct(conn, this.productList);
         await this.retrieveCharges(conn, this.productList);
@@ -125,7 +126,7 @@ export class ProductExporter {
                                        .forEach(provisioningPlanAssing => {product.provisioningPlanAssings.push(provisioningPlanAssing)});
             }
            this.extractIds(product);
-           Util.writeFile('./temp/products/' +  product.root['Name'] + '_' + product.root['enxCPQ__TECH_External_Id__c'] + '.json', product);
+           Util.writeFile('./temp/products/' +  Util.sanitizeFileName(product.root['Name']) + '_' + product.root['enxCPQ__TECH_External_Id__c'] + '.json', product);
    
            Util.hideSpinner('products export done'); 
       }
@@ -191,7 +192,7 @@ export class ProductExporter {
             attributeValues.filter(attributeValue => attributeValue['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] === attribute['enxCPQ__TECH_External_Id__c'])
                            .forEach(attributeValue=>{attributeToSave.values.push(attributeValue)});     
 
-            Util.writeFile('./temp/attributes/' + attribute['Name'] + '_' + attribute['enxCPQ__TECH_External_Id__c']+ '.json', attributeToSave);
+            Util.writeFile('./temp/attributes/' + Util.sanitizeFileName(attribute['Name']) + '_' + attribute['enxCPQ__TECH_External_Id__c']+ '.json', attributeToSave);
         })};
     }
 
@@ -208,7 +209,7 @@ export class ProductExporter {
             attributeSetAttributes.filter(attributeSetAttribute => attributeSetAttribute['enxCPQ__Attribute_Set__r']['enxCPQ__TECH_External_Id__c'] === attributeSet['enxCPQ__TECH_External_Id__c'])
                                   .forEach(attributeSetAttribute => {attributeSetToSave.values.push(attributeSetAttribute)});     
 
-            Util.writeFile('./temp/attributeSets/' + attributeSet['Name'] +'_' + attributeSet['enxCPQ__TECH_External_Id__c']+ '.json', attributeSetToSave);
+            Util.writeFile('./temp/attributeSets/' + Util.sanitizeFileName(attributeSet['Name']) +'_' + attributeSet['enxCPQ__TECH_External_Id__c']+ '.json', attributeSetToSave);
         });}
     }
 
@@ -225,7 +226,7 @@ export class ProductExporter {
             prvTaskAssignments.filter(prvTaskAssignment => prvTaskAssignment['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c'] === provisioningPlan['enxB2B__TECH_External_Id__c'])
                               .forEach(prvTaskAssignment => {provisioningPlanToSave.values.push(prvTaskAssignment)});     
 
-            Util.writeFile('./temp/provisioningPlans/' + provisioningPlan['Name'] +'_' + provisioningPlan['enxB2B__TECH_External_Id__c']+ '.json', provisioningPlanToSave);
+            Util.writeFile('./temp/provisioningPlans/' + Util.sanitizeFileName(provisioningPlan['Name']) +'_' + provisioningPlan['enxB2B__TECH_External_Id__c']+ '.json', provisioningPlanToSave);
         });
     }
     
@@ -233,7 +234,7 @@ export class ProductExporter {
         let provisioningTasks = await Queries.queryProvisioningTasks(conn);
 
         provisioningTasks.forEach(provisioningTask => {
-            Util.writeFile('./temp/provisioningTasks/' + provisioningTask['Name'] +'_' + provisioningTask['enxB2B__TECH_External_Id__c']+ '.json', provisioningTask);
+            Util.writeFile('./temp/provisioningTasks/' + Util.sanitizeFileName(provisioningTask['Name']) +'_' + provisioningTask['enxB2B__TECH_External_Id__c']+ '.json', provisioningTask);
         });
     }
 
@@ -249,8 +250,8 @@ export class ProductExporter {
         priceBooks.forEach(priceBook => {
 
             const priceBookTechExtId = priceBook['enxCPQ__TECH_External_Id__c'];
-            Util.createDir('./temp/priceBooks/' + priceBook['Name']);
-            Util.writeFile('./temp/PriceBooks/' + priceBook['Name'] + '.json', priceBook)
+            Util.createDir('./temp/priceBooks/' + Util.sanitizeFileName(priceBook['Name']));
+            Util.writeFile('./temp/PriceBooks/' + Util.sanitizeFileName(priceBook['Name']) + '.json', priceBook)
             
             currencies.forEach(currency =>{this.currencyIsoCodes.add(currency['CurrencyIsoCode'])});
             
@@ -278,7 +279,7 @@ export class ProductExporter {
                                                 && currency === chargeElementStdPbe['CurrencyIsoCode'])
                                                 .forEach(chargeElementStdPbe=>{currencyToSave.chargeElementStdPricebookEntries.push(chargeElementStdPbe)});
 
-                Util.writeFile('./temp/PriceBooks/' + priceBook['Name'] + '/' + currency + '.json', currencyToSave);
+                Util.writeFile('./temp/PriceBooks/' + Util.sanitizeFileName(priceBook['Name']) + '/' + currency + '.json', currencyToSave);
             });
         });}
     }
@@ -307,7 +308,7 @@ export class ProductExporter {
 
             chargeToSave.chargeElements = chargeElementsToSave;
             chargeToSave.chargeTier = chargeTiersToSave;
-            Util.writeFile('./temp/charges/' +chargeName + '.json', chargeToSave);
+            Util.writeFile('./temp/charges/' + Util.sanitizeFileName(chargeName) + '.json', chargeToSave);
         }
     }
 }

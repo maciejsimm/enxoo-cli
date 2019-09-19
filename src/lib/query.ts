@@ -4,7 +4,7 @@ import { Util } from './Util';
 export class Queries {
     private static isB2B;
 
-    public static setIsB2B(isB2B){
+    public static setIsB2B(isB2B: boolean){
         this.isB2B = isB2B;
     }
 
