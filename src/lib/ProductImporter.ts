@@ -106,7 +106,7 @@ export class ProductImporter {
   
       await Upsert.enableTriggers(conn);
       await Upsert.disableTriggers(conn);  
-  
+      Util.setDir(this.dir);
       await this.extractProduct(conn);
       await this.extractData(conn);
       await this.extractPricebooks();
@@ -365,7 +365,7 @@ export class ProductImporter {
         allPricebookEntriesTarget.forEach(pbeTarget => {this.pricebookEntryIds.push(pbeTarget['Id'])});
 
         for (let productName of this.productList){
-            let prdNames = await Util.matchFileNames(productName, this.dir);
+            let prdNames = await Util.matchFileNames(productName);
             productFileNameList = [...productFileNameList, ...prdNames];
         }
         // Collect all Ids' of products that will be inserted
@@ -402,12 +402,12 @@ export class ProductImporter {
 
     private async extractPricebooks() {
        // reading data for every pricebook
-       let dirNames = await Util.readDirNames('temp/pricebooks');
+       let dirNames = await Util.readDirNames('/pricebooks');
        let allPbes = [];
    
        for(let dirName of dirNames){
            if(dirName=== 'Standard Price Book' ){continue;}                        // <- to jest hardkod!!!
-           let pbes = await Util.readAllFiles('temp/pricebooks/' + dirName);
+           let pbes = await Util.readAllFiles('/pricebooks/' + dirName);
            allPbes.push(pbes);
        }
        
@@ -422,7 +422,7 @@ export class ProductImporter {
                this.pbes.push(...this.extractObjects(pbe['chargeElementPricebookEntries'], this.sourceProductIds, 'Product2'));
            }
        }    
-       let stdPbes = await Util.readAllFiles('temp/pricebooks/Standard Price Book');
+       let stdPbes = await Util.readAllFiles('/pricebooks/Standard Price Book');
        stdPbes.forEach(allstdpbe => {!this.isB2B ? Util.removeB2BFields(allstdpbe['stdEntries']) : null,
                                      this.stdPbes.push(...this.extractObjects(allstdpbe['stdEntries'], this.sourceProductIds, 'Product2'))});
 
@@ -432,11 +432,11 @@ export class ProductImporter {
 
     private async extractData(conn: core.Connection) {
         //  Read all other than pricebook and product objects from local store
-        const allCategories = await Util.readAllFiles('temp/categories');
-        let allCharges = await Util.readAllFiles('temp/charges');
-        let allAttributes = await Util.readAllFiles('temp/attributes');
-        let allAttributeSets = await Util.readAllFiles('temp/attributeSets');
-        let allPricebooks = await Util.readAllFiles('temp/pricebooks');
+        const allCategories = await Util.readAllFiles('/categories');
+        let allCharges = await Util.readAllFiles('/charges');
+        let allAttributes = await Util.readAllFiles('/attributes');
+        let allAttributeSets = await Util.readAllFiles('/attributeSets');
+        let allPricebooks = await Util.readAllFiles('/pricebooks');
         if(this.isB2B){
             await this.extractB2BObjects(conn);
         }
@@ -474,8 +474,8 @@ export class ProductImporter {
 
     private async extractB2BObjects(conn: core.Connection){
         //reading B2B objects from local store
-        let allProvisioningPlans = await Util.readAllFiles('./'+this.dir +'/provisioningPlans');
-        let allProvisioningTasks = await Util.readAllFiles('./'+this.dir +'/provisioningTasks');     
+        let allProvisioningPlans = await Util.readAllFiles('/provisioningPlans');
+        let allProvisioningTasks = await Util.readAllFiles('/provisioningTasks');     
         let planAssignmentsTarget = await Queries.queryProvisioningPlanAssignmentIds(conn);
         let taskAssignmentsTarget = await Queries.queryProvisioningTaskAssignmentIds(conn);
     

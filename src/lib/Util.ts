@@ -6,6 +6,12 @@ import * as fsExtra from 'fs-extra'
 
 export class Util {
 
+    private static dir;
+
+    public static setDir(dir: string){
+        this.dir = dir;
+    }
+    
 	public static throwError(msg: any) {
 		throw new core.SfdxError(msg, "Error", null, -1);
     }
@@ -96,7 +102,7 @@ export class Util {
     public static async readFile(directoryName: String, fileName: String) {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             let content;
-            fs.readFile('./' + directoryName + '/' + fileName, function read(err, data) {
+            fs.readFile('./'+this.dir + directoryName + '/' + fileName, function read(err, data) {
                 if (err) {
                     reject(err);
                 }
@@ -110,7 +116,7 @@ export class Util {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             let allFilePromiseArray = new Array<any>();
 
-            fs.readdir('./' + directoryName + '/', async (err, filenames) => {
+            fs.readdir('./' + this.dir + directoryName + '/', async (err, filenames) => {
                 if (err) {
                     throw err;
                 }
@@ -128,7 +134,7 @@ export class Util {
 
     public static async readDirNames(directoryName: String){
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-            fs.readdir('./' + directoryName + '/', async (err, filenames) => {
+            fs.readdir('./' + this.dir + directoryName + '/', async (err, filenames) => {
                 if (err) {
                     throw err;
                 }
@@ -139,9 +145,9 @@ export class Util {
             });            
     }
 
-    public static async matchFileNames(productName: string, dir: string){
+    public static async matchFileNames(productName: string){
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-            fs.readdir('./' + dir +'/products/' , async (err, filenames) => {
+            fs.readdir('./' + this.dir +'/products/' , async (err, filenames) => {
                 let fileNamesToResolve = filenames.filter(fileName => fileName.startsWith(productName));
                 if(!fileNamesToResolve[0] || err){
                     reject('Failed to find Product:'+ productName + err);
@@ -152,7 +158,7 @@ export class Util {
     }
 
     public static async writeFile(path:string, dataToSanitaze:any){
-        await fs.writeFile(path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {
+        await fs.writeFile('./' + this.dir + path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {
             if(err) {
                 return Util.log(err);
             }

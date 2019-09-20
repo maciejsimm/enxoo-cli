@@ -28,10 +28,10 @@ export class Queries {
             null,
             function (err, res) {
                 if (err) { 
-                    reject('error retrieving Std Pricebook Entry Ids: ' + err);
+                    reject('error retrieving standard Pricebook Entry Ids: ' + err);
                     return;
                 }
-                Util.log("--- Std Pricebook Entry Ids: " + res.records.length);
+                Util.log("--- standard Pricebook Entry Ids: " + res.records.length);
                 resolve(res.records);
             });
         })
@@ -90,7 +90,7 @@ export class Queries {
     })
 }
     public static async queryStdPricebookEntries(conn: core.Connection, productList: Set<String>): Promise<String[]> {
-        Util.log('--- exporting std pbe');
+        Util.log('--- exporting standard PricebookEntry');
         let queryString = this.isB2B 
         ? "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name IN ("
         : "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxCPQ__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name IN ("
@@ -98,8 +98,8 @@ export class Queries {
         conn.query(queryString + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element' AND IsActive = true", 
         null,
         function (err, res) {
-            if (err) reject('error retrieving std pricebook entries: ' + err);
-            Util.log("--- std pricebook entries: " + res.records.length);
+            if (err) reject('error retrieving standard pricebook entries: ' + err);
+            Util.log("--- standard pricebook entries: " + res.records.length);
             resolve(res.records);
         });
     })
@@ -131,7 +131,7 @@ public static async queryPricebookEntryCurrencies(conn: core.Connection, product
     })
     }
     public static async queryPricebookEntries(conn: core.Connection, productList: Set<String>): Promise<String[]> {
-        Util.log('--- exporting pbe');
+        Util.log('--- exporting PricebookEntry');
         let queryString = this.isB2B
         ? "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name IN ("
         : "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxCPQ__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name IN (";
@@ -197,7 +197,7 @@ public static async queryPricebookEntryCurrencies(conn: core.Connection, product
     }
 
     public static async queryAttributes(conn: core.Connection, attributeIds: Set<String>): Promise<String[]> {
-        Util.log('--- exporting attributes - ' + attributeIds.size);
+        Util.log('--- exporting attributes');
         if(attributeIds.size === 0){
             return;
         }
@@ -327,7 +327,7 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
     }
 
     public static async queryProvisioningPlanAssigns(conn: core.Connection, productList: Set<String>): Promise<String[]> {
-        Util.log('--- exporting provisioning plan assignments ');
+        Util.log('--- exporting provisioning plan assignments');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
 
             conn.query("SELECT enxB2B__Active__c, enxB2B__Criteria__c, enxB2B__Item_Action__c, enxB2B__Order__c, enxB2B__Product__r.enxCPQ__TECH_External_Id__c, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__TECH_External_ID__c FROM enxB2B__ProvisioningPlanAssignment__c WHERE enxB2B__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxB2B__Order__c", 
@@ -340,7 +340,7 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
     }
 
     public static async queryCategories(conn: core.Connection, categoryIds: Set<String>): Promise<String[]> {
-        Util.log('--- exporting categories - ' + categoryIds.size);
+        Util.log('--- exporting categories');
         if(categoryIds.size ===0){
             return;
         }
@@ -356,7 +356,7 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
     }
 
     public static async queryAttributeValues(conn: core.Connection, attributeIds: Set<String>): Promise<String[]> {
-        Util.log('--- exporting product attribute values ');
+        Util.log('--- exporting product attribute values');
         if(attributeIds.size === 0){
             return;
         }
@@ -371,7 +371,7 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
         });
     }
     public static async queryAttributeSets(conn: core.Connection, attributeSetIds: Set<String>): Promise<String[]> {
-        Util.log('--- exporting attributes sets - ' + attributeSetIds.size);
+        Util.log('--- exporting attributes sets - ');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             
             conn.query("SELECT Name, enxCPQ__Description__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeSet__c ", 
@@ -461,12 +461,12 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
         let queryString = this.isB2B
         ? "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN ("
         : "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxCPQ__OTC_List__c, Pricebook2Id, Product2Id, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN ("
-        Util.log('--- exporting Charge Elements Std Entries ');
+        Util.log('--- exporting Charge Elements standard PricebookEntry ');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query(queryString + Util.setToIdString(productList) + ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true", 
         null,
         function(err, res) {
-            if (err) reject('error retrieving Charge Elements Std Entries: ' + err);
+            if (err) reject('error retrieving Charge Elements standard PricebookEntry: ' + err);
             
             resolve(res.records);
         });
@@ -489,21 +489,21 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
     })    
     }
     public static async bulkQueryChargeElementStdPricebookEntries (conn: core.Connection, productList: String): Promise<String[]> {
-        Util.log('--- exporting charge element std pricebook entries ');
+        Util.log('--- exporting charge element standard pricebook entries ');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + productList + ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true")
             .on('record', function(rec) { 
                 if (records.length % 100 == 0) {
-                    process.stdout.write("--- querying charge element std pricebook entries. Retrieved: " + records.length + " records\r");
+                    process.stdout.write("--- querying charge element standard pricebook entries. Retrieved: " + records.length + " records\r");
                 }
                 records.push(rec);
             })
             .on('error', function(err) { 
-                reject('error retrieving charge element std pricebook entries ' + err); 
+                reject('error retrieving charge element standard pricebook entries ' + err); 
             })
             .on('end', function(info) { 
-                Util.log("--- charge element std pricebook entries: " + records.length + "        ");
+                Util.log("--- charge element standard pricebook entries: " + records.length + "        ");
                 resolve(records); 
                 
             });
@@ -641,33 +641,33 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
     })
     }
     public static async bulkQueryStdPricebookEntryIds (conn: core.Connection): Promise<string> {
-        Util.log('--- exporting std pbe ids ');
+        Util.log('--- exporting standard PricebookEntry ids ');
         return new Promise<string>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query("SELECT Id FROM PricebookEntry WHERE Pricebook2Id != null AND Pricebook2.IsStandard = true AND product2.isactive = true AND Product2.RecordType.Name = 'Charge Element'")
             .on('record', function(rec) { 
                 if (records.length % 100 == 0) {
-                    Util.log("--- querying std pbe ids. Retrieved: " + records.length + " records\r");
+                    Util.log("--- querying standard PricebookEntry ids. Retrieved: " + records.length + " records\r");
                 }
                 records.push(rec);
             })
             .on('error', function(err) { 
-                reject('error retrieving std pbe ids ' + err);  
+                reject('error retrieving standard PricebookEntry ids ' + err);  
             })
             .on('end', function(info) { 
-                Util.log("--- querying std pbe ids completed. Retrieved: " + records.length + "                                ");
+                Util.log("--- querying standard PricebookEntry ids completed. Retrieved: " + records.length + "                                ");
                 resolve(records); 
             });
     })
     }
     public static async bulkQueryPricebookEntryIds (conn: core.Connection): Promise<string> {
-        Util.log('--- exporting  pbe ids ');
+        Util.log('--- exporting  PricebookEntry ids ');
         return new Promise<string>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query("SELECT Id FROM PricebookEntry WHERE Pricebook2Id != null AND Pricebook2.IsStandard = false AND product2.isactive = true AND Product2.RecordType.Name = 'Charge Element'")
             .on('record', function(rec) { 
                 if (records.length % 100 == 0) {
-                    Util.log("--- querying pbe ids. Retrieved: " + records.length + " records\r");
+                    Util.log("--- querying PricebookEntry ids. Retrieved: " + records.length + " records\r");
                 }
                 records.push(rec);
             })
@@ -675,7 +675,7 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
                 reject(err); 
             })
             .on('end', function(info) { 
-                Util.log("--- querying pbe ids completed. Retrieved: " + records.length + "                                ");
+                Util.log("--- querying PricebookEntry ids completed. Retrieved: " + records.length + "                                ");
                 resolve(records); 
             });
     })

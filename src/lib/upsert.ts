@@ -177,11 +177,11 @@ export class Upsert {
     public static async insertBulkPricebookEntries(conn, data)  {
         this.sanitize(data);
         this.fixIds(data);
-        Util.log("---inserting pbe " + data.length);
+        Util.log("---inserting PricebookEntry " + data.length);
         return new Promise((resolve, reject) => {
             if (data.length === 0) resolve(); // temporary workaround to eliminate blocker
             conn.bulk.load("PricebookEntry", "insert", data, function(err, rets) {
-                if (err) { reject('error creating pbe' + err); }
+                if (err) { reject('error creating PricebookEntry' + err); }
                     let successCount = 0;
                     let errorsCount = 0;
                     if(rets){
@@ -193,7 +193,7 @@ export class Upsert {
                                 errorsCount++;
                              }       
                          if(i===rets.length-1){
-                             Util.log("--- Pbe insert success: " + successCount + " errors: " + errorsCount + "\r");
+                             Util.log("--- PricebookEntry insert success: " + successCount + " errors: " + errorsCount + "\r");
                 }}}
                 resolve();
             });
