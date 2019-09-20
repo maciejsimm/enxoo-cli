@@ -100,13 +100,15 @@ export class ProductImporter {
         this.provisioningTaskIds = new Set<String>();
     }
     
-    public async all(conn: core.Connection) {       
-        
-      conn.setMaxListeners(100);
-  
+    public async all(conn: core.Connection) { 
+      conn.setMaxListeners(100);      
+      Util.setDir(this.dir);
+      
+      if(this.productList[0] === '*ALL'){
+          this.productList = await Util.retrieveAllFileName();
+      }
       await Upsert.enableTriggers(conn);
       await Upsert.disableTriggers(conn);  
-      Util.setDir(this.dir);
       await this.extractProduct(conn);
       await this.extractData(conn);
       await this.extractPricebooks();

@@ -7,6 +7,18 @@ export class Queries {
     public static setIsB2B(isB2B: boolean){
         this.isB2B = isB2B;
     }
+    public static async queryAllProductNames(conn: core.Connection): Promise<Set<string>> {
+        Util.log('--- querying all Product Names');
+        return new Promise<Set<string>>((resolve: Function, reject: Function) => {
+        conn.query("SELECT Name FROM Product2 WHERE RecordType.Name = 'Product' OR RecordType.Name = 'Bundle'", 
+        null,
+        function (err, res) {
+            if (err) reject('error querying all Product Names: ' + err);
+            Util.log("--- all Product Names: " + res.records.length);
+            resolve(res.records);
+        });
+    })
+    }
 
     public static async queryRecordTypes(conn: core.Connection): Promise<String[]> {
         Util.log('--- exporting record Types');
@@ -22,7 +34,7 @@ export class Queries {
     }
 
     public static async queryStdPricebookEntryIds(conn: core.Connection, productList: Set<String>): Promise<String[]> {
-        Util.log('--- exporting STD Pricebook Entry Ids');
+        Util.log('--- exporting standard Pricebook Entry Ids');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Id FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2Id != null AND Pricebook2.IsStandard = true AND product2.isactive = true AND IsActive = true", 
             null,

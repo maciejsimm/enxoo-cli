@@ -49,8 +49,14 @@ export class ProductExporter {
         this.productList = products;
     }
 
-    public async all(conn: core.Connection) {     
-        // Util.removeDir(this.dir);    <- ziom nie usuwaj katalogu
+    public async all(conn: core.Connection) {
+        if(this.productList[0] === '*ALL'){
+            this.productList = new Set<string>();
+            let productList = await Queries.queryAllProductNames(conn);
+            for(let product of productList){
+                this.productList.add(product['Name']);
+            }
+        }
         Util.setDir(this.dir)
         Queries.setIsB2B(this.isB2B);
         await this.retrievePriceBooks(conn, this.productList);
@@ -97,6 +103,7 @@ export class ProductExporter {
            product.attributeDefaultValues = new Array<any>();
            product.attributeValueDependencies = new Array<any>();
            product.attributeRules = new Array<any>();
+           product.productRelationships = new Array<any>();
 
            options.filter(option => option['enxCPQ__Parent_Product__r'] && option['enxCPQ__Parent_Product__r'][techId]===defTechId)
                   .forEach(option=> {product.options.push(option)}); 
@@ -305,9 +312,9 @@ export class ProductExporter {
             
             chargeElements.filter(chargeElement => chargeElement['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
                           .forEach(chargeElementToSave=>{ chargeElementsToSave.push(chargeElementToSave)});
-      
-             chargeTiers.filter(chargeTier => chargeTier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
-                        .forEach(chargeTierToSave=>{ chargeTiersToSave.push(chargeTierToSave)});              
+
+            chargeTiers.filter(chargeTier => chargeTier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
+                       .forEach(chargeTierToSave=>{ chargeTiersToSave.push(chargeTierToSave)});              
 
             chargeToSave.chargeElements = chargeElementsToSave;
             chargeToSave.chargeTier = chargeTiersToSave;

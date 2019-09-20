@@ -156,6 +156,14 @@ export class Util {
             });   
         });            
     }
+    public static async retrieveAllFileName(){
+        let allProducts = await this.readAllFiles('/products');
+        let allProductsNames = new Set<string>();
+
+        allProducts.forEach(product => allProductsNames.add(product['root']['Name']));
+
+        return allProductsNames;
+    }
 
     public static async writeFile(path:string, dataToSanitaze:any){
         await fs.writeFile('./' + this.dir + path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {
@@ -196,4 +204,6 @@ export class Util {
     public static sanitizeFileName(fileName: string){
         return fileName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g,'_');
     }
+
+
 }

@@ -52,7 +52,7 @@ export default class Org extends SfdxCommand {
     const b2b = this.flags.b2b;
     const dir = this.flags.dir;
 
-    this.ux.log('*** Import Begin ***');
+    this.ux.log('*** Begin Importing ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
 
     const exporter = new ProductImporter(products, b2b, dir);
     await exporter.all(conn);
