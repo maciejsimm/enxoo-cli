@@ -7,17 +7,42 @@ export class Queries {
     public static setIsB2B(isB2B: boolean){
         this.isB2B = isB2B;
     }
-    public static async queryAllProductNames(conn: core.Connection): Promise<Set<string>> {
+    public static async queryAllProductNames(conn: core.Connection):Promise<String[]> {
         Util.log('--- querying all Product Names');
-        return new Promise<Set<string>>((resolve: Function, reject: Function) => {
+        return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Name FROM Product2 WHERE RecordType.Name = 'Product' OR RecordType.Name = 'Bundle'", 
         null,
         function (err, res) {
             if (err) reject('error querying all Product Names: ' + err);
-            Util.log("--- all Product Names: " + res.records.length);
-            resolve(res.records);
+            if(res.records.length<200){
+               Util.log("--- all Product Names: " + res.records.length);
+               resolve(res.records);
+            }else{
+                resolve(["useBulkApi"]);
+            }
         });
     })
+    }
+
+    public static async bulkQueryAllProductNames(conn: core.Connection):  Promise<String[]> {
+        Util.log('--- bulk querying all Product Names');
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query("SELECT Name FROM Product2 WHERE RecordType.Name = 'Product' OR RecordType.Name = 'Bundle'")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying all Product Names. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving all Product Names ' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying all Product Names completed. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
     }
 
     public static async queryRecordTypes(conn: core.Connection): Promise<String[]> {
@@ -111,9 +136,37 @@ export class Queries {
         null,
         function (err, res) {
             if (err) reject('error retrieving standard pricebook entries: ' + err);
-            Util.log("--- standard pricebook entries: " + res.records.length);
-            resolve(res.records);
+            if (res.records.length < 200){
+                Util.log("--- standard pricebook entries: " + res.records.length);
+                resolve(res.records);
+            }
+            else{
+                resolve(["useBulkApi"]);
+            }
         });
+    })
+}
+public static async bulkQueryStdPricebookEntries(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+    Util.log('--- bulk exporting standard PricebookEntry');
+    let queryString = this.isB2B 
+    ? "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name IN ("
+    : "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxCPQ__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name IN ("
+    return new  Promise<String[]>((resolve: Function, reject: Function) => {
+        var records = []; 
+        conn.bulk.query(queryString + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element' AND IsActive = true")
+            .on('record', function(rec) { 
+                if (records.length % 100 == 0) {
+                    Util.log("--- querying standard PricebookEntry. Retrieved: " + records.length + " records\r");
+                }
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving standard PricebookEntry' + err);  
+            })
+            .on('end', function(info) { 
+                Util.log("--- querying standard PricebookEntry completed. Retrieved: " + records.length + "                                ");
+                resolve(records); 
+            });
     })
 }
 
@@ -124,10 +177,35 @@ public static async queryPricebookEntryCurrencies(conn: core.Connection, product
     null,
     function (err, res) {
         if (err) reject('error retrieving pricebook entry currencies: ' + err);
-        Util.log("--- pricebook entry currencies: " + res.records.length);
-        resolve(res.records);
+        if(res.records.length < 200){
+           Util.log("--- pricebook entry currencies: " + res.records.length);
+           resolve(res.records);
+        }else{
+            resolve(["useBulkApi"]);
+        }
     });
 })
+}
+
+public static async bulkQueryPricebookEntryCurrencies(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+    Util.log('--- bulk exporting  pricebook entry currencies');
+    return new  Promise<String[]>((resolve: Function, reject: Function) => {
+        var records = []; 
+        conn.bulk.query("SELECT Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND (IsActive = true OR Pricebook2.IsStandard = true)")
+            .on('record', function(rec) { 
+                if (records.length % 100 == 0) {
+                    Util.log("--- querying pricebook entry currencies. Retrieved: " + records.length + " records\r");
+                }
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving pricebook entry currencies' + err);  
+            })
+            .on('end', function(info) { 
+                Util.log("--- querying pricebook entry currencies completed. Retrieved: " + records.length + "                                ");
+                resolve(records); 
+            });
+    })
 }
 
     public static async queryPricebooks(conn: core.Connection): Promise<String[]> {
@@ -137,11 +215,37 @@ public static async queryPricebookEntryCurrencies(conn: core.Connection, product
         null,
         function (err, res) {
             if (err) reject('error retrieving pricebooks: ' + err);
-            Util.log("--- pricebooks: " + res.records.length);
-            resolve(res.records);
+            if(res.records.length < 200){
+               Util.log("--- pricebooks: " + res.records.length);
+               resolve(res.records);
+            }else{
+                resolve(["useBulkApi"]);
+            }
         });
     })
     }
+
+    public static async bulkQueryPricebooks(conn: core.Connection): Promise<String[]> {
+        Util.log('--- bulk exporting pricebooks');
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query("SELECT IsStandard, Name, IsActive, Description, enxCPQ__Master__c, enxCPQ__Reference_Master_field__c, enxCPQ__TECH_External_Id__c, enxCPQ__Use_UnitPrice__c, enxCPQ__Valid_From__c, enxCPQ__Valid_To__c FROM Pricebook2 WHERE IsActive = true OR IsStandard = true")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying pricebooks. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving pricebooks ' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying pricebooks completed. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
+    }
+
     public static async queryPricebookEntries(conn: core.Connection, productList: Set<String>): Promise<String[]> {
         Util.log('--- exporting PricebookEntry');
         let queryString = this.isB2B
@@ -152,11 +256,40 @@ public static async queryPricebookEntryCurrencies(conn: core.Connection, product
         null,
         function (err, res) {
             if (err) reject('error retrieving pricebook entries: ' + err);
-            Util.log("--- pricebook entries: " + res.records.length);
-            resolve(res.records);
+            if (res.records.length < 200){
+                Util.log("--- pricebook entries: " + res.records.length);
+                resolve(res.records)
+            }else{
+                resolve(["useBulkApi"]);
+            }
         });
     })
     }
+
+    public static async bulkQueryPricebookEntries(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+        Util.log('--- bulk exporting PricebookEntry');
+        let queryString = this.isB2B
+        ? "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name IN ("
+        : "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxCPQ__OTC_List__c, Pricebook2Id, enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c, Product2Id, UseStandardPrice FROM PricebookEntry WHERE (Product2.Name IN (";
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query(queryString + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element' AND IsActive = true")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying PricebookEntry. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving PricebookEntry' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying PricebookEntry completed. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
+    }
+
     public static async queryProduct(conn: core.Connection, productList: Set<String>): Promise<String[]> {
         Util.log('--- exporting product');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
@@ -165,9 +298,36 @@ public static async queryPricebookEntryCurrencies(conn: core.Connection, product
             function (err, res) {
                 if (err) {reject('Failed to retrieve product: ' + productList + '. Error: ' + err)};
                 if(res.records.length === 0) {reject('Failed to retrieve products. Check if every product exist on source env')};
-                resolve(res.records);
+                if (res.records.length < 200){
+                    Util.log("--- product: " + res.records.length);
+                    resolve(res.records);
+                }
+                else{
+                    resolve(["useBulkApi"]);
+                }
             });
         });
+    }
+
+    public static async bulkQueryProduct(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+        Util.log('--- bulk exporting product');
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Column_Dimension__c, enxCPQ__Column_Value__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Pricing_Method__c, enxCPQ__Row_Dimension__c, enxCPQ__Row_Value__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c,enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, enxCPQ__Save_Before_Calculation__c,  RecordType.Name, enxCPQ__Dimension_1__c, enxCPQ__Dimension_1_Numeric__c, enxCPQ__Dimension_2__c, enxCPQ__Dimension_2_Numeric__c, enxCPQ__Dimension_3__c, enxCPQ__Dimension_3_Numeric__c, enxCPQ__Dimension_4__c, enxCPQ__Dimension_4_Numeric__c, enxCPQ__Dimension_5__c, enxCPQ__Dimension_5_Numeric__c, enxCPQ__Sorting_Order__c FROM Product2 WHERE Name IN (" + Util.setToIdString(productList) + ")")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying product. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving product' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying product completed. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
     }
 
     public static async queryProductAttributes(conn: core.Connection, productList: Set<String>): Promise<String[]> {
@@ -177,10 +337,38 @@ public static async queryPricebookEntryCurrencies(conn: core.Connection, product
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve product attributes:  Error: ' + err);
-                resolve(res.records);
+                if (res.records.length < 200){
+                    Util.log("--- product attributes: " + res.records.length);
+                    resolve(res.records);
+                }
+                else{
+                    resolve(["useBulkApi"]);
+                }
             });
         });
     }
+
+    public static async bulkQueryProductAttributes(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+        Util.log('--- bulk exporting product attributes');
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query("SELECT Name, enxCPQ__Active__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Option_Affecting__c, enxCPQ__Order__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product_Field_to_Update__c, RecordType.Name, enxCPQ__Role__c, enxCPQ__TECH_External_Id__c, enxCPQ__Value_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Value_Boolean__c, enxCPQ__Value_Currency__c, enxCPQ__Value_Date__c, enxCPQ__Value_Number__c, enxCPQ__Value_Percent__c, enxCPQ__Value_Text_Long__c, enxCPQ__Value_Text_Short__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__ProductAttribute__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Order__c")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying product attributes. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving product attributes' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying product attributes completed. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
+    }
+
     public static async queryProductOptions(conn: core.Connection, productList: Set<String>): Promise<String[]> {
         Util.log('--- exporting product options ');
 
@@ -189,9 +377,37 @@ public static async queryPricebookEntryCurrencies(conn: core.Connection, product
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve options. Error: ' + err);
-                resolve(res.records);
+                if (res.records.length < 200){
+                    Util.log("--- options: " + res.records.length);
+                    resolve(res.records);
+                }
+                else{
+                    resolve(["useBulkApi"]);
+                }
             });
         });
+    }
+
+    public static async bulkQueryProductOptions(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+        Util.log('--- bulk exporting product options ');
+
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Column_Dimension__c, enxCPQ__Column_Value__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Pricing_Method__c, enxCPQ__Row_Dimension__c, enxCPQ__Row_Value__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, enxCPQ__Save_Before_Calculation__c, RecordType.Name, enxCPQ__Dimension_1__c, enxCPQ__Dimension_1_Numeric__c, enxCPQ__Dimension_2__c, enxCPQ__Dimension_2_Numeric__c, enxCPQ__Dimension_3__c, enxCPQ__Dimension_3_Numeric__c, enxCPQ__Dimension_4__c, enxCPQ__Dimension_4_Numeric__c, enxCPQ__Dimension_5__c, enxCPQ__Dimension_5_Numeric__c FROM Product2 WHERE RecordType.Name = 'Option' AND enxCPQ__Parent_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Sorting_Order__c")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying options. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving options' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying options completed. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
     }
 
     public static async queryAttributeSetAttributes(conn: core.Connection, attributeSetIds: Set<String>): Promise<String[]> {
@@ -201,11 +417,38 @@ public static async queryPricebookEntryCurrencies(conn: core.Connection, product
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve attribute set attributes. Error: ' + err);
-                if( attributeSetIds.size === 0) resolve("");
-                resolve(res.records);
+                if( attributeSetIds.size === 0) resolve([""]);
+                if (res.records.length < 200){
+                    Util.log("--- attribute set attributes: " + res.records.length);
+                    resolve(res.records);
+                }
+                else{
+                    resolve(["useBulkApi"]);
+                }
             });
 
         });
+    }
+
+    public static async bulkQueryAttributeSetAttributes(conn: core.Connection): Promise<String[]> {
+        Util.log('--- bulk exporting attributes set attributes ');
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query("SELECT Name, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeSetAttribute__c ORDER BY enxCPQ__Order__c ")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying attribute set attributes. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving attribute set attributes' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying attribute set attributes completed. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
     }
 
     public static async queryAttributes(conn: core.Connection, attributeIds: Set<String>): Promise<String[]> {
@@ -219,21 +462,74 @@ public static async queryPricebookEntryCurrencies(conn: core.Connection, product
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve attributes. Error: ' + err);
-                resolve(res.records);
+                if (res.records.length < 200){
+                    Util.log("--- attributes: " + res.records.length);
+                    resolve(res.records);
+                }
+                else{
+                    resolve(["useBulkApi"]);
+                }
             });
         });
     }
 
+    public static async bulkQueryAttributes(conn: core.Connection, attributeIds: Set<String>): Promise<String[]> {
+        Util.log('--- bulk exporting attributes');
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query("SELECT Name, enxCPQ__Active__c, enxCPQ__Decimal_Places__c, enxCPQ__Description__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_PL__c, enxCPQ__Display_Disabled__c,enxCPQ__Display_in_Configurator__c, enxCPQ__Display_not_for_Item_Action__c, enxCPQ__Display_not_for_Profile__c, enxCPQ__Display_not_on_Quote_Stage__c, enxCPQ__Display_on_Configuration_Description__c, enxCPQ__Editable_not_for_Item_Action__c, enxCPQ__Editable_not_for_Profile__c, enxCPQ__Editable_not_on_Quote_Stage__c, enxCPQ__Helptext__c, enxCPQ__Item_Field_Type__c, enxCPQ__Lookup_Field__c, enxCPQ__Lookup_Field_Query__c, enxCPQ__Lookup_Filters__c, enxCPQ__Lookup_Object__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, enxCPQ__Product_Field_to_Update__c, enxCPQ__Required__c, enxCPQ__Required_on_Quote_Stage__c, enxCPQ__Source_Field_Cart__c, enxCPQ__Source_Field__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__Type__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__Attribute__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying attributes. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving attributes' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying attributes completed. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
+    }
 
     public static async queryProvisioningTasks(conn: core.Connection): Promise<String[]> {
         Util.log('--- exporting provisioning tasks ');
+
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Name, enxB2B__Apex_handler_reference__c, enxB2B__Automated_Task_Type__c, enxB2B__Description__c, enxB2B__TECH_External_Id__c, enxB2B__Type__c  FROM enxB2B__ProvisioningTask__c",null, function(err, res) {
             if (err) reject('error retrieving provisioning tasks: ' + err);
-            Util.log("--- provisioning tasks: " + res.records.length);
-            resolve(res.records);
-        });
+            if(res.records.length<200){
+                Util.log("--- provisioning tasks: " + res.records.length);
+                resolve(res.records);
+            }else{
+                resolve(["useBulkApi"]);
+                }
+            });
     });
+}
+
+public static async bulkQueryProvisioningTasks(conn: core.Connection): Promise<String[]> {
+    Util.log('--- bulk exporting provisioning tasks ');
+    
+    return new Promise<string[]>((resolve: Function, reject: Function) => {
+        var records = []; 
+        conn.bulk.query("SELECT Name, enxB2B__Apex_handler_reference__c, enxB2B__Automated_Task_Type__c, enxB2B__Description__c, enxB2B__TECH_External_Id__c, enxB2B__Type__c  FROM enxB2B__ProvisioningTask__c")
+            .on('record', function(rec) { 
+                if (records.length % 100 == 0) {
+                    Util.log("--- querying provisioning tasks. Retrieved: " + records.length + " records\r");
+                }
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving provisioning tasks ' + err);  
+            })
+            .on('end', function(info) { 
+                Util.log("--- querying provisioning tasks completed. Retrieved: " + records.length + "                                ");
+                resolve(records); 
+            });
+    })
 }
 
     public static async queryProvisioningPlans(conn: core.Connection): Promise<String[]> {
@@ -241,26 +537,78 @@ public static async queryPricebookEntryCurrencies(conn: core.Connection, product
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Name, enxB2B__Support_Plan__c, enxB2B__TECH_External_Id__c FROM enxB2B__ProvisioningPlan__c", null, function(err, res) {
             if (err) reject('error retrieving provisioning plans: ' + err);
-            Util.log("--- provisioning plans: " + res.records.length);
-            resolve(res.records);
+            if (res.records.length < 200){
+                Util.log("--- provisioning plans: " + res.records.length);
+                resolve(res.records);
+            }
+            else{
+                resolve(["useBulkApi"]);
+            }
         });
     });
+}
+
+public static async bulkQueryProvisioningPlans(conn: core.Connection): Promise<String[]> {
+    Util.log('--- bulk exporting provisioning plans');
+    return new  Promise<String[]>((resolve: Function, reject: Function) => {
+        var records = []; 
+        conn.bulk.query("SELECT Name, enxB2B__Support_Plan__c, enxB2B__TECH_External_Id__c FROM enxB2B__ProvisioningPlan__c")
+            .on('record', function(rec) { 
+                if (records.length % 100 == 0) {
+                    Util.log("--- querying provisioning plans. Retrieved: " + records.length + " records\r");
+                }
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving provisioning plans' + err);  
+            })
+            .on('end', function(info) { 
+                Util.log("--- querying provisioning plans completed. Retrieved: " + records.length + "                                ");
+                resolve(records); 
+            });
+    })
 }
     public static async  queryProductCharges(conn: core.Connection, productList: Set<String>): Promise<String[]> {
          Util.log('--- exporting product charges ');
          return new Promise<String[]>((resolve: Function, reject: Function) => {
-
          conn.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Column_Dimension__c, enxCPQ__Column_Value__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Pricing_Method__c, enxCPQ__Row_Dimension__c, enxCPQ__Row_Value__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, enxCPQ__Save_Before_Calculation__c, RecordType.Name, enxCPQ__Dimension_1__c, enxCPQ__Dimension_1_Numeric__c, enxCPQ__Dimension_2__c, enxCPQ__Dimension_2_Numeric__c, enxCPQ__Dimension_3__c, enxCPQ__Dimension_3_Numeric__c, enxCPQ__Dimension_4__c, enxCPQ__Dimension_4_Numeric__c, enxCPQ__Dimension_5__c, enxCPQ__Dimension_5_Numeric__c FROM Product2 WHERE RecordType.Name = 'Charge' AND (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Charge_Reference__c !=null)  ORDER BY enxCPQ__Sorting_Order__c", 
          null,
          function (err, res) {
             if (err) reject('Failed to retrieve charges error: ' + err);
             Util.log('fin charges');
-            resolve(res.records);
+            if (res.records.length < 200){
+                Util.log("--- charges: " + res.records.length);
+                resolve(res.records);
+            }
+            else{
+                resolve(["useBulkApi"]);
+            }
         });
     });
 }
 
-public static async  queryProductChargesIds(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+public static async  bulkQueryProductCharges(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+    Util.log('--- bulk exporting product charges ');
+    return new  Promise<String[]>((resolve: Function, reject: Function) => {
+        var records = []; 
+        conn.bulk.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Column_Dimension__c, enxCPQ__Column_Value__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Pricing_Method__c, enxCPQ__Row_Dimension__c, enxCPQ__Row_Value__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, enxCPQ__Save_Before_Calculation__c, RecordType.Name, enxCPQ__Dimension_1__c, enxCPQ__Dimension_1_Numeric__c, enxCPQ__Dimension_2__c, enxCPQ__Dimension_2_Numeric__c, enxCPQ__Dimension_3__c, enxCPQ__Dimension_3_Numeric__c, enxCPQ__Dimension_4__c, enxCPQ__Dimension_4_Numeric__c, enxCPQ__Dimension_5__c, enxCPQ__Dimension_5_Numeric__c FROM Product2 WHERE RecordType.Name = 'Charge' AND (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Charge_Reference__c !=null)  ORDER BY enxCPQ__Sorting_Order__c")
+            .on('record', function(rec) { 
+                if (records.length % 100 == 0) {
+                    Util.log("--- querying charges. Retrieved: " + records.length + " records\r");
+                }
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving charges' + err);  
+            })
+            .on('end', function(info) { 
+                Util.log("--- querying charges completed. Retrieved: " + records.length + "                                ");
+                resolve(records); 
+            });
+    })
+}
+
+public static async queryProductChargesIds(conn: core.Connection, productList: Set<String>): Promise<String[]> {
     Util.log('--- exporting product charges ids');
     return new Promise<String[]>((resolve: Function, reject: Function) => {
 
@@ -268,11 +616,37 @@ public static async  queryProductChargesIds(conn: core.Connection, productList: 
     null,
     function (err, res) {
        if (err) reject('Failed to retrieve charges ids. Error: ' + err);
-       Util.log('fin charges ids');
-       resolve(res.records);
+       if (res.records.length < 200){
+        Util.log("--- product charges ids: " + res.records.length);
+        resolve(res.records);
+    }
+    else{
+        resolve(["useBulkApi"]);
+    }
    });
 });
 }
+public static async bulkQueryProductChargesIds(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+    Util.log('--- bulk exporting product charges ids');
+    return new  Promise<String[]>((resolve: Function, reject: Function) => {
+        var records = []; 
+        conn.bulk.query("SELECT enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c FROM Product2 WHERE RecordType.Name = 'Charge' AND enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Sorting_Order__c")
+            .on('record', function(rec) { 
+                if (records.length % 100 == 0) {
+                    Util.log("--- querying product charges ids. Retrieved: " + records.length + " records\r");
+                }
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving product charges ids' + err);  
+            })
+            .on('end', function(info) { 
+                Util.log("--- querying product charges ids completed. Retrieved: " + records.length + "                                ");
+                resolve(records); 
+            });
+    })
+}
+
     public static async queryProductAttributeValues(conn: core.Connection, productList: Set<String>): Promise<String[]> {
        Util.log('--- exporting product attribute values ');
        return new Promise<String[]>((resolve: Function, reject: Function) => {
@@ -280,10 +654,37 @@ public static async  queryProductChargesIds(conn: core.Connection, productList: 
            conn.query("SELECT Name, enxCPQ__Active__c, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c, enxCPQ__TECH_Definition_Id__c FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = false AND enxCPQ__Exclusive_for_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Order__c", 
            null,
            function (err, res) {
-               if (err) reject('Failed to retrieve product attribute values. Error: ' + err);
-               resolve(res.records);
+            if (err) reject('Failed to retrieve product attribute values. Error: ' + err);
+            if (res.records.length < 200){
+                Util.log("--- product attribute values: " + res.records.length);
+                resolve(res.records);
+            }
+            else{
+                resolve(["useBulkApi"]);
+            }
            });
        });
+}
+
+public static async bulkQueryProductAttributeValues(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+    Util.log('--- bulk exporting product attribute values ');
+    return new  Promise<String[]>((resolve: Function, reject: Function) => {
+        var records = []; 
+        conn.bulk.query("SELECT Name, enxCPQ__Active__c, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c, enxCPQ__TECH_Definition_Id__c FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = false AND enxCPQ__Exclusive_for_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Order__c")
+            .on('record', function(rec) { 
+                if (records.length % 100 == 0) {
+                    Util.log("--- querying product attribute values. Retrieved: " + records.length + " records\r");
+                }
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving product attribute values' + err);  
+            })
+            .on('end', function(info) { 
+                Util.log("--- querying product attribute values completed. Retrieved: " + records.length + "                                ");
+                resolve(records); 
+            });
+    })
 }
 
 public static async queryAttributeDefaultValues(conn: core.Connection, productList: Set<String>): Promise<String[]> {
@@ -294,9 +695,36 @@ public static async queryAttributeDefaultValues(conn: core.Connection, productLi
         null,
         function (err, res) {
             if (err) reject('Failed to retrieve attribute default values. Error: ' + err);
-            resolve(res.records);
+            if (res.records.length < 200){
+                Util.log("--- attribute default values: " + res.records.length);
+                resolve(res.records);
+            }
+            else{
+                resolve(["useBulkApi"]);
+            }
         });
     });
+}
+
+public static async bulkQueryAttributeDefaultValues(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+    Util.log('--- bulk exporting attribute default values ');
+    return new  Promise<String[]>((resolve: Function, reject: Function) => {
+        var records = []; 
+        conn.bulk.query("SELECT enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Value_Text__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeDefaultValue__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__TECH_External_Id__c")
+            .on('record', function(rec) { 
+                if (records.length % 100 == 0) {
+                    Util.log("--- querying attribute default values. Retrieved: " + records.length + " records\r");
+                }
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving attribute default values' + err);  
+            })
+            .on('end', function(info) { 
+                Util.log("--- querying attribute default values completed. Retrieved: " + records.length + "                                ");
+                resolve(records); 
+            });
+    })
 }
 
 public static async queryProductRelationships(conn: core.Connection, productList: Set<String>): Promise<String[]> {
@@ -307,11 +735,37 @@ public static async queryProductRelationships(conn: core.Connection, productList
         null,
         function (err, res) {
             if (err) reject('Failed to retrieve product relationships. Error: ' + err);
-            resolve(res.records);
+            if (res.records.length < 200){
+                Util.log("--- product relationships: " + res.records.length);
+                resolve(res.records);
+            }
+            else{
+                resolve(["useBulkApi"]);
+            }
         });
     });
 }
 
+public static async bulkQueryProductRelationships(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+    Util.log('--- bulk exporting product relationships ');
+    return new  Promise<String[]>((resolve: Function, reject: Function) => {
+        var records = []; 
+        conn.bulk.query("SELECT Name, enxCPQ__Max_Occurrences__c, enxCPQ__Min_Occurrences__c, enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Relationship_Type__c, enxCPQ__Secondary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__ProductRelationship__c WHERE enxCPQ__Primary_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND enxCPQ__Secondary_Product__c != null")
+            .on('record', function(rec) { 
+                if (records.length % 100 == 0) {
+                    Util.log("--- querying product relationships. Retrieved: " + records.length + " records\r");
+                }
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving product relationships ' + err);  
+            })
+            .on('end', function(info) { 
+                Util.log("--- querying product relationships completed. Retrieved: " + records.length + "                                ");
+                resolve(records); 
+            });
+    })
+}
 
 public static async queryAttributeValueDependencies(conn: core.Connection, productList: Set<String>): Promise<String[]> {
     Util.log('--- exporting attribute value dependency ');
@@ -321,9 +775,36 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
         null,
         function (err, res) {
             if (err) reject('Failed to retrieve attribute value dependency. Error: ' + err);
-            resolve(res.records);
+            if (res.records.length < 200){
+                Util.log("--- attribute value dependency: " + res.records.length);
+                resolve(res.records);
+            }
+            else{
+                resolve(["useBulkApi"]);
+            }
         });
     });
+}
+
+public static async bulkQueryAttributeValueDependencies(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+    Util.log('--- bulk exporting attribute value dependency ');
+    return new  Promise<String[]>((resolve: Function, reject: Function) => {
+        var records = []; 
+        conn.bulk.query("SELECT enxCPQ__Dependent_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Dependent_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Execution_Order__c, enxCPQ__Master_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c, enxCPQ__TECH_Key__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Product__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeValueDependency__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__TECH_External_Id__c")
+            .on('record', function(rec) { 
+                if (records.length % 100 == 0) {
+                    Util.log("--- querying attribute value dependency. Retrieved: " + records.length + " records\r");
+                }
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving attribute value dependency ' + err);  
+            })
+            .on('end', function(info) { 
+                Util.log("--- querying attribute value dependency completed. Retrieved: " + records.length + "                                ");
+                resolve(records); 
+            });
+    })
 }
     public static async queryAttributeRules(conn: core.Connection, productList: Set<String>): Promise<String[]> {
         Util.log('--- exporting attribute rules ');
@@ -333,9 +814,36 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve attribute rules. Error: ' + err);
-                resolve(res.records);
+                if (res.records.length < 200){
+                    Util.log("--- attribute rules: " + res.records.length);
+                    resolve(res.records);
+                }
+                else{
+                    resolve(["useBulkApi"]);
+                }
             });
         });
+    }
+
+    public static async bulkQueryAttributeRules(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+        Util.log('--- bulk exporting attribute rules ');
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query("SELECT enxCPQ__Active__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Error_Message__c, enxCPQ__Order__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Regexp__c, enxCPQ__Rule_Attribute_Update_Logic__c, enxCPQ__Rule_Criteria__c, enxCPQ__TECH_External_Id__c, enxCPQ__Validation_Type__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeRule__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Order__c")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying attribute rules. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving attribute rules' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying attribute rules completed. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
     }
 
     public static async queryProvisioningPlanAssigns(conn: core.Connection, productList: Set<String>): Promise<String[]> {
@@ -346,9 +854,36 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve provisioning plan assignments Error: ' + err);
-                resolve(res.records);
+                if (res.records.length < 200){
+                    Util.log("--- provisioning plan assignments: " + res.records.length);
+                    resolve(res.records);
+                }
+                else{
+                    resolve(["useBulkApi"]);
+                }
             });
         });
+    }
+
+    public static async bulkQueryProvisioningPlanAssigns(conn: core.Connection, productList: Set<String>): Promise<String[]> {
+        Util.log('--- bulk exporting provisioning plan assignments');
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query("SELECT enxB2B__Active__c, enxB2B__Criteria__c, enxB2B__Item_Action__c, enxB2B__Order__c, enxB2B__Product__r.enxCPQ__TECH_External_Id__c, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__TECH_External_ID__c FROM enxB2B__ProvisioningPlanAssignment__c WHERE enxB2B__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxB2B__Order__c")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying provisioning plan assignments. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving provisioning plan assignments' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying provisioning plan assignments. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
     }
 
     public static async queryCategories(conn: core.Connection, categoryIds: Set<String>): Promise<String[]> {
@@ -362,9 +897,36 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve categories. Error: ' + err);
-                resolve(res.records);
+                if (res.records.length < 200){
+                    Util.log("--- categories: " + res.records.length);
+                    resolve(res.records);
+                }
+                else{
+                    resolve(["useBulkApi"]);
+                }
             });
         });
+    }
+
+    public static async bulkQueryCategories(conn: core.Connection, categoryIds: Set<String>): Promise<String[]> {
+        Util.log('--- bulk exporting categories');
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query("SELECT Name, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c, enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__Category__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(categoryIds) + ") ")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying categories. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving categories' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying categories completed. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
     }
 
     public static async queryAttributeValues(conn: core.Connection, attributeIds: Set<String>): Promise<String[]> {
@@ -378,10 +940,38 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve product attribute values: ' + attributeIds + '. Error: ' + err);
-                resolve(res.records);
+                if (res.records.length < 200){
+                    Util.log("--- product attribute values: " + res.records.length);
+                    resolve(res.records);
+                }
+                else{
+                    resolve(["useBulkApi"]);
+                }
             });
         });
     }
+    public static async bulkQueryAttributeValues(conn: core.Connection, attributeIds: Set<String>): Promise<String[]> {
+        Util.log('--- bulk exporting product attribute values');
+     
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query("SELECT Name FROM Product2 WHERE RecordType.Name = 'Product' OR RecordType.Name = 'Bundle'")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying product attribute values. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving product attribute values' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying product attribute values completed. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
+    }
+
     public static async queryAttributeSets(conn: core.Connection, attributeSetIds: Set<String>): Promise<String[]> {
         Util.log('--- exporting attributes sets - ');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
@@ -390,12 +980,40 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve attribute sets. Error: ' + err);
-                if( attributeSetIds.size === 0) resolve("");
-                resolve(res.records);
+                if( attributeSetIds.size === 0) resolve([""]);
+                if (res.records.length < 200){
+                    Util.log("--- attributes sets: " + res.records.length);
+                    resolve(res.records);
+                }
+                else{
+                    resolve(["useBulkApi"]);
+                }
             });
 
         });
     }
+
+    public static async bulkQueryAttributeSets(conn: core.Connection): Promise<String[]> {
+        Util.log('--- bulk exporting attributes sets - ');
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query("SELECT Name, enxCPQ__Description__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeSet__c ")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying attributes sets. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving attributes sets' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying attributes sets completed. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
+    }
+
     public static async queryProvisioningPlanAssignmentIds (conn: core.Connection): Promise<String[]> {
         Util.log('--- exporting Provisioning Plan Assignment Ids ');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
@@ -428,11 +1046,38 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
         null,
         function(err, res) {
             if (err) reject('error retrieving provisioning task assignments: ' + err);
-
-            resolve(res.records);
+            if (res.records.length < 200){
+                Util.log("--- provisioning task assignments: " + res.records.length);
+                resolve(res.records);
+            }
+            else{
+                resolve(["useBulkApi"]);
+            }
         });
     });
     }
+
+    public static async bulkQueryProvisioningTaskAssignments (conn: core.Connection): Promise<String[]> {
+        Util.log('--- bulk exporting Provisioning task assignments');
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query("SELECT enxB2B__Criteria__c, enxB2B__Order__c, enxB2B__Predecessors__c, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__Provisioning_Task__r.enxB2B__TECH_External_Id__c, enxB2B__TECH_External_ID__c FROM enxB2B__ProvisioningTaskAssignment__c")
+                .on('record', function(rec) { 
+                    if (records.length % 100 == 0) {
+                        Util.log("--- querying provisioning task assignments. Retrieved: " + records.length + " records\r");
+                    }
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving provisioning task assignments' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.log("--- querying provisioning task assignments completed. Retrieved: " + records.length + "                                ");
+                    resolve(records); 
+                });
+        })
+    }
+
     public static async queryPriceRules (conn: core.Connection): Promise<String[]> {
         Util.log('--- exporting  price rules ');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
@@ -479,10 +1124,40 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
         null,
         function(err, res) {
             if (err) reject('error retrieving Charge Elements standard PricebookEntry: ' + err);
-            
-            resolve(res.records);
+            if (res.records.length < 200){
+                Util.log("--- Charge Elements standard PricebookEntry: " + res.records.length);
+                resolve(res.records);
+            }
+            else{
+                resolve(["useBulkApi"]);
+            }
         });
     })    
+    }
+
+    public static async bulkQueryChargeElementStdPricebookEntries (conn: core.Connection, productList:  Set<String>): Promise<String[]> {
+        Util.log('--- bulk exporting charge element standard pricebook entries ');
+        let queryString = this.isB2B
+        ? "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN ("
+        : "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxCPQ__OTC_List__c, Pricebook2Id, Product2Id, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN ("
+  
+        return new Promise<String[]>((resolve: Function, reject: Function) => {
+        var records = []; 
+        conn.bulk.query(queryString + Util.setToIdString(productList) + ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true")
+            .on('record', function(rec) { 
+                if (records.length % 100 == 0) {
+                    process.stdout.write("--- querying charge element standard pricebook entries. Retrieved: " + records.length + " records\r");
+                }
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving charge element standard pricebook entries ' + err); 
+            })
+            .on('end', function(info) { 
+                Util.log("--- charge element standard pricebook entries: " + records.length + "        ");
+                resolve(records); 
+            });
+    })
     }
 
     public static async queryChargeElementPricebookEntries (conn: core.Connection, productList: Set<String>): Promise<String[]> {
@@ -500,33 +1175,16 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
         });
     })    
     }
-    public static async bulkQueryChargeElementStdPricebookEntries (conn: core.Connection, productList: String): Promise<String[]> {
-        Util.log('--- exporting charge element standard pricebook entries ');
-        return new Promise<String[]>((resolve: Function, reject: Function) => {
-        var records = []; 
-        conn.bulk.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + productList + ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true")
-            .on('record', function(rec) { 
-                if (records.length % 100 == 0) {
-                    process.stdout.write("--- querying charge element standard pricebook entries. Retrieved: " + records.length + " records\r");
-                }
-                records.push(rec);
-            })
-            .on('error', function(err) { 
-                reject('error retrieving charge element standard pricebook entries ' + err); 
-            })
-            .on('end', function(info) { 
-                Util.log("--- charge element standard pricebook entries: " + records.length + "        ");
-                resolve(records); 
-                
-            });
-    })
-    }
     // FIELDS removed from query because they were putting "0" instead of null -> enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c
-    public static async bulkQueryChargeElementPricebookEntries (conn: core.Connection, productList: String): Promise<String[]> {
-        Util.log('--- exporting Charge Element Pricebook Entries ');
+    public static async bulkQueryChargeElementPricebookEntries (conn: core.Connection, productList:  Set<String>): Promise<String[]> {
+        Util.log('--- bulk exporting Charge Element Pricebook Entries ');
+        let queryString = this.isB2B 
+        ? "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN ("
+        : "SELECT Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxCPQ__OTC_List__c, Pricebook2Id, Product2Id, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN ("
+
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, IsActive, enxCPQ__Charge_List_Price__c, CurrencyIsoCode, enxCPQ__Current_Pricebook_Inventory__c, enxCPQ__Current_Pricebook_Lead_Time__c, UnitPrice, enxCPQ__MRC_List__c, enxB2B__MRC_List__c, enxCPQ__OTC_List__c, enxB2B__OTC_List__c, Pricebook2Id, Product2Id, enxB2B__Service_Capex__c, UseStandardPrice FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + productList + ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true")
+        conn.bulk.query(queryString + Util.setToIdString(productList) + ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true")
             .on('record', function(rec) { 
                 if (records.length % 100 == 0) {
                     process.stdout.write("--- querying charge element pricebook entries. Retrieved: " + records.length + " records\r");
@@ -542,11 +1200,30 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
             });
     })
     }
-    public static async bulkQueryChargeElements (conn: core.Connection, productName: String, chargeName: String): Promise<String[]> {
-        Util.log('--- exporting charge elements ');
+
+    public static async queryChargeElements (conn: core.Connection, productList: Set<String>, chargeList: Set<String>): Promise<String[]> {
+        Util.showSpinner('--- exporting charge elements ');
+        return new Promise<String[]>((resolve: Function, reject: Function) => {
+            conn.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c,enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Column_Value__c, enxCPQ__Row_Value__c, enxCPQ__Dimension_1_Value__c, enxCPQ__Dimension_2_Value__c, enxCPQ__Dimension_3_Value__c,enxCPQ__Dimension_4_Value__c, enxCPQ__Dimension_5_Value__c FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Element' AND IsActive = true",
+            null,
+            function(err, res) {
+                if (err) reject('error retrieving charge elements: ' + err);
+                Util.hideSpinner('charge elements export done')
+                if (res.records.length < 200){
+                    Util.log("--- charge elements: " + res.records.length);
+                    resolve(res.records);
+                }
+                else{
+                    resolve(["useBulkApi"]);
+                }
+            });
+        })    
+    }
+    public static async bulkQueryChargeElements (conn: core.Connection, productList: Set<String>, chargeList: Set<String>): Promise<String[]> {
+        Util.log('--- bulk exporting charge elements ');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c,enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Column_Value__c, enxCPQ__Row_Value__c, enxCPQ__Dimension_1_Value__c, enxCPQ__Dimension_2_Value__c, enxCPQ__Dimension_3_Value__c,enxCPQ__Dimension_4_Value__c, enxCPQ__Dimension_5_Value__c FROM Product2 WHERE (enxCPQ__Root_Product__r.Name = '" + productName + "' or enxCPQ__Root_Product__r.Name= '" + chargeName + "') AND RecordType.Name = 'Charge Element' AND IsActive = true")
+        conn.bulk.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c,enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Column_Value__c, enxCPQ__Row_Value__c, enxCPQ__Dimension_1_Value__c, enxCPQ__Dimension_2_Value__c, enxCPQ__Dimension_3_Value__c,enxCPQ__Dimension_4_Value__c, enxCPQ__Dimension_5_Value__c FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Element' AND IsActive = true")
             .on('record', function(rec) { 
                 if (records.length % 100 == 0) {
                     Util.log("--- querying charge elements. Retrieved: " + records.length + " records\r");
@@ -562,18 +1239,6 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
             });
     })
     }
-    public static async queryChargeElements (conn: core.Connection, productList: Set<String>, chargeList: Set<String>): Promise<String[]> {
-        Util.showSpinner('--- exporting charge elements ');
-        return new Promise<String[]>((resolve: Function, reject: Function) => {
-            conn.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c,enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Column_Value__c, enxCPQ__Row_Value__c, enxCPQ__Dimension_1_Value__c, enxCPQ__Dimension_2_Value__c, enxCPQ__Dimension_3_Value__c,enxCPQ__Dimension_4_Value__c, enxCPQ__Dimension_5_Value__c FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Element' AND IsActive = true",
-            null,
-            function(err, res) {
-                if (err) reject('error retrieving charge elements: ' + err);
-                Util.hideSpinner('charge elements export done')
-                resolve(res.records);
-            });
-        })    
-    }
 
     public static async queryChargeTiers (conn: core.Connection,  productList: Set<String>, chargeList: Set<String>): Promise<String[]> {
         Util.log('--- exporting charge Tiers ');
@@ -582,17 +1247,22 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
             null,
             function(err, res) {
                 if (err) reject('error retrieving charge Tiers: ' + err);
-                
-                resolve(res.records);
+                if (res.records.length < 200){
+                    Util.log("--- charge Tiers: " + res.records.length);
+                    resolve(res.records);
+                }
+                else{
+                    resolve(["useBulkApi"]);
+                }
             });
         })    
     }
 
-    public static async bulkQueryChargeTiers (conn: core.Connection, productName: String, chargeName: String): Promise<string> {
-        Util.log('--- exporting charge Tiers ');
-        return new Promise<string>((resolve: Function, reject: Function) => {
+    public static async bulkQueryChargeTiers (conn: core.Connection,  productList: Set<String>, chargeList: Set<String>): Promise<String[]> {
+        Util.log('--- bulk exporting charge Tiers ');
+        return new Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c,enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Column_Value__c, enxCPQ__Row_Value__c, enxCPQ__Dimension_1_Value__c, enxCPQ__Dimension_2_Value__c, enxCPQ__Dimension_3_Value__c,enxCPQ__Dimension_4_Value__c, enxCPQ__Dimension_5_Value__c FROM Product2 WHERE (enxCPQ__Root_Product__r.Name = '" + productName + "' or enxCPQ__Root_Product__r.Name= '" + chargeName + "') AND RecordType.Name = 'Charge Tier' AND IsActive = true")
+        conn.bulk.query("SELECT Name, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Name__c, enxCPQ__Charge_Type__c, enxCPQ__Current_Inventory__c, enxCPQ__Current_Lead_Time__c, enxCPQ__Description_DE__c, enxCPQ__Description_EN__c, enxCPQ__Description_ES__c, enxCPQ__Description_FR__c, enxCPQ__Description_IT__c, enxCPQ__Description_Pattern__c, enxCPQ__Description_PL__c, enxCPQ__Hide_in_Product_Catalogue__c, enxCPQ__Ignore_Inventory_Management__c, enxCPQ__Ignore_Option_Requirement__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, ProductCode, Description, Family, enxCPQ__Product_Lifecycle_Version__c,enxCPQ__TECH_Bundle_Element__c, enxCPQ__TECH_Definition_Id__c, enxCPQ__TECH_External_Id__c,enxCPQ__TECH_Is_Configurable__c, enxCPQ__TECH_Option_JSON__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c,enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Column_Value__c, enxCPQ__Row_Value__c, enxCPQ__Dimension_1_Value__c, enxCPQ__Dimension_2_Value__c, enxCPQ__Dimension_3_Value__c,enxCPQ__Dimension_4_Value__c, enxCPQ__Dimension_5_Value__c FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Tier' AND IsActive = true")
             .on('record', function(rec) { 
                 if (records.length % 100 == 0) {
                     Util.log("--- querying charge Tiers. Retrieved: " + records.length + " records\r");
@@ -605,15 +1275,13 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
             .on('end', function(info) { 
                 Util.log("--- charge Tiers: " + records.length + "                                ");
                 resolve(records); 
-                
-                
             });
     })
     }
 
     // FIELDS removed from query because they were putting "0" instead of null -> enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c
     public static async bulkQueryChargeElementPricebookEntryIds (conn: core.Connection, productName: String): Promise<string> {
-        Util.log('--- exporting charge element pricebook entries ids ');
+        Util.log('--- bulk exporting charge element pricebook entries ids ');
         return new Promise<string>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query("SELECT Id FROM PricebookEntry WHERE Product2.RecordType.Name = 'Charge Element' AND Product2.enxCPQ__Root_Product__r.Name = '" + productName + "'")
@@ -633,7 +1301,7 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
     })
     }
     public static async bulkQueryProductIds (conn: core.Connection, productName: String): Promise<String[]> {
-        Util.log('--- exporting product ids ');
+        Util.log('--- bulk exporting product ids ');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query("SELECT Id, enxCPQ__TECH_External_Id__c FROM Product2 WHERE RecordType.Name = 'Charge Element'  AND enxCPQ__Root_Product__r.Name = '" + productName + "'")
@@ -653,7 +1321,7 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
     })
     }
     public static async bulkQueryStdPricebookEntryIds (conn: core.Connection): Promise<string> {
-        Util.log('--- exporting standard PricebookEntry ids ');
+        Util.log('--- bulk exporting standard PricebookEntry ids ');
         return new Promise<string>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query("SELECT Id FROM PricebookEntry WHERE Pricebook2Id != null AND Pricebook2.IsStandard = true AND product2.isactive = true AND Product2.RecordType.Name = 'Charge Element'")
@@ -673,7 +1341,7 @@ public static async queryAttributeValueDependencies(conn: core.Connection, produ
     })
     }
     public static async bulkQueryPricebookEntryIds (conn: core.Connection): Promise<string> {
-        Util.log('--- exporting  PricebookEntry ids ');
+        Util.log('--- bulk exporting  PricebookEntry ids ');
         return new Promise<string>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query("SELECT Id FROM PricebookEntry WHERE Pricebook2Id != null AND Pricebook2.IsStandard = false AND product2.isactive = true AND Product2.RecordType.Name = 'Charge Element'")

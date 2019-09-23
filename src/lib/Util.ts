@@ -121,7 +121,7 @@ export class Util {
                     throw err;
                 }
                    filenames.filter(fileName => fileName.includes('.json')).forEach(async (fileName) => {
-                    const fileReadPromise = Util.readFile(directoryName, fileName)
+                    const fileReadPromise = await this.readFile(directoryName, fileName)
                     allFilePromiseArray.push(fileReadPromise);
                 });
                 await Promise.all(allFilePromiseArray).then((allFileContents) => {
@@ -202,8 +202,16 @@ export class Util {
     }
 
     public static sanitizeFileName(fileName: string){
-        return fileName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g,'_');
+        if(fileName){
+            return fileName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g,'_');
+        }
+        return fileName;
     }
 
-
+    public static isBulkApi(objectToCheck: String[]){
+        if(!objectToCheck || objectToCheck[0] !== 'useBulkApi'){
+            return false;
+        }
+        return true;
+    }
 }
