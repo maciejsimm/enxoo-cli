@@ -47,7 +47,7 @@ export default class Org extends SfdxCommand {
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
     const conn = this.org.getConnection();
     conn.bulk.pollInterval = 5000; // 5 sec
-    conn.bulk.pollTimeout = 120000; // 120 sec
+    conn.bulk.pollTimeout = 180000; // 180 sec
     const products = this.flags.products;
     const b2b = this.flags.b2b;
     const dir = this.flags.dir;

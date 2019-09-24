@@ -53,7 +53,6 @@ export class ProductExporter {
         if(this.productList[0] === '*ALL'){
             this.productList = new Set<string>();
             let productList = await Queries.queryAllProductNames(conn);
-            Util.isBulkApi(productList) ? productList = await Queries.bulkQueryAllProductNames(conn) : null;
             for(let product of productList){
                 this.productList.add(product['Name']);
             }
@@ -77,30 +76,20 @@ export class ProductExporter {
 
     private async retrieveProduct(conn: core.Connection, productList: Set<string>) {
         Util.showSpinner('products export');
-
         let productDefinitions = await Queries.queryProduct(conn, productList);
-        Util.isBulkApi(productDefinitions) ? productDefinitions = await Queries.bulkQueryProduct(conn, productList) : null;
+        Util.sanitizeResult(productDefinitions)
         let options = await Queries.queryProductOptions(conn, productList);
-        Util.isBulkApi(options) ? options = await Queries.bulkQueryProductOptions(conn, productList) : null;
         let chargesIds = await Queries.queryProductChargesIds(conn, productList);
-        Util.isBulkApi(chargesIds) ? chargesIds = await Queries.bulkQueryProductChargesIds(conn, productList) : null;
         let productAttributes = await Queries.queryProductAttributes(conn, productList);
-        Util.isBulkApi(productAttributes) ? productAttributes = await Queries.bulkQueryProductAttributes(conn, productList) : null;
         let attributeValues = await Queries.queryProductAttributeValues(conn, productList);
-        Util.isBulkApi(attributeValues) ? attributeValues = await Queries.bulkQueryProductAttributeValues(conn, productList) : null;
         let attributeDefaultValues = await Queries.queryAttributeDefaultValues(conn, productList);
-        Util.isBulkApi(attributeDefaultValues) ? attributeDefaultValues = await Queries.bulkQueryAttributeDefaultValues(conn, productList) : null;
         let attributeValueDependencies = await Queries.queryAttributeValueDependencies(conn, productList);
-        Util.isBulkApi(attributeValueDependencies) ? attributeValueDependencies = await Queries.bulkQueryAttributeValueDependencies(conn, productList) : null;
         let attributeRules = await Queries.queryAttributeRules(conn, productList);
-        Util.isBulkApi(attributeRules) ? attributeRules = await Queries.bulkQueryAttributeRules(conn, productList) : null;
         let productRelationships = await Queries.queryProductRelationships(conn, productList);
-        Util.isBulkApi(productRelationships) ? productRelationships = await Queries.bulkQueryProductRelationships(conn, productList) : null;
 
         let provisioningPlanAssings:any = {};
         if(this.isB2B){
            provisioningPlanAssings = await Queries.queryProvisioningPlanAssigns(conn, productList);
-           Util.isBulkApi(provisioningPlanAssings) ? provisioningPlanAssings = await Queries.bulkQueryProvisioningPlanAssigns(conn, productList) : null;
         }
        
         for(let productDefinition of productDefinitions){
@@ -116,7 +105,6 @@ export class ProductExporter {
            product.attributeValueDependencies = new Array<any>();
            product.attributeRules = new Array<any>();
            product.productRelationships = new Array<any>();
-
            options.filter(option => option['enxCPQ__Parent_Product__r'] && option['enxCPQ__Parent_Product__r'][techId]===defTechId)
                   .forEach(option=> {product.options.push(option)}); 
             
@@ -143,7 +131,7 @@ export class ProductExporter {
                                .forEach(productRelationship => {product.productRelationships.push(productRelationship)});           
            product.productRelationships = productRelationships;
             if(this.isB2B){
-                product.provisioningPlanAssings = [];
+                product.provisioningPlanAssings = new Array<any>();
                 provisioningPlanAssings.filter(provisioningPlanAssing => provisioningPlanAssing['enxB2B__Product__r'] && provisioningPlanAssing['enxB2B__Product__r'][techId]===defTechId)
                                        .forEach(provisioningPlanAssing => {product.provisioningPlanAssings.push(provisioningPlanAssing)});
             }
@@ -173,6 +161,7 @@ export class ProductExporter {
                 this.provisioningPlanIds.add(assign.enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c);
             }
         }
+        debugger;
     }
     private async retrieveCategoriesHelper(conn: core.Connection, categories:any){
         let parentCategoriesIds =  new Set<String>();
@@ -186,7 +175,6 @@ export class ProductExporter {
             Util.writeFile('/categories/' + category['Name'] +'_' +category['enxCPQ__TECH_External_Id__c']+ '.json', category);
         }
         let newParentCategories = await Queries.queryCategories(conn, parentCategoriesIds);
-        Util.isBulkApi(newParentCategories) ? newParentCategories = await Queries.bulkQueryCategories(conn, parentCategoriesIds) : null;
 
         if(newParentCategories){
             this.retrieveCategoriesHelper(conn, newParentCategories);
@@ -195,7 +183,6 @@ export class ProductExporter {
 
     private async retrieveCategories(conn: core.Connection) {
         let categories = await Queries.queryCategories(conn, this.categoryIds);
-        Util.isBulkApi(categories) ? categories = await Queries.bulkQueryCategories(conn, this.categoryIds) : null;
         
         if(categories){
            await this.retrieveCategoriesHelper(conn, categories);
@@ -204,9 +191,7 @@ export class ProductExporter {
 
     private async retrieveAttributes(conn: core.Connection) {
         let attributes = await Queries.queryAttributes(conn, this.attributeIds);
-        Util.isBulkApi(attributes) ? attributes = await Queries.bulkQueryAttributes(conn, this.attributeIds) : null;
         let attributeValues = await Queries.queryAttributeValues(conn, this.attributeIds);
-        Util.isBulkApi(attributeValues) ? attributeValues = await Queries.bulkQueryAttributeValues(conn, this.attributeIds) : null;
 
         if(attributes){
             attributes.forEach(attribute => {
@@ -225,9 +210,7 @@ export class ProductExporter {
 
     private async retrieveAttributeSets(conn: core.Connection) {
         let attributeSets = await Queries.queryAttributeSets(conn, this.attributeSetIds);
-        Util.isBulkApi(attributeSets) ? attributeSets = await Queries.bulkQueryAttributeSets(conn) : null;
         let attributeSetAttributes = await Queries.queryAttributeSetAttributes(conn, this.attributeSetIds);
-        Util.isBulkApi(attributeSetAttributes) ? attributeSetAttributes = await Queries.bulkQueryAttributeSetAttributes(conn) : null;
 
         if (attributeSets){
         attributeSets.forEach(attributeSet => {
@@ -246,9 +229,7 @@ export class ProductExporter {
 
     private async retrieveProvisioningPlans(conn: core.Connection) {
         let provisioningPlans = await Queries.queryProvisioningPlans(conn);
-        Util.isBulkApi(provisioningPlans) ? provisioningPlans = await Queries.bulkQueryProvisioningPlans(conn) : null;
         let prvTaskAssignments = await Queries.queryProvisioningTaskAssignments(conn)
-        Util.isBulkApi(prvTaskAssignments) ? prvTaskAssignments = await Queries.bulkQueryProvisioningTaskAssignments(conn) : null;
         
         provisioningPlans.forEach(provisioningPlan=>{
         
@@ -266,7 +247,6 @@ export class ProductExporter {
     
     private async retrieveProvisioningTasks(conn: core.Connection){
         let provisioningTasks = await Queries.queryProvisioningTasks(conn);
-        Util.isBulkApi(provisioningTasks) ? provisioningTasks = await Queries.bulkQueryProvisioningTasks(conn) : null;
 
         provisioningTasks.forEach(provisioningTask => {
             Util.writeFile('/provisioningTasks/' + Util.sanitizeFileName(provisioningTask['Name']) +'_' + provisioningTask['enxB2B__TECH_External_Id__c']+ '.json', provisioningTask);
@@ -275,18 +255,11 @@ export class ProductExporter {
 
     private async retrievePriceBooks(conn: core.Connection, productList: Set<String>){
         let priceBooks = await Queries.queryPricebooks(conn);
-        Util.isBulkApi(priceBooks) ? priceBooks = await Queries.bulkQueryPricebooks(conn) : null;
         let currencies = await Queries.queryPricebookEntryCurrencies(conn, productList);
-        Util.isBulkApi(currencies) ? currencies = await Queries.bulkQueryPricebookEntryCurrencies(conn, productList) : null;
         let priceBookEntries = await Queries.queryPricebookEntries(conn, productList);
-        Util.isBulkApi(priceBookEntries) ? priceBookEntries = await Queries.bulkQueryPricebookEntries(conn, productList) : null;
         let stdPriceBookEntries = await Queries.queryStdPricebookEntries(conn, productList);
-        Util.isBulkApi(stdPriceBookEntries) ? stdPriceBookEntries = await Queries.bulkQueryStdPricebookEntries(conn, productList) : null;
         let chargeElementPricebookEntries = await Queries.queryChargeElementPricebookEntries(conn, productList);
-        Util.isBulkApi(chargeElementPricebookEntries) ? chargeElementPricebookEntries = await Queries.bulkQueryChargeElementPricebookEntries(conn, productList) : null;
         let chargeElementStdPricebookEntries = await Queries.queryChargeElementStdPricebookEntries(conn, productList);
-        Util.isBulkApi(chargeElementStdPricebookEntries) ? chargeElementStdPricebookEntries = await Queries.bulkQueryChargeElementStdPricebookEntries(conn, productList) : null;
-
         if(priceBooks){
         priceBooks.forEach(priceBook => {
 
@@ -327,14 +300,11 @@ export class ProductExporter {
 
     private async retrieveCharges(conn: core.Connection, productList: Set<string>){
         let charges = await Queries.queryProductCharges(conn, productList);
-        Util.isBulkApi(charges) ? charges = await Queries.bulkQueryProductCharges(conn, productList) : null;
         let chargeList = new Set<String>();
         charges.forEach(charge => {chargeList.add(charge['Name'])});
 
         let chargeElements = await Queries.queryChargeElements(conn, productList, chargeList);
-        Util.isBulkApi(chargeElements) ? chargeElements = await Queries.bulkQueryChargeElements(conn, productList, chargeList) : null;
         let chargeTiers = await Queries.queryChargeTiers(conn, productList, chargeList);
-        Util.isBulkApi(chargeTiers) ? chargeTiers = await Queries.bulkQueryChargeTiers(conn, productList, chargeList) : null;
       
         for(let charge of charges){
 

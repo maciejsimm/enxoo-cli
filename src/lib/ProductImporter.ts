@@ -469,7 +469,6 @@ export class ProductImporter {
         this.allCategoriesChild.forEach(category => {delete category['enxCPQ__Parent_Category__r']});
         this.attributes.push(...this.extractProductObjects(attributesRoot, this.attributeIds));
         attributeValues.forEach(attributeValue => {  this.attributeValues.push(...this.extractObjects(attributeValue, this.attributeIds, 'enxCPQ__Attribute__r', false))} )
-        //this.attributeValues.push(...this.extractObjects(attributeValues, this.attributeIds, 'enxCPQ__Attribute__r'));
         this.attributeSets.push(...this.extractProductObjects(attributeSetsRoot, this.attributeSetIds));
         this.attributeSetAttributes.push(...this.extractObjects(attributeSetAttributes, this.attributeSetIds, 'enxCPQ__Attribute_Set__r', false))
     }

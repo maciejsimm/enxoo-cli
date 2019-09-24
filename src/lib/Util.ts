@@ -214,4 +214,14 @@ export class Util {
         }
         return true;
     }
+    public static sanitizeResult(result: any){
+        debugger;
+        for(let propt in result){
+            if(propt.includes('.')){
+                let separatedPropt = propt.split('.');
+                result.separatedPropt[0].separatedPropt[1] = result[propt];
+                delete result[propt]
+            }
+        }
+    }
 }
