@@ -77,7 +77,6 @@ export class ProductExporter {
     private async retrieveProduct(conn: core.Connection, productList: Set<string>) {
         Util.showSpinner('products export');
         let productDefinitions = await Queries.queryProduct(conn, productList);
-        Util.sanitizeResult(productDefinitions)
         let options = await Queries.queryProductOptions(conn, productList);
         let chargesIds = await Queries.queryProductChargesIds(conn, productList);
         let productAttributes = await Queries.queryProductAttributes(conn, productList);
@@ -129,7 +128,7 @@ export class ProductExporter {
            
            productRelationships.filter(productRelationship => productRelationship['enxCPQ__Primary_Product__r'] && productRelationship['enxCPQ__Primary_Product__r'][techId]===defTechId)
                                .forEach(productRelationship => {product.productRelationships.push(productRelationship)});           
-           product.productRelationships = productRelationships;
+           
             if(this.isB2B){
                 product.provisioningPlanAssings = new Array<any>();
                 provisioningPlanAssings.filter(provisioningPlanAssing => provisioningPlanAssing['enxB2B__Product__r'] && provisioningPlanAssing['enxB2B__Product__r'][techId]===defTechId)

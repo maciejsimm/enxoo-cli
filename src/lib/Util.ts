@@ -59,7 +59,11 @@ export class Util {
         }
 
         if (isObject) {
+            
             for (let prop in obj) {
+                if ( obj[prop] == "")  obj[prop] = null;
+                if ( obj[prop] == "true")  obj[prop] = true;
+                if ( obj[prop] == "false")  obj[prop] = false;
                 if (prop === 'attributes') {
                     delete obj[prop];
                     continue;
@@ -215,13 +219,18 @@ export class Util {
         return true;
     }
     public static sanitizeResult(result: any){
-        debugger;
-        for(let propt in result){
+        for(let propts of result){
+            for(let propt in propts){
             if(propt.includes('.')){
                 let separatedPropt = propt.split('.');
-                result.separatedPropt[0].separatedPropt[1] = result[propt];
-                delete result[propt]
-            }
+                if(propts[propt]){
+                   propts[separatedPropt[0]] = {};
+                   propts[separatedPropt[0]][separatedPropt[1]] = propts[propt];
+                }else{
+                    propts[separatedPropt[0]] = null;
+                }
+                delete propts[propt]
+            }}
         }
     }
 }

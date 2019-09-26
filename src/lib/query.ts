@@ -14,21 +14,10 @@ public static async queryAllProductNames(conn: core.Connection):Promise<String[]
         null,
         function (err, res) {
             if (err) reject('error querying all Product Names: ' + err);
-            if(res.records.length<200){
                Util.log("--- all Product Names: " + res.records.length);
                resolve(res.records);
-            }else{
-                resolve(["useBulkApi"]);
-            }
         });
-    }).then(async result =>{
-        if(result[0] === 'useBulkApi'){
-            return await this.bulkQueryAllProductNames(conn);
-        }else{
-            return result;
-        }
-      }
-    );
+    })
    }
 
 public static async bulkQueryAllProductNames(conn: core.Connection):  Promise<String[]> {
@@ -44,6 +33,7 @@ public static async bulkQueryAllProductNames(conn: core.Connection):  Promise<St
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('all Product Names export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -174,6 +164,7 @@ public static async bulkQueryStdPricebookEntries(conn: core.Connection, productL
             })
             .on('end', function(info) { 
                 Util.hideSpinner('standard PricebookEntry export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -216,6 +207,7 @@ public static async bulkQueryPricebookEntryCurrencies(conn: core.Connection, pro
             })
             .on('end', function(info) { 
                 Util.hideSpinner('pricebook entry currencies export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -258,6 +250,7 @@ public static async bulkQueryPricebooks(conn: core.Connection): Promise<String[]
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('pricebooks export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -306,6 +299,7 @@ public static async bulkQueryPricebookEntries(conn: core.Connection, productList
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('PricebookEntry export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -351,6 +345,7 @@ public static async bulkQueryProduct(conn: core.Connection, productList: Set<Str
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('product export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -396,6 +391,7 @@ public static async bulkQueryProductAttributes(conn: core.Connection, productLis
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('product attributes export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -439,6 +435,7 @@ public static async bulkQueryProductOptions(conn: core.Connection, productList: 
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('product options export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -484,6 +481,7 @@ public static async bulkQueryAttributeSetAttributes(conn: core.Connection): Prom
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('attributes set attributes export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -531,6 +529,7 @@ public static async bulkQueryAttributes(conn: core.Connection, attributeIds: Set
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('attributes export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -573,6 +572,7 @@ public static async bulkQueryProvisioningTasks(conn: core.Connection): Promise<S
             })
             .on('end', function(info) { 
                 Util.hideSpinner('provisioning tasks export done. Retrieved: ' + records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -614,6 +614,7 @@ public static async bulkQueryProvisioningPlans(conn: core.Connection): Promise<S
             })
             .on('end', function(info) { 
                 Util.hideSpinner('provisioning plans export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -657,6 +658,7 @@ public static async  bulkQueryProductCharges(conn: core.Connection, productList:
             })
             .on('end', function(info) { 
                 Util.hideSpinner('product charges export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -700,6 +702,7 @@ public static async bulkQueryProductChargesIds(conn: core.Connection, productLis
             })
             .on('end', function(info) { 
                 Util.hideSpinner('product charges ids export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -744,6 +747,7 @@ public static async bulkQueryProductAttributeValues(conn: core.Connection, produ
             })
             .on('end', function(info) { 
                 Util.hideSpinner('product attribute values export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -788,6 +792,7 @@ public static async bulkQueryAttributeDefaultValues(conn: core.Connection, produ
             })
             .on('end', function(info) { 
                 Util.hideSpinner('attribute default values export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -832,6 +837,7 @@ public static async bulkQueryProductRelationships(conn: core.Connection, product
             })
             .on('end', function(info) { 
                 Util.hideSpinner('product relationships export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -876,6 +882,7 @@ public static async bulkQueryAttributeValueDependencies(conn: core.Connection, p
             })
             .on('end', function(info) { 
                 Util.hideSpinner('attribute value dependency export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -919,6 +926,7 @@ public static async bulkQueryAttributeRules(conn: core.Connection, productList: 
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('attribute rules export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -963,6 +971,7 @@ public static async bulkQueryProvisioningPlanAssigns(conn: core.Connection, prod
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('provisioning plan assignments export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -1010,6 +1019,7 @@ public static async bulkQueryCategories(conn: core.Connection, categoryIds: Set<
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('categories export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -1056,6 +1066,7 @@ public static async bulkQueryAttributeValues(conn: core.Connection): Promise<Str
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('product attribute values export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -1102,6 +1113,7 @@ public static async bulkQueryAttributeSets(conn: core.Connection): Promise<Strin
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('attributes sets export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -1170,6 +1182,7 @@ public static async bulkQueryProvisioningTaskAssignments (conn: core.Connection)
                 })
                 .on('end', function(info) { 
                     Util.hideSpinner('Provisioning task assignments export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
                     resolve(records); 
                 });
         })
@@ -1257,6 +1270,7 @@ public static async bulkQueryChargeElementStdPricebookEntries (conn: core.Connec
             })
             .on('end', function(info) { 
                 Util.hideSpinner('charge element standard pricebook entries export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -1307,6 +1321,7 @@ public static async bulkQueryChargeElementPricebookEntries (conn: core.Connectio
             })
             .on('end', function(info) { 
                 Util.hideSpinner('Charge Element Pricebook Entries export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records);           
             });
     })
@@ -1350,6 +1365,7 @@ public static async bulkQueryChargeElements (conn: core.Connection, productList:
             })
             .on('end', function(info) { 
                 Util.hideSpinner('charge elements export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -1393,6 +1409,7 @@ public static async bulkQueryChargeTiers (conn: core.Connection,  productList: S
             })
             .on('end', function(info) { 
                 Util.hideSpinner('charge Tiers export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -1412,6 +1429,7 @@ public static async bulkQueryChargeElementPricebookEntryIds (conn: core.Connecti
             })
             .on('end', function(info) { 
                 Util.hideSpinner('charge element pricebook entries ids export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -1429,6 +1447,7 @@ public static async bulkQueryProductIds (conn: core.Connection, productName: Str
             })
             .on('end', function(info) { 
                 Util.hideSpinner('product ids export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records);
             });
     })
@@ -1446,6 +1465,7 @@ public static async bulkQueryStdPricebookEntryIds (conn: core.Connection): Promi
             })
             .on('end', function(info) { 
                 Util.hideSpinner(' standard PricebookEntry ids export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
@@ -1463,6 +1483,7 @@ public static async bulkQueryPricebookEntryIds (conn: core.Connection): Promise<
             })
             .on('end', function(info) { 
                 Util.hideSpinner('PricebookEntry ids export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
