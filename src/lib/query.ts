@@ -14,8 +14,12 @@ public static async queryAllProductNames(conn: core.Connection):Promise<String[]
         null,
         function (err, res) {
             if (err) reject('error querying all Product Names: ' + err);
+            if(res.records.length<200){
                Util.log("--- all Product Names: " + res.records.length);
                resolve(res.records);
+            }else{
+                resolve(["useBulkApi"]);
+            }
         });
     })
    }
