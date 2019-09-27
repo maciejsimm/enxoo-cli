@@ -141,7 +141,6 @@ export class ProductExporter {
       }
     }
 
-   
     private extractIds(product:any) {
         // Category IDs
         if(product.root.enxCPQ__Category__r){this.categoryIds.add(product.root.enxCPQ__Category__r.enxCPQ__TECH_External_Id__c);}

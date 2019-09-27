@@ -14,12 +14,9 @@ public static async queryAllProductNames(conn: core.Connection):Promise<String[]
         null,
         function (err, res) {
             if (err) reject('error querying all Product Names: ' + err);
-            if(res.records.length<200){
                Util.log("--- all Product Names: " + res.records.length);
                resolve(res.records);
-            }else{
-                resolve(["useBulkApi"]);
-            }
+            
         });
     })
    }
@@ -71,6 +68,15 @@ public static async queryStdPricebookEntryIds(conn: core.Connection, productList
             });
         })
         }
+        public static async describeAllFields(conn: core.Connection, sObjectName: string): Promise<String[]> {
+            Util.log('--- describing all fields for sObject Name ' + sObjectName);
+            return new Promise<String[]>((resolve: Function, reject: Function) => {
+                conn.sobject(sObjectName).describe(function(err, meta) {
+                    if (err) { return console.error(err); }
+                    resolve(meta.fields)
+                  });
+            })
+            }
 
 public static async queryPricebookEntryIds(conn: core.Connection, productList: Set<String>): Promise<String[]> {
         Util.log('--- exporting Pricebook Entry Ids');
@@ -1050,18 +1056,18 @@ public static async queryAttributeValues(conn: core.Connection, attributeIds: Se
             });
         }).then(async result =>{
             if(result[0] === 'useBulkApi'){
-                return await this.bulkQueryAttributeValues(conn);
+                return await this.bulkQueryAttributeValues(conn, attributeIds);
             }else{
                 return result;
             }
       }
   );
 }
-public static async bulkQueryAttributeValues(conn: core.Connection): Promise<String[]> {
+public static async bulkQueryAttributeValues(conn: core.Connection, attributeIds: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting product attribute values');
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT Name FROM Product2 WHERE RecordType.Name = 'Product' OR RecordType.Name = 'Bundle'")
+            conn.bulk.query("SELECT Name, enxCPQ__Active__c, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Name_DE__c, enxCPQ__Name_EN__c, enxCPQ__Name_ES__c, enxCPQ__Name_FR__c, enxCPQ__Name_IT__c, enxCPQ__Name_PL__c, enxCPQ__Order__c, enxCPQ__TECH_External_Id__c, enxCPQ__TECH_Definition_Id__c FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c")
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
