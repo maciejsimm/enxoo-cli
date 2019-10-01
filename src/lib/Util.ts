@@ -61,7 +61,6 @@ export class Util {
         if (isObject) {
             
             for (let prop in obj) {
-                if ( obj[prop] == "")  obj[prop] = null;
                 if ( obj[prop] == "true")  obj[prop] = true;
                 if ( obj[prop] == "false")  obj[prop] = false;
                 if (prop === 'attributes') {
@@ -119,13 +118,12 @@ export class Util {
     public static async readAllFiles(directoryName: String) {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             let allFilePromiseArray = new Array<any>();
-
             fs.readdir('./' + this.dir + directoryName + '/', async (err, filenames) => {
                 if (err) {
                     throw err;
                 }
-                   filenames.filter(fileName => fileName.includes('.json')).forEach(async (fileName) => {
-                    const fileReadPromise = await this.readFile(directoryName, fileName)
+                   filenames.filter(fileName => fileName.includes('.json')).forEach(async fileName => {
+                    const fileReadPromise = this.readFile(directoryName, fileName);
                     allFilePromiseArray.push(fileReadPromise);
                 });
                 await Promise.all(allFilePromiseArray).then((allFileContents) => {
@@ -165,7 +163,7 @@ export class Util {
         let allProductsNames = new Set<string>();
 
         allProducts.forEach(product => allProductsNames.add(product['root']['Name']));
-
+        Util.log('retrieved: ' + allProductsNames.size + ' file names')
         return allProductsNames;
     }
 
@@ -232,5 +230,19 @@ export class Util {
                 delete propts[propt]
             }}
         }
+    }
+
+    public static async readQueryJson(queryDir: string){
+        return new Promise<String>((resolve: Function, reject: Function) => {
+        let content;
+        fs.readFile('./' +queryDir+ '/queries.json', function read(err, data) {
+            if (err) {
+                reject(err);
+            }
+            content = data.toString('utf8');
+            resolve(JSON.parse(content));
+        });
+    });
+
     }
 }

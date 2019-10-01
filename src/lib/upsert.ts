@@ -220,19 +220,21 @@ export class Upsert {
 
     public static async upsertObject(conn: core.Connection, sObjectName: string, data: Object[]): Promise<string> {
         if(data.length===0){
-           return;
+            return;
         }
         Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
         let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c', 'enxB2B__ProvisioningTaskAssignment__c'];
         let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
         Util.sanitizeForImport(data);
-
         let promises:Array<Promise<RecordResult>> = new Array<Promise<RecordResult>>();
         for (const record of data) {
             promises.push(conn.sobject(sObjectName).upsert(record, techId, {}, function(err: any, rets: RecordResult) {
-            if (err) {
+            // if (err === 'Exceeded max limit of concurrent call'){
+
+            // }
+                if (err) {
                 Util.log('error creating ' + sObjectName + ': ' + err);
-                return;
+                //return;
             }   
         }));
         }

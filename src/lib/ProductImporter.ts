@@ -229,27 +229,37 @@ export class ProductImporter {
 
     private extractProvisionigPlansIds(product:any){
         let provisionigPlansIds = new Set<String>();
-        product.provisioningPlanAssings.forEach(prvPlanAssing => {provisionigPlansIds.add(prvPlanAssing['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c'])});
+        if(product.provisioningPlanAssings){
+            product.provisioningPlanAssings.forEach(prvPlanAssing => {provisionigPlansIds.add(prvPlanAssing['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c'])});
+        }
 
         return provisionigPlansIds;
     }
     private extractAttributeDefaultValuesIds(product:any){
         let attributeDefaultValuesIds = new Set<String>();
-        product.attributeValueDependencies.forEach(atrValueDependency => {attributeDefaultValuesIds.add(atrValueDependency['enxCPQ__Master_Attribute__r']['enxCPQ__TECH_External_Id__c'])});
+        if(product.attributeValueDependencies){
+            product.attributeValueDependencies.forEach(atrValueDependency => {attributeDefaultValuesIds.add(atrValueDependency['enxCPQ__Master_Attribute__r']['enxCPQ__TECH_External_Id__c'])});
+        }
 
         return attributeDefaultValuesIds;
     }
     private extractSourceProductIds(product:any){
         let sourceProductIds = new Set<String>();
-        product.chargesIds.forEach(chargesId => {sourceProductIds.add(chargesId['enxCPQ__TECH_External_Id__c'])});
+        if(product.chargesIds){
+            product.chargesIds.forEach(chargesId => {sourceProductIds.add(chargesId['enxCPQ__TECH_External_Id__c'])});
+        }
         sourceProductIds.add(product.root.enxCPQ__TECH_External_Id__c);
-        product.options.forEach(option => {sourceProductIds.add(option.enxCPQ__TECH_External_Id__c)});
+        if(product.options){
+            product.options.forEach(option => {sourceProductIds.add(option.enxCPQ__TECH_External_Id__c)});
+        }
 
         return sourceProductIds;
     }
     private extractChargesIds(product:any){
         let chargesIds = new Set<String>();
-        product.chargesIds.forEach(chargesId => {chargesIds.add(chargesId['enxCPQ__TECH_External_Id__c'])});
+        if(product.chargesIds){
+            product.chargesIds.forEach(chargesId => {chargesIds.add(chargesId['enxCPQ__TECH_External_Id__c'])});
+        }
 
         return chargesIds;
     }
@@ -263,15 +273,19 @@ export class ProductImporter {
     }
     private extractAttributeIds(product:any){
         let attributeIds = new Set<String>();
-        product.productAttributes.forEach(attr => {attributeIds.add(attr.enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c)});
+        if(product.productAttributes){
+            product.productAttributes.forEach(attr => {attributeIds.add(attr.enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c)});
+        }
 
         return attributeIds;
     }
     
     private extractAttributeSetIds(product:any){
         let attributeSetIds = new Set<String>();
-        product.productAttributes.filter(attr => attr['enxCPQ__Attribute_Set__r'])
-                                 .forEach(attr =>  attributeSetIds.add(attr.enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c));
+        if(product.productAttributes){
+            product.productAttributes.filter(attr => attr['enxCPQ__Attribute_Set__r'])
+                                     .forEach(attr =>  attributeSetIds.add(attr.enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c));
+        }
 
         return attributeSetIds;
     }
@@ -363,7 +377,7 @@ export class ProductImporter {
         let allStdPricebookEntriesTarget = await Queries.queryStdPricebookEntryIds(conn, this.productList);  // for delete
         let allPricebookEntriesTarget = await Queries.queryPricebookEntryIds(conn, this.productList);        // for delete
         prdAttrsTarget.forEach(prdAttr => {this.productAttributesIds.push(prdAttr['Id'])});
-        allStdPricebookEntriesTarget.forEach(stdPbeTarget => {this.stdPricebookEntryIds.push(stdPbeTarget['Id'])})
+        allStdPricebookEntriesTarget.forEach(stdPbeTarget => {this.stdPricebookEntryIds.push(stdPbeTarget['Id'])});
         allPricebookEntriesTarget.forEach(pbeTarget => {this.pricebookEntryIds.push(pbeTarget['Id'])});
 
         for (let productName of this.productList){
@@ -389,15 +403,15 @@ export class ProductImporter {
         for (let product of this.products) {
             delete product['root']['Id'];
             this.productsRoot.push(product['root']);
-            this.prdAttributeValues = [...this.prdAttributeValues, ...product['attributeValues']];
-            this.productOptions = [...this.productOptions, ...product['options']];
-            this.productAttributes = [...this.productAttributes, ...product['productAttributes']];
-            this.productRelationships = [...this.productRelationships, ...product['productRelationships']];
-            this.attributeDefaultValues = [...this.attributeDefaultValues, ...product['attributeDefaultValues']];
-            this.attributeValueDependencies = [...this.attributeValueDependencies, ...product['attributeValueDependencies']];
-            this.attributeRules = [...this.attributeRules, ...product['attributeRules']];
+            this.prdAttributeValues.push(product['attributeValues']);
+            this.productOptions.push(product['options']);
+            this.productAttributes.push(product['productAttributes']);
+            this.productRelationships.push(product['productRelationships']);
+            this.attributeDefaultValues.push(product['attributeDefaultValues']);
+            this.attributeValueDependencies.push(product['attributeValueDependencies']);
+            this.attributeRules.push(product['attributeRules']);
             if(this.isB2B){
-                this.provisioningPlanAssignments = [...this.provisioningPlanAssignments, ...product['provisioningPlanAssings']];
+                this.provisioningPlanAssignments.push(product['provisioningPlanAssings']);
             }
         }
     }
@@ -458,8 +472,8 @@ export class ProductImporter {
         let productCharges = [...this.extractProductObjects(allCharges, this.chargesIds)];
     
         productCharges.forEach(charge=>{this.charges.push(charge['root']);
-                                        this.chargeElements = [...this.chargeElements, ...charge['chargeElements']];
-                                        this.chargeTiers = [...this.chargeTiers, ...charge['chargeTier']]});                      
+                                        this.chargeElements.push(charge['chargeElements']);
+                                        this.chargeTiers.push(charge['chargeTier'])});                      
         this.chargeElements.forEach(chargeElement => {this.sourceProductIds.add(chargeElement['enxCPQ__TECH_External_Id__c'])});
         this.chargeTiers.forEach(chargeTier =>{this.sourceProductIds.add(chargeTier['enxCPQ__TECH_External_Id__c'])});
         this.categories.push(...this.extractProductObjects(allCategories, this.categoryIds));
@@ -483,9 +497,13 @@ export class ProductImporter {
         planAssignmentsTarget.forEach(planAssignmentTarget => {this.provisioningPlanAssignmentIds.push(planAssignmentTarget['Id'])});
         taskAssignmentsTarget.forEach(taskAssignmentTarget => {this.provisioningTaskAssignmentIds.push(taskAssignmentTarget['Id'])});
         let provisioningPlans = [...this.extractObjects(allProvisioningPlans, this.provisionigPlansIds)];
-        provisioningPlans.forEach(provisioningPlan => {this.provisioningPlans.push(provisioningPlan['root']),
-                                                        this.provisioningTaskAssignments = [...this.provisioningTaskAssignments, ...provisioningPlan['values']]});
-        this.provisioningTaskAssignments.forEach(prvTaskAssignment => {this.provisioningTaskIds.add(prvTaskAssignment['enxB2B__Provisioning_Task__r']['enxB2B__TECH_External_Id__c'])})
+        provisioningPlans.forEach(provisioningPlan => {
+        this.provisioningPlans.push(provisioningPlan['root']);
+            if(provisioningPlan['values']){
+                 this.provisioningTaskAssignments.push(provisioningPlan['values'])     
+            }
+         });
+        
         this.provisioningTasks.push(...this.extractObjects(allProvisioningTasks, this.provisioningTaskIds));
     }
 }

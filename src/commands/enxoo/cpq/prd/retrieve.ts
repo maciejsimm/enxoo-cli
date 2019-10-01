@@ -31,7 +31,8 @@ export default class Org extends SfdxCommand {
   protected static flagsConfig = {
     products: flags.array({char: 'p', required: true, description: messages.getMessage('productsFlagDescription')}),
     b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('b2bFlagDescription')}),
-    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')})
+    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')}),
+    query: flags.string({char: 'q', required: true, description: messages.getMessage('queryDirFlagDescription')})
   };
 
   // Comment this out if your command does not require an org username
@@ -53,10 +54,11 @@ export default class Org extends SfdxCommand {
     const products = this.flags.products;
     const b2b = this.flags.b2b;
     const dir = this.flags.dir;
+    const queryDir = this.flags.query;
 
     this.ux.log('*** Begin exporting ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
 
-    const exporter = new ProductExporter(products, b2b, dir);
+    const exporter = new ProductExporter(products, b2b, dir, queryDir);
     await exporter.all(conn);
 
     this.ux.log('*** Finished ***');

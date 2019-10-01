@@ -37,8 +37,9 @@ export class ProductExporter {
     private currencyIsoCodes:Set<String>;
     private isB2B: boolean;
     private dir: string;
+    private queryDir: string
 
-    constructor(products: Set<string>, isB2B: boolean, dir: string) {
+    constructor(products: Set<string>, isB2B: boolean, dir: string, queryDir: string) {
         this.categoryIds = new Set<String>();
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
@@ -47,6 +48,7 @@ export class ProductExporter {
         this.dir = dir;
         this.isB2B = isB2B;
         this.productList = products;
+        this.queryDir = queryDir;
     }
 
     public async all(conn: core.Connection) {
@@ -57,8 +59,8 @@ export class ProductExporter {
                 this.productList.add(product['Name']);
             }
         }
-        Util.setDir(this.dir)
-        Queries.setIsB2B(this.isB2B);
+        Util.setDir(this.dir);
+        await Queries.retrieveQueryJson(this.queryDir);
         await this.retrievePriceBooks(conn, this.productList);
         Util.createAllDirs(this.isB2B, this.dir);
 

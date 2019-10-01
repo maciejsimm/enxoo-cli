@@ -27,10 +27,10 @@ export class Describer {
         queryFields.productRelationshipsFieldNames = await this.describeProductRelationships(conn);
         queryFields.attrValueDependecyFieldNames = await this.describeAttrValueDependecy(conn);
         queryFields.attrRulesFieldNames = await this.describeAttrRules(conn);
-        queryFields.categoryFieldNames = await this.describePrvPlanAssignment(conn);
+        queryFields.categoryFieldNames = await this.describeCategory(conn);
         queryFields.attrSetFieldNames = await this.describeAttrSet(conn);
         if(this.isB2B){
-            queryFields.prvPlanAssignmentFieldNames = await this.describeCategory(conn);
+            queryFields.prvPlanAssignmentFieldNames = await this.describePrvPlanAssignment(conn);
             queryFields.prvTaskFieldNames = await this.describePrvTask(conn);
             queryFields.prvPlanFieldNames = await this.describePrvPlan(conn);
             queryFields.prvTaskAssignmentFieldNames = await this.describePrvTaskAssignment(conn);
