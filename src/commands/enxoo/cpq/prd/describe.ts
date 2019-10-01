@@ -1,8 +1,6 @@
 import {core, flags, SfdxCommand} from '@salesforce/command';
 import {AnyJson} from '@salesforce/ts-types';
-import {ProductExporter} from '../../../../lib/ProductExporter';
-import {getJsforceConnection } from '../../../../lib/jsforceHelper';
-import { Connection } from 'jsforce';
+import { Describer } from '../../../../lib/Describer';
 
 // Initialize Messages with the current plugin directory
 core.Messages.importMessagesDirectory(__dirname);
@@ -16,25 +14,21 @@ export default class Org extends SfdxCommand {
   public static description = messages.getMessage('commandDescription');
 
   public static examples = [
-  `$ sfdx enxoo:cpq:prd:retrieve --u myOrg@example.com -p 'GEPL,IPLC,Colocation Service'
-  *** Begin exporting GEPL,IPLC products ***
-  --- exporting product definition 
-  --- exporting product attributes 
+  `$ sfdx hello:org --targetusername myOrg@example.com --targetdevhubusername devhub@org.com
+  Hello world! This is org: MyOrg and I will be around until Tue Mar 20 2018!
+  My hub org id is: 00Dxx000000001234
   `,
-  `$ sfdx enxoo:cpq:prd:retrieve --u myOrg@example.com -p *ALL
-  *** Begin exporting all products ***
-  --- exporting product definition 
-  ...
+  `$ sfdx hello:org --name myname --targetusername myOrg@example.com
+  Hello myname! This is org: MyOrg and I will be around until Tue Mar 20 2018!
   `
   ];
 
-  // public static args = [{name: 'file'}];
+  // public static args = [{product: 'file'}];
 
   protected static flagsConfig = {
-    products: flags.array({char: 'p', required: true, description: messages.getMessage('productsFlagDescription')}),
+    // flag with a value (-p, --product=VALUE)
     b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('b2bFlagDescription')}),
-    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')}),
-    query: flags.string({char: 'q', required: true, description: messages.getMessage('queryDirFlagDescription')})
+    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')})
   };
 
   // Comment this out if your command does not require an org username
@@ -47,26 +41,22 @@ export default class Org extends SfdxCommand {
   protected static requiresProject = false;
 
   public async run(): Promise<AnyJson> {
-    // const name = this.flags.name || 'world';
 
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
-    let conn: Connection;
-    conn = await getJsforceConnection(this.org.getConnection().getConnectionOptions());
-    console.log(conn)
+    const conn = this.org.getConnection();
     conn.bulk.pollInterval = 5000; // 5 sec
     conn.bulk.pollTimeout = 180000; // 180 sec
-    const products = this.flags.products;
     const b2b = this.flags.b2b;
     const dir = this.flags.dir;
-    const queryDir = this.flags.query;
 
-    this.ux.log('*** Begin exporting ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
+    this.ux.log('*** Begin Describing  ' + (b2b ? 'B2B + CPQ' : 'CPQ') + ' objects ***');
 
-    const exporter = new ProductExporter(products, b2b, dir, queryDir);
-    await exporter.all(conn);
+    const describer = new Describer(b2b, dir);
+    await describer.all(conn);
 
     this.ux.log('*** Finished ***');
     
+
     // const query = 'Select Name, TrialExpirationDate from Organization';
 
     // The type we are querying for

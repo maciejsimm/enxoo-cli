@@ -25,13 +25,14 @@ export default class Org extends SfdxCommand {
   `
   ];
 
-  public static args = [{product: 'file'}];
+  // public static args = [{product: 'file'}];
 
   protected static flagsConfig = {
     // flag with a value (-p, --product=VALUE)
     products: flags.array({char: 'p', required: true, description: messages.getMessage('productsFlagDescription')}),
     force: flags.boolean({char: 'f', description: messages.getMessage('forceFlagDescription')}),
-    b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('productsFlagDescription')})
+    b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('b2bFlagDescription')}),
+    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')})
   };
 
   // Comment this out if your command does not require an org username
@@ -44,7 +45,6 @@ export default class Org extends SfdxCommand {
   protected static requiresProject = false;
 
   public async run(): Promise<AnyJson> {
-    // const name = this.flags.name || 'world';
 
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
     let conn: Connection;
@@ -52,13 +52,16 @@ export default class Org extends SfdxCommand {
     console.log(conn)
     let userName = this.org.getUsername();
     console.log(userName);
+    conn.bulk.pollInterval = 5000; // 5 sec
+    conn.bulk.pollTimeout = 180000; //180 sec
     const products = this.flags.products;
     const b2b = this.flags.b2b;
+    const dir = this.flags.dir;
 
-    this.ux.log('*** Import Begin ***');
+    this.ux.log('*** Begin Importing ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
 
-    const exporter = new ProductImporter(products, b2b, userName);
-    await exporter.all(conn);
+    const importer = new ProductImporter(products, b2b, dir, userName);
+    await importer.all(conn);
 
     this.ux.log('*** Finished ***');
     

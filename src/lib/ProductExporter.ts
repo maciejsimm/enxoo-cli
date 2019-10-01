@@ -36,21 +36,33 @@ export class ProductExporter {
     private productList:Set<string>;
     private currencyIsoCodes:Set<String>;
     private isB2B: boolean;
+    private dir: string;
+    private queryDir: string
 
-    constructor(products: Set<string>, isB2B: boolean) {
+    constructor(products: Set<string>, isB2B: boolean, dir: string, queryDir: string) {
         this.categoryIds = new Set<String>();
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
         this.provisioningPlanIds = new Set<String>();
         this.currencyIsoCodes = new Set<String>();
-        this.isB2B= isB2B;
+        this.dir = dir;
+        this.isB2B = isB2B;
         this.productList = products;
+        this.queryDir = queryDir;
     }
 
-    public async all(conn: Connection) {         
-        Util.createAllDirs(this.isB2B);
-        Queries.setIsB2B(this.isB2B);
+    public async all(conn: Connection) {
+        if(this.productList[0] === '*ALL'){
+            this.productList = new Set<string>();
+            let productList = await Queries.queryAllProductNames(conn);
+            for(let product of productList){
+                this.productList.add(product['Name']);
+            }
+        }
+        Util.setDir(this.dir);
+        await Queries.retrieveQueryJson(this.queryDir);
         await this.retrievePriceBooks(conn, this.productList);
+        Util.createAllDirs(this.isB2B, this.dir);
 
         await this.retrieveProduct(conn, this.productList);
         await this.retrieveCharges(conn, this.productList);
@@ -66,7 +78,6 @@ export class ProductExporter {
 
     private async retrieveProduct(conn: Connection, productList: Set<string>) {
         Util.showSpinner('products export');
-
         let productDefinitions = await Queries.queryProduct(conn, productList);
         let options = await Queries.queryProductOptions(conn, productList);
         let chargesIds = await Queries.queryProductChargesIds(conn, productList);
@@ -76,6 +87,7 @@ export class ProductExporter {
         let attributeValueDependencies = await Queries.queryAttributeValueDependencies(conn, productList);
         let attributeRules = await Queries.queryAttributeRules(conn, productList);
         let productRelationships = await Queries.queryProductRelationships(conn, productList);
+
         let provisioningPlanAssings:any = {};
         if(this.isB2B){
            provisioningPlanAssings = await Queries.queryProvisioningPlanAssigns(conn, productList);
@@ -93,7 +105,7 @@ export class ProductExporter {
            product.attributeDefaultValues = new Array<any>();
            product.attributeValueDependencies = new Array<any>();
            product.attributeRules = new Array<any>();
-
+           product.productRelationships = new Array<any>();
            options.filter(option => option['enxCPQ__Parent_Product__r'] && option['enxCPQ__Parent_Product__r'][techId]===defTechId)
                   .forEach(option=> {product.options.push(option)}); 
             
@@ -113,25 +125,24 @@ export class ProductExporter {
            attributeValueDependencies.filter(attributeValueDependency => attributeValueDependency['enxCPQ__Product__r'] && attributeValueDependency['enxCPQ__Product__r'][techId]===defTechId)
                                      .forEach(attributeValueDependency => {product.attributeValueDependencies.push(attributeValueDependency)});
            
-           attributeRules.filter(attributeRule => attributeRule['enxCPQ__Product__r'][techId]===defTechId)
+           attributeRules.filter(attributeRule => attributeRule['enxCPQ__Product__r'] &&  attributeRule['enxCPQ__Product__r'][techId]===defTechId)
                           .forEach(attributeRule => { product.attributeRules.push(attributeRule)});
            
            productRelationships.filter(productRelationship => productRelationship['enxCPQ__Primary_Product__r'] && productRelationship['enxCPQ__Primary_Product__r'][techId]===defTechId)
                                .forEach(productRelationship => {product.productRelationships.push(productRelationship)});           
-           product.productRelationships = productRelationships;
+           
             if(this.isB2B){
-                product.provisioningPlanAssings = [];
+                product.provisioningPlanAssings = new Array<any>();
                 provisioningPlanAssings.filter(provisioningPlanAssing => provisioningPlanAssing['enxB2B__Product__r'] && provisioningPlanAssing['enxB2B__Product__r'][techId]===defTechId)
                                        .forEach(provisioningPlanAssing => {product.provisioningPlanAssings.push(provisioningPlanAssing)});
             }
            this.extractIds(product);
-           Util.writeFile('./temp/products/' +  product.root['Name'] + '_' + product.root['enxCPQ__TECH_External_Id__c'] + '.json', product);
+           Util.writeFile('/products/' +  Util.sanitizeFileName(product.root['Name']) + '_' + product.root['enxCPQ__TECH_External_Id__c'] + '.json', product);
    
            Util.hideSpinner('products export done'); 
       }
     }
 
-   
     private extractIds(product:any) {
         // Category IDs
         if(product.root.enxCPQ__Category__r){this.categoryIds.add(product.root.enxCPQ__Category__r.enxCPQ__TECH_External_Id__c);}
@@ -150,20 +161,21 @@ export class ProductExporter {
                 this.provisioningPlanIds.add(assign.enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c);
             }
         }
+        debugger;
     }
     private async retrieveCategoriesHelper(conn: Connection, categories:any){
         let parentCategoriesIds =  new Set<String>();
 
         for (let category of categories) {
 
-            if(category['enxCPQ__Parent_Category__r'] !==null){
+            if(category['enxCPQ__Parent_Category__r'] && category['enxCPQ__Parent_Category__r'] !==null){
                 parentCategoriesIds.add(category['enxCPQ__Parent_Category__r']['enxCPQ__TECH_External_Id__c']);
             }
 
-            Util.writeFile('./temp/categories/' + category['Name'] +'_' +category['enxCPQ__TECH_External_Id__c']+ '.json', category);
+            Util.writeFile('/categories/' + category['Name'] +'_' +category['enxCPQ__TECH_External_Id__c']+ '.json', category);
         }
         let newParentCategories = await Queries.queryCategories(conn, parentCategoriesIds);
-        
+
         if(newParentCategories){
             this.retrieveCategoriesHelper(conn, newParentCategories);
         }
@@ -173,14 +185,14 @@ export class ProductExporter {
         let categories = await Queries.queryCategories(conn, this.categoryIds);
         
         if(categories){
-            this.retrieveCategoriesHelper(conn, categories);
+           await this.retrieveCategoriesHelper(conn, categories);
         }
     }
 
     private async retrieveAttributes(conn: Connection) {
         let attributes = await Queries.queryAttributes(conn, this.attributeIds);
         let attributeValues = await Queries.queryAttributeValues(conn, this.attributeIds);
-        
+
         if(attributes){
             attributes.forEach(attribute => {
         
@@ -188,16 +200,18 @@ export class ProductExporter {
             attributeToSave.root = attribute;
             attributeToSave.values = new Array<any>();
 
-            attributeValues.filter(attributeValue => attributeValue['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] === attribute['enxCPQ__TECH_External_Id__c'])
+            attributeValues.filter(attributeValue => attributeValue['enxCPQ__Attribute__r'] 
+                                                     && attributeValue['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] === attribute['enxCPQ__TECH_External_Id__c'])
                            .forEach(attributeValue=>{attributeToSave.values.push(attributeValue)});     
 
-            Util.writeFile('./temp/attributes/' + attribute['Name'] + '_' + attribute['enxCPQ__TECH_External_Id__c']+ '.json', attributeToSave);
+            Util.writeFile('/attributes/' + Util.sanitizeFileName(attribute['Name']) + '_' + attribute['enxCPQ__TECH_External_Id__c']+ '.json', attributeToSave);
         })};
     }
 
     private async retrieveAttributeSets(conn: Connection) {
         let attributeSets = await Queries.queryAttributeSets(conn, this.attributeSetIds);
         let attributeSetAttributes = await Queries.queryAttributeSetAttributes(conn, this.attributeSetIds);
+
         if (attributeSets){
         attributeSets.forEach(attributeSet => {
         
@@ -205,27 +219,29 @@ export class ProductExporter {
             attributeSetToSave.root = attributeSet;
             attributeSetToSave.values = new Array<any>();
 
-            attributeSetAttributes.filter(attributeSetAttribute => attributeSetAttribute['enxCPQ__Attribute_Set__r']['enxCPQ__TECH_External_Id__c'] === attributeSet['enxCPQ__TECH_External_Id__c'])
+            attributeSetAttributes.filter(attributeSetAttribute => attributeSetAttribute['enxCPQ__Attribute_Set__r']
+                                                                   && attributeSetAttribute['enxCPQ__Attribute_Set__r']['enxCPQ__TECH_External_Id__c'] === attributeSet['enxCPQ__TECH_External_Id__c'])
                                   .forEach(attributeSetAttribute => {attributeSetToSave.values.push(attributeSetAttribute)});     
 
-            Util.writeFile('./temp/attributeSets/' + attributeSet['Name'] +'_' + attributeSet['enxCPQ__TECH_External_Id__c']+ '.json', attributeSetToSave);
+                Util.writeFile('/attributeSets/' + Util.sanitizeFileName(attributeSet['Name']) +'_' + attributeSet['enxCPQ__TECH_External_Id__c']+ '.json', attributeSetToSave);
         });}
     }
 
     private async retrieveProvisioningPlans(conn: Connection) {
         let provisioningPlans = await Queries.queryProvisioningPlans(conn);
         let prvTaskAssignments = await Queries.queryProvisioningTaskAssignments(conn)
-
+        
         provisioningPlans.forEach(provisioningPlan=>{
         
             let provisioningPlanToSave:any = {};
             provisioningPlanToSave.root = provisioningPlan;
             provisioningPlanToSave.values = new Array<any>();
 
-            prvTaskAssignments.filter(prvTaskAssignment => prvTaskAssignment['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c'] === provisioningPlan['enxB2B__TECH_External_Id__c'])
+            prvTaskAssignments.filter(prvTaskAssignment => prvTaskAssignment['enxB2B__Provisioning_Plan__r'] 
+                                                           && prvTaskAssignment['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c'] === provisioningPlan['enxB2B__TECH_External_Id__c'])
                               .forEach(prvTaskAssignment => {provisioningPlanToSave.values.push(prvTaskAssignment)});     
 
-            Util.writeFile('./temp/provisioningPlans/' + provisioningPlan['Name'] +'_' + provisioningPlan['enxB2B__TECH_External_Id__c']+ '.json', provisioningPlanToSave);
+            Util.writeFile('/provisioningPlans/' + Util.sanitizeFileName(provisioningPlan['Name']) +'_' + provisioningPlan['enxB2B__TECH_External_Id__c']+ '.json', provisioningPlanToSave);
         });
     }
     
@@ -233,7 +249,7 @@ export class ProductExporter {
         let provisioningTasks = await Queries.queryProvisioningTasks(conn);
 
         provisioningTasks.forEach(provisioningTask => {
-            Util.writeFile('./temp/provisioningTasks/' + provisioningTask['Name'] +'_' + provisioningTask['enxB2B__TECH_External_Id__c']+ '.json', provisioningTask);
+            Util.writeFile('/provisioningTasks/' + Util.sanitizeFileName(provisioningTask['Name']) +'_' + provisioningTask['enxB2B__TECH_External_Id__c']+ '.json', provisioningTask);
         });
     }
 
@@ -244,13 +260,12 @@ export class ProductExporter {
         let stdPriceBookEntries = await Queries.queryStdPricebookEntries(conn, productList);
         let chargeElementPricebookEntries = await Queries.queryChargeElementPricebookEntries(conn, productList);
         let chargeElementStdPricebookEntries = await Queries.queryChargeElementStdPricebookEntries(conn, productList);
-        
         if(priceBooks){
         priceBooks.forEach(priceBook => {
 
             const priceBookTechExtId = priceBook['enxCPQ__TECH_External_Id__c'];
-            Util.createDir('./temp/priceBooks/' + priceBook['Name']);
-            Util.writeFile('./temp/PriceBooks/' + priceBook['Name'] + '.json', priceBook)
+            Util.createDir('./' + this.dir +'/priceBooks/' + Util.sanitizeFileName(priceBook['Name']));
+            Util.writeFile('/priceBooks/' + Util.sanitizeFileName(priceBook['Name']) + '.json', priceBook)
             
             currencies.forEach(currency =>{this.currencyIsoCodes.add(currency['CurrencyIsoCode'])});
             
@@ -263,7 +278,7 @@ export class ProductExporter {
                 currencyToSave.chargeElementStdPricebookEntries = new Array<any>();
                 
                 priceBookEntries.filter(pbe => pbe['Pricebook2'] && pbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId 
-                                && currency === pbe['CurrencyIsoCode'])
+                                               && currency === pbe['CurrencyIsoCode'])
                                 .forEach(pbe=>{currencyToSave.entries.push(pbe)});
 
                 stdPriceBookEntries.filter(stdPbe => stdPbe['Pricebook2'] && stdPbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId
@@ -271,14 +286,14 @@ export class ProductExporter {
                                    .forEach(stdPbe=>{ currencyToSave.stdEntries.push(stdPbe)});
                                 
                 chargeElementPricebookEntries.filter(chargeElementPbe => chargeElementPbe['Pricebook2'] && chargeElementPbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId
-                                              && currency === chargeElementPbe['CurrencyIsoCode'])
+                                                                         && currency === chargeElementPbe['CurrencyIsoCode'])
                                              .forEach(chargeElementPbe=>{ currencyToSave.chargeElementPricebookEntries.push(chargeElementPbe)});
 
                 chargeElementStdPricebookEntries.filter(chargeElementStdPbe => chargeElementStdPbe['Pricebook2'] && chargeElementStdPbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId
-                                                && currency === chargeElementStdPbe['CurrencyIsoCode'])
+                                                                               && currency === chargeElementStdPbe['CurrencyIsoCode'])
                                                 .forEach(chargeElementStdPbe=>{currencyToSave.chargeElementStdPricebookEntries.push(chargeElementStdPbe)});
 
-                Util.writeFile('./temp/PriceBooks/' + priceBook['Name'] + '/' + currency + '.json', currencyToSave);
+                Util.writeFile('/priceBooks/' + Util.sanitizeFileName(priceBook['Name']) + '/' + currency + '.json', currencyToSave);
             });
         });}
     }
@@ -290,7 +305,7 @@ export class ProductExporter {
 
         let chargeElements = await Queries.queryChargeElements(conn, productList, chargeList);
         let chargeTiers = await Queries.queryChargeTiers(conn, productList, chargeList);
-
+      
         for(let charge of charges){
 
             let chargeName = charge['Name'];
@@ -299,15 +314,17 @@ export class ProductExporter {
             let chargeTiersToSave: any = [];
             chargeToSave.root= charge;
             
-            chargeElements.filter(chargeElement => chargeElement['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
+            chargeElements.filter(chargeElement => chargeElement['enxCPQ__Charge_Parent__r'] 
+                                                   && chargeElement['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
                           .forEach(chargeElementToSave=>{ chargeElementsToSave.push(chargeElementToSave)});
-      
-             chargeTiers.filter(chargeTier => chargeTier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
-                        .forEach(chargeTierToSave=>{ chargeTiersToSave.push(chargeTierToSave)});              
+
+            chargeTiers.filter(chargeTier => chargeTier['enxCPQ__Charge_Parent__r']
+                                             && chargeTier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
+                       .forEach(chargeTierToSave=>{ chargeTiersToSave.push(chargeTierToSave)});              
 
             chargeToSave.chargeElements = chargeElementsToSave;
             chargeToSave.chargeTier = chargeTiersToSave;
-            Util.writeFile('./temp/charges/' +chargeName + '.json', chargeToSave);
+            Util.writeFile('/charges/' + Util.sanitizeFileName(chargeName) + '.json', chargeToSave);
         }
     }
 }

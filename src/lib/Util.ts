@@ -2,10 +2,16 @@
 
 import { core, UX } from "@salesforce/command";
 import * as fs from 'fs';
-// import { type } from "os";
+import * as fsExtra from 'fs-extra'
 
 export class Util {
 
+    private static dir;
+
+    public static setDir(dir: string){
+        this.dir = dir;
+    }
+    
 	public static throwError(msg: any) {
 		throw new core.SfdxError(msg, "Error", null, -1);
     }
@@ -33,6 +39,7 @@ export class Util {
 
     public static setToIdString(aSet: Set<String>):String {
         let result = '';
+        if (aSet.size === 0 || aSet === null || aSet === undefined) return "''";
         for (let elem of aSet) {
             result += "'" + elem + "',";
         }
@@ -52,7 +59,10 @@ export class Util {
         }
 
         if (isObject) {
+            
             for (let prop in obj) {
+                if ( obj[prop] == "true")  obj[prop] = true;
+                if ( obj[prop] == "false")  obj[prop] = false;
                 if (prop === 'attributes') {
                     delete obj[prop];
                     continue;
@@ -95,7 +105,7 @@ export class Util {
     public static async readFile(directoryName: String, fileName: String) {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             let content;
-            fs.readFile('./' + directoryName + '/' + fileName, function read(err, data) {
+            fs.readFile('./'+this.dir + directoryName + '/' + fileName, function read(err, data) {
                 if (err) {
                     reject(err);
                 }
@@ -108,13 +118,12 @@ export class Util {
     public static async readAllFiles(directoryName: String) {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             let allFilePromiseArray = new Array<any>();
-
-            fs.readdir('./' + directoryName + '/', async (err, filenames) => {
+            fs.readdir('./' + this.dir + directoryName + '/', async (err, filenames) => {
                 if (err) {
                     throw err;
                 }
-                   filenames.filter(fileName => fileName.includes('.json')).forEach(async (fileName) => {
-                    const fileReadPromise = Util.readFile(directoryName, fileName)
+                   filenames.filter(fileName => fileName.includes('.json')).forEach(async fileName => {
+                    const fileReadPromise = this.readFile(directoryName, fileName);
                     allFilePromiseArray.push(fileReadPromise);
                 });
                 await Promise.all(allFilePromiseArray).then((allFileContents) => {
@@ -127,7 +136,7 @@ export class Util {
 
     public static async readDirNames(directoryName: String){
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-            fs.readdir('./' + directoryName + '/', async (err, filenames) => {
+            fs.readdir('./' + this.dir + directoryName + '/', async (err, filenames) => {
                 if (err) {
                     throw err;
                 }
@@ -136,42 +145,104 @@ export class Util {
                 resolve(fileNamesToResolve);
                 });
             });            
-        }
+    }
+
     public static async matchFileNames(productName: string){
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-            fs.readdir('./temp/products/' , async (err, filenames) => {
+            fs.readdir('./' + this.dir +'/products/' , async (err, filenames) => {
                 let fileNamesToResolve = filenames.filter(fileName => fileName.startsWith(productName));
                 if(!fileNamesToResolve[0] || err){
                     reject('Failed to find Product:'+ productName + err);
                 }
                 resolve(fileNamesToResolve);
-                });   
-            });            
-        }
+            });   
+        });            
+    }
+    public static async retrieveAllFileName(){
+        let allProducts = await this.readAllFiles('/products');
+        let allProductsNames = new Set<string>();
+
+        allProducts.forEach(product => allProductsNames.add(product['root']['Name']));
+        Util.log('retrieved: ' + allProductsNames.size + ' file names')
+        return allProductsNames;
+    }
 
     public static async writeFile(path:string, dataToSanitaze:any){
-        await fs.writeFile(path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {
+        await fs.writeFile('./' + this.dir + path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {
             if(err) {
                 return Util.log(err);
             }
         });
     }
+
     public static createDir(dir:string){
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir, { recursive: true });
         }
     }
-    public static createAllDirs(isB2B: boolean){
-        const dirs = ['./temp/products', './temp/categories', './temp/attributes', 
-                     './temp/attributeSets', './temp/priceBooks', './temp/charges' ];
+
+    public static createAllDirs(isB2B: boolean, dir: string){
+        const dirs = ['/products', '/categories', '/attributes', 
+                     '/attributeSets', '/priceBooks', '/charges' ];
+        const dirsToCreate = dirs.map(singleDir => './' + dir + singleDir);
         if(isB2B){
-            dirs.push('./temp/provisioningPlans', './temp/provisioningTasks');
+            dirsToCreate.push('./'+dir+'/provisioningPlans', './'+dir+'/provisioningTasks');
         }
-        dirs.forEach(dir => { this.createDir(dir) })
+        dirsToCreate.forEach(dir => { this.createDir(dir) })
     }
+
     public static removeB2BFields(object: any){
         delete object['enxB2B__MRC_List__c'];
         delete object['enxB2B__OTC_List__c'];
         delete object['enxB2B__Service_Capex__c'];
+    }
+
+    public static removeDir(dir: string){
+        fsExtra.remove('./' + dir, err => {
+             Util.log(err);
+         });
+    }
+
+    public static sanitizeFileName(fileName: string){
+        if(fileName){
+            return fileName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g,'_');
+        }
+        return fileName;
+    }
+
+    public static isBulkApi(objectToCheck: String[]){
+        if(!objectToCheck || objectToCheck[0] !== 'useBulkApi'){
+            return false;
+        }
+        return true;
+    }
+    public static sanitizeResult(result: any){
+        for(let propts of result){
+            for(let propt in propts){
+            if(propt.includes('.')){
+                let separatedPropt = propt.split('.');
+                if(propts[propt]){
+                   propts[separatedPropt[0]] = {};
+                   propts[separatedPropt[0]][separatedPropt[1]] = propts[propt];
+                }else{
+                    propts[separatedPropt[0]] = null;
+                }
+                delete propts[propt]
+            }}
+        }
+    }
+
+    public static async readQueryJson(queryDir: string){
+        return new Promise<String>((resolve: Function, reject: Function) => {
+        let content;
+        fs.readFile('./' +queryDir+ '/queries.json', function read(err, data) {
+            if (err) {
+                reject(err);
+            }
+            content = data.toString('utf8');
+            resolve(JSON.parse(content));
+        });
+    });
+
     }
 }
