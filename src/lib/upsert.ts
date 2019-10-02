@@ -145,12 +145,11 @@ export class Upsert {
     
          return new Promise<string>((resolve: Function, reject: Function) => {
             conn.sobject("enxCPQ__CPQ_Settings__c").insert(data, function(err, rets) {
-                console.log(rets)
                 if (err) {
                     reject('error disabling triggers: ' + err);
                     return;
                 }
-            console.log("--- trigers disabled");
+            Util.log("--- trigers disabled");
            
             resolve();
             });
@@ -161,106 +160,159 @@ export class Upsert {
         Util.log("---enabling triggers");
         return new Promise<string>((resolve: Function, reject: Function) => {
             conn.query("SELECT Id FROM enxCPQ__CPQ_Settings__c WHERE Name = 'G_CPQ_DISABLE_TRIGGERS_99'", null, function(err, res) {
-                console.log('ddddd')
                 if (res.records.length == 0){
-                    console.log('eeeee')
                     resolve();
                 } 
                 conn.sobject("enxCPQ__CPQ_Settings__c").del(res.records[0].Id, function(err, rets) {
-                    console.log('fffffff')
-                    console.log(rets)
                     if (err) {
-                        console.log('gggggg')
                         reject('error enabling triggers: ' + err);
                         return;
                     }
-                    console.log("--- trigers enabled");
+                    Util.log("--- trigers enabled");
                     resolve();
                 }); 
             });
         });      
     }
 
-    public static async insertBulkPricebookEntries(conn, data)  {
+
+    public static async insertObject(conn: Connection, sObjectName: string, data: Object[]): Promise<string>{ 
         this.sanitize(data);
-        this.fixIds(data);
-        Util.log("---inserting PricebookEntry " + data.length);
-        return new Promise((resolve, reject) => {
-            if (data.length === 0) resolve(); // temporary workaround to eliminate blocker
-            conn.bulk.load("PricebookEntry", "insert", data, function(err, rets) {
-                if (err) { reject('error creating PricebookEntry' + err); }
-                    let successCount = 0;
-                    let errorsCount = 0;
-                    if(rets){
-                         for (let i=0; i < rets.length; i++) {
-                             if (rets[i].success) {
-                                successCount++;
-                             } else {
-                                Util.log('error:' + rets[i].errors)
-                                errorsCount++;
-                             }       
-                         if(i===rets.length-1){
-                             Util.log("--- PricebookEntry insert success: " + successCount + " errors: " + errorsCount + "\r");
-                }}}
-                resolve();
+        if(sObjectName ==='PricebookEntry'){
+            this.fixIds(data);
+        }
+        if(data.length > 2){
+            await this.insertbulkObject(conn, sObjectName, data);
+            return;
+        }
+        Util.log('--- inserting ' + sObjectName + ': ' + data.length + ' records');
+        if(data.length===0){
+            return;
+         }
+      
+        return new Promise<string>((resolve: Function, reject: Function) => {
+            conn.sobject(sObjectName).create(data,async (err:any, rets:RecordResult[]) => {
+                if (err) {
+                    Util.log(err);
+                    reject('error creating ' + sObjectName + ': ' + err);
+                    return;
+                }
+                
+                let successCount = rets
+                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
+                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+
+                await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
+                rets.forEach(async (ret, i) => {
+                    if (ret.success === false) {
+                        ret.errors.forEach(async err=> {
+                            await Util.log('----- ['+ i +'] errors: ' + err['message']);
+                        })
+                    } 
+                })
+
+                resolve('OK');
+            });
+        });
+
+    }
+    public static async insertbulkObject(conn, sObjectName, data): Promise<string>{ 
+        Util.log('--- inserting bulk ' + sObjectName + ': ' + data.length + ' records');
+      
+         return new Promise((resolve, reject) => {
+            conn.bulk.load(sObjectName, "insert", data, async (err:any, rets:RecordResult[]) => {
+                if (err) {
+                    Util.log(err);
+                    reject('error creating ' + sObjectName + ': ' + err);
+                    return;
+                }
+                
+                let successCount = rets
+                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
+                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+
+                await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
+                rets.forEach(async (ret, i) => {
+                    if (ret.success === false) {
+                        ret.errors.forEach(async err=> {
+                            await Util.log('----- ['+ i +'] errors: ' + err['message']);
+                        })
+                    }
+                })
+
+                resolve('OK');
             });
         });
     }
 
-    public static async insertObject(conn: Connection, sObjectName:string, data: Object[]): Promise<string>{ 
-        Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
-        this.sanitize(data);
-        if(data.length===0){
-            return;
-         }
-        let promises:Array<Promise<RecordResult>> = new Array<Promise<RecordResult>>();
-        for (const record of data) {
-            promises.push(conn.sobject(sObjectName).create(record, function(err: any, rets: RecordResult) {
-                if (err) {
-                    Util.log('error creating ' + sObjectName + ': ' + err);
-                    return;
-                }   
-            }))
-        }
-        await Promise.all(promises);
-    }
+ 
 
-    // public static async upsertObject(conn: Connection, sObjectName: string, data: Object[]): Promise<string> {
-    //     if(data.length===0){
-    //        return;
-    //     }
-    //     Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
-    //     let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c', 'enxB2B__ProvisioningTaskAssignment__c'];
-    //     let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
-    //     Util.sanitizeForImport(data);
-
-    //     let promises:Array<Promise<RecordResult>> = new Array<Promise<RecordResult>>();
-    //     for (const record of data) {
-    //         promises.push(conn.sobject(sObjectName).upsert(record, techId, {}, function(err: any, rets: RecordResult) {
-    //         if (err) {
-    //             Util.log('error creating ' + sObjectName + ': ' + err);
-    //             return;
-    //         }   
-    //     }));
-    //     }
-    //     await Promise.all(promises);
-    // }
     public static async upsertObject(conn: Connection, sObjectName: string, data: Object[]): Promise<string> {
-        if(data.length===0){
-            return;
-        }
-        Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
+        Util.sanitizeForImport(data);
         let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c', 'enxB2B__ProvisioningTaskAssignment__c'];
         let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
-        Util.sanitizeForImport(data);
+       
+        if(data.length > 2){
+            await this.upsertBulkObject(conn, sObjectName, data, techId);
+            return;
+        }
+        
+        Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
+        if(data.length===0){
+            return;
+        }
 
+    
         return new Promise<string>((resolve: Function, reject: Function) => {
-
-            conn.sobject(sObjectName).upsert(data, techId, {}, function(err: any, rets: RecordResult) {
+            conn.sobject(sObjectName).upsert(data, techId, {}, async (err:any, rets:RecordResult[]) => {
                 if (err) {
+                    Util.log(err);
                     reject('error creating ' + sObjectName + ': ' + err);
                     return;
                 }
+                
+                let successCount = rets
+                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
+                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+
+                await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
+                rets.forEach(async (ret, i) => {
+                    if (ret.success === false) {
+                        ret.errors.forEach(async err=> {
+                            await Util.log('----- ['+ i +'] errors: ' + err['message']);
+                        })
+                    }
+                })
+
+                resolve('OK');
+            });
+        });
+    }
+
+    private static async upsertBulkObject(conn: Connection, sObjectName: string, data: Object[], techId: string): Promise<string> {
+        Util.log('--- bulk importing ' + sObjectName + ': ' + data.length + ' records');
+        Util.sanitizeForBulkImport(data);
+        return new Promise<string>((resolve: Function, reject: Function) => {
+            conn.bulk.load(sObjectName, 'upsert', {'extIdField': techId}, data, async (err:any, rets:RecordResult[]) => {
+                if (err) {
+                    Util.log(err);
+                    reject('error creating ' + sObjectName + ': ' + err);
+                    return;
+                }
+                
+                let successCount = rets
+                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
+                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+
+                await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
+                rets.forEach(async (ret, i) => {
+                    if (ret.success === false) {
+                        ret.errors.forEach(async err=> {
+                            await Util.log('----- ['+ i +'] errors: ' + err['message']);
+                        })
+                    } 
+                })
+
                 resolve('OK');
             });
         });

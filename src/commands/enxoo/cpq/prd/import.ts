@@ -49,9 +49,8 @@ export default class Org extends SfdxCommand {
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
     let conn: Connection;
     conn = await getJsforceConnection(this.org.getConnection().getConnectionOptions());
-    console.log(conn)
     let userName = this.org.getUsername();
-    console.log(userName);
+
     conn.bulk.pollInterval = 5000; // 5 sec
     conn.bulk.pollTimeout = 180000; //180 sec
     const products = this.flags.products;

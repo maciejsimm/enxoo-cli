@@ -217,19 +217,34 @@ export class Util {
         return true;
     }
     public static sanitizeResult(result: any){
-        for(let propts of result){
-            for(let propt in propts){
-            if(propt.includes('.')){
-                let separatedPropt = propt.split('.');
-                if(propts[propt]){
-                   propts[separatedPropt[0]] = {};
-                   propts[separatedPropt[0]][separatedPropt[1]] = propts[propt];
+        for(let props of result){
+            for(let prop in props){
+            if(prop.includes('.')){
+                let separatedProp = prop.split('.');
+                if(props[prop]){
+                   props[separatedProp[0]] = {};
+                   props[separatedProp[0]][separatedProp[1]] = props[prop];
                 }else{
-                    propts[separatedPropt[0]] = null;
+                    props[separatedProp[0]] = null;
                 }
-                delete propts[propt]
+                delete props[prop]
             }}
         }
+    }
+    public static sanitizeForBulkImport(objs: any){
+
+        for(let obj of objs){
+ 
+            for(let prop in obj){
+                if(typeof obj[prop] == 'object'){
+                    let newProp;
+                    for(let innerProp in obj[prop]){
+                        newProp = prop +'.'+innerProp;
+                        obj[newProp] = obj[prop][innerProp];
+                    }
+                    delete obj[prop];
+            }
+        }}
     }
 
     public static async readQueryJson(queryDir: string){

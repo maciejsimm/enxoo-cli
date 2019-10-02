@@ -22,7 +22,7 @@ export class Describer {
         queryFields.productAttrFieldNames = await this.describeProductAttr(conn);
         queryFields.attrSetAttrFieldNames = await this.describeAttrSetAttr(conn);
         queryFields.attrFieldNames = await this.describeAttr(conn);
-        queryFields.atrValuesFieldNames = await this.describeAttrValues(conn);
+        queryFields.attrValuesFieldNames = await this.describeAttrValues(conn);
         queryFields.attrDefaultValuesFieldNames = await this.describeAttrDefaultValues(conn);
         queryFields.productRelationshipsFieldNames = await this.describeProductRelationships(conn);
         queryFields.attrValueDependecyFieldNames = await this.describeAttrValueDependecy(conn);
