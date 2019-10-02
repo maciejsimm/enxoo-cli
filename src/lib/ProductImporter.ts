@@ -48,7 +48,6 @@ export class ProductImporter {
     private chargeElements:Array<Object>;
     private chargeTiers:Array<Object>;
     private provisionigPlansIds:Set<String>;
-    private provisioningTaskIds:Set<String>;
     private attributeDefaultValuesIds:Set<String>;
     private isB2B: boolean;
     private dir: string;
@@ -99,7 +98,6 @@ export class ProductImporter {
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
         this.provisionigPlansIds = new Set<String>();
-        this.provisioningTaskIds = new Set<String>();
     }
     
     public async all(conn:Connection) { 
@@ -507,7 +505,6 @@ export class ProductImporter {
         provisioningPlans.forEach(provisioningPlan => {
         this.provisioningPlans.push(provisioningPlan['root']);
                                 if(provisioningPlan['values']){ provisioningPlan['values'].forEach(value => { this.provisioningTaskAssignments.push(value)})}});
-        
-        this.provisioningTasks.push(...this.extractObjects(allProvisioningTasks, this.provisioningTaskIds));
+        allProvisioningTasks.forEach(prvTask =>{this.provisioningTasks.push(prvTask)});
     }
 }
