@@ -181,7 +181,7 @@ export class Upsert {
         if(sObjectName ==='PricebookEntry'){
             this.fixIds(data);
         }
-        if(data.length > 2){
+        if(data.length > 199){
             await this.insertbulkObject(conn, sObjectName, data);
             return;
         }
@@ -234,10 +234,8 @@ export class Upsert {
                 await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
                 rets.forEach(async (ret, i) => {
                     if (ret.success === false) {
-                        ret.errors.forEach(async err=> {
-                            await Util.log('----- ['+ i +'] errors: ' + err['message']);
-                        })
-                    }
+                        await Util.log('----- ['+ i +'] errors: ' + ret.errors);
+                    } 
                 })
 
                 resolve('OK');
@@ -252,7 +250,7 @@ export class Upsert {
         let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c', 'enxB2B__ProvisioningTaskAssignment__c'];
         let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
        
-        if(data.length > 2){
+        if(data.length > 199){
             await this.upsertBulkObject(conn, sObjectName, data, techId);
             return;
         }
@@ -307,9 +305,7 @@ export class Upsert {
                 await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
                 rets.forEach(async (ret, i) => {
                     if (ret.success === false) {
-                        ret.errors.forEach(async err=> {
-                            await Util.log('----- ['+ i +'] errors: ' + err['message']);
-                        })
+                        await Util.log('----- ['+ i +'] errors: ' + ret.errors);
                     } 
                 })
 
@@ -332,7 +328,7 @@ export class Upsert {
                  let errorsCount = 0;
                  for (let i = 0; i < rets.length; i++) {
                      if (!rets[i].success) {
-                         console.log('----- !!! - success: ' + rets[i].success);
+                         Util.log('----- !!! - success: ' + rets[i].success);
                          errorsCount++;
                      }
                  }

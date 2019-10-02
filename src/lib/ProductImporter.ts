@@ -488,9 +488,10 @@ export class ProductImporter {
         this.extractParentCategories(this.categories, allCategories);
         this.allCategoriesChild.forEach(category => {delete category['enxCPQ__Parent_Category__r']});
         this.attributes.push(...this.extractProductObjects(attributesRoot, this.attributeIds));
-        attributeValues.forEach(attributeValue => {  this.attributeValues.push(...this.extractObjects(attributeValue, this.attributeIds, 'enxCPQ__Attribute__r', false))} )
+        attributeValues.forEach(attributeValue => {  this.attributeValues.push(attributeValue)});
+        //attributeValues.forEach(attributeValue => {  this.attributeValues.push(...this.extractObjects(attributeValue, this.attributeIds, 'enxCPQ__Attribute__r', false))} )
         this.attributeSets.push(...this.extractProductObjects(attributeSetsRoot, this.attributeSetIds));
-        this.attributeSetAttributes.push(...this.extractObjects(attributeSetAttributes, this.attributeSetIds, 'enxCPQ__Attribute_Set__r', false))
+        this.attributeSetAttributes.push(...this.extractObjects(attributeSetAttributes, this.attributeSetIds, 'enxCPQ__Attribute_Set__r', false));
     }
 
     private async extractB2BObjects(conn: Connection){
