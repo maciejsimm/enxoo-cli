@@ -53,7 +53,7 @@ export default class Org extends SfdxCommand {
     let conn: Connection;
     conn = await getJsforceConnection(this.org.getConnection().getConnectionOptions());
     conn.bulk.pollInterval = 5000; // 5 sec
-    conn.bulk.pollTimeout = 180000; // 180 sec
+    conn.bulk.pollTimeout = 300000; // 180 sec
     const products = this.flags.products;
     const b2b = this.flags.b2b;
     const dir = this.flags.dir;
