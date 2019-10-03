@@ -112,8 +112,6 @@ export class ProductImporter {
       await this.extractProduct(conn);
       await this.extractData(conn);
       await this.extractPricebooks();
-      this.targetPricebooksIds = await this.retrieveTargetPricebookIds(conn);
-      this.targetProductIds = await this.retrieveTargerProductIds(conn);
      
       //Perform an upsert of data
       try {
@@ -126,7 +124,7 @@ export class ProductImporter {
           await Upsert.upsertObject(conn, 'Product2', this.charges);
           await Upsert.upsertObject(conn, 'Product2', this.chargeElements);
           await Upsert.upsertObject(conn, 'Product2', this.chargeTiers);
-          await this.checkLengthOfTargetPrdIds(conn)
+          this.targetProductIds = await this.retrieveTargerProductIds(conn);
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeSetAttribute__c', this.attributeSetAttributes);
           await Upsert.deleteObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributesIds);
           await Upsert.upsertObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributes);
@@ -134,7 +132,7 @@ export class ProductImporter {
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeValue__c', this.attributeValues);
           let pricebooks = this.retrieveNonStandardPricebooks();
           await Upsert.upsertObject(conn, 'Pricebook2', pricebooks);
-          await this.checkLengthOfTargetPricebookIds(conn);
+          this.targetPricebooksIds = await this.retrieveTargetPricebookIds(conn);
           Upsert.mapPricebooks(this.sourcePricebooksIds,  this.targetPricebooksIds);
           Upsert.mapProducts(this.sourceProductIds, this.targetProductIds);
          
@@ -163,16 +161,7 @@ export class ProductImporter {
           Util.log(ex);
       }     
 }
-    private async checkLengthOfTargetPrdIds(conn:Connection){
-        if(this.targetProductIds.length === 0){
-            this.targetProductIds = await this.retrieveTargerProductIds(conn);
-          }
-    }
-    private async checkLengthOfTargetPricebookIds(conn:Connection){
-        if(this.targetPricebooksIds.length < 2){
-            this.targetPricebooksIds = await this.retrieveTargetPricebookIds(conn);
-          }
-    }
+
     private retrieveNonStandardPricebooks(){
         return this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
     }
