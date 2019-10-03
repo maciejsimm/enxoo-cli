@@ -1,8 +1,8 @@
 // Class responsible for Importing product data into an org
 
-import {core} from '@salesforce/command';
 import * as fs from 'fs';
 import { Util } from './Util';
+import { Connection } from 'jsforce';
 import { Queries } from './query';
 import { Upsert } from './upsert';
 import * as _ from 'lodash';
@@ -48,12 +48,13 @@ export class ProductImporter {
     private chargeElements:Array<Object>;
     private chargeTiers:Array<Object>;
     private provisionigPlansIds:Set<String>;
-    private provisioningTaskIds:Set<String>;
     private attributeDefaultValuesIds:Set<String>;
     private isB2B: boolean;
     private dir: string;
+    private userName: string;
 
-    constructor(products: Set<string>, isB2B: boolean, dir: string){
+    constructor(products: Set<string>, isB2B: boolean, dir: string, userName: string){
+        this.userName = userName;
         this.dir = dir;
         this.productList = products;
         this.isB2B = isB2B;
@@ -97,16 +98,17 @@ export class ProductImporter {
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
         this.provisionigPlansIds = new Set<String>();
-        this.provisioningTaskIds = new Set<String>();
     }
     
-    public async all(conn: core.Connection) {       
-        
-      conn.setMaxListeners(100);
-  
+    public async all(conn:Connection) { 
+      conn.setMaxListeners(100);      
+      Util.setDir(this.dir);
+      
+      if(this.productList[0] === '*ALL'){
+          this.productList = await Util.retrieveAllFileName();
+      }
       await Upsert.enableTriggers(conn);
-      await Upsert.disableTriggers(conn);  
-  
+      await Upsert.disableTriggers(conn, this.userName);  
       await this.extractProduct(conn);
       await this.extractData(conn);
       await this.extractPricebooks();
@@ -139,8 +141,8 @@ export class ProductImporter {
           await Upsert.deleteObject(conn, 'PricebookEntry', this.pricebookEntryIds);
           await Upsert.deleteObject(conn, 'PricebookEntry', this.stdPricebookEntryIds);
          
-          await Upsert.insertBulkPricebookEntries(conn, this.stdPbes);
-          await Upsert.insertBulkPricebookEntries(conn, this.pbes)
+          await Upsert.insertObject(conn, 'PricebookEntry', this.stdPbes);
+          await Upsert.insertObject(conn, 'PricebookEntry', this.pbes);
           
           await Upsert.upsertObject(conn, 'enxCPQ__ProductRelationship__c', this.productRelationships);
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeDefaultValue__c', this.attributeDefaultValues);
@@ -161,12 +163,12 @@ export class ProductImporter {
           Util.log(ex);
       }     
 }
-    private async checkLengthOfTargetPrdIds(conn: core.Connection){
+    private async checkLengthOfTargetPrdIds(conn:Connection){
         if(this.targetProductIds.length === 0){
             this.targetProductIds = await this.retrieveTargerProductIds(conn);
           }
     }
-    private async checkLengthOfTargetPricebookIds(conn: core.Connection){
+    private async checkLengthOfTargetPricebookIds(conn:Connection){
         if(this.targetPricebooksIds.length < 2){
             this.targetPricebooksIds = await this.retrieveTargetPricebookIds(conn);
           }
@@ -175,7 +177,7 @@ export class ProductImporter {
         return this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
     }
 
-    private async retrieveTargerProductIds(conn: core.Connection){
+    private async retrieveTargerProductIds(conn: Connection){
         let targetProductIds = new Array<Object>();
         let prdIdsTarget = await Queries.queryProductIds(conn, this.productList); 
         prdIdsTarget.forEach(prdIdTarget =>{
@@ -190,7 +192,7 @@ export class ProductImporter {
         return targetProductIds;
     }
 
-    private async retrieveTargetPricebookIds(conn: core.Connection){
+    private async retrieveTargetPricebookIds(conn: Connection){
         let targetPricebooksIds = new Array<Object>();
         let pricebooksTarget = await Queries.queryPricebooksIds(conn);
         pricebooksTarget.forEach(pricebookTarget => {
@@ -227,27 +229,37 @@ export class ProductImporter {
 
     private extractProvisionigPlansIds(product:any){
         let provisionigPlansIds = new Set<String>();
-        product.provisioningPlanAssings.forEach(prvPlanAssing => {provisionigPlansIds.add(prvPlanAssing['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c'])});
+        if(product.provisioningPlanAssings){
+            product.provisioningPlanAssings.forEach(prvPlanAssing => {provisionigPlansIds.add(prvPlanAssing['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c'])});
+        }
 
         return provisionigPlansIds;
     }
     private extractAttributeDefaultValuesIds(product:any){
         let attributeDefaultValuesIds = new Set<String>();
-        product.attributeValueDependencies.forEach(atrValueDependency => {attributeDefaultValuesIds.add(atrValueDependency['enxCPQ__Master_Attribute__r']['enxCPQ__TECH_External_Id__c'])});
+        if(product.attributeValueDependencies){
+            product.attributeValueDependencies.forEach(atrValueDependency => {attributeDefaultValuesIds.add(atrValueDependency['enxCPQ__Master_Attribute__r']['enxCPQ__TECH_External_Id__c'])});
+        }
 
         return attributeDefaultValuesIds;
     }
     private extractSourceProductIds(product:any){
         let sourceProductIds = new Set<String>();
-        product.chargesIds.forEach(chargesId => {sourceProductIds.add(chargesId['enxCPQ__TECH_External_Id__c'])});
+        if(product.chargesIds){
+            product.chargesIds.forEach(chargesId => {sourceProductIds.add(chargesId['enxCPQ__TECH_External_Id__c'])});
+        }
         sourceProductIds.add(product.root.enxCPQ__TECH_External_Id__c);
-        product.options.forEach(option => {sourceProductIds.add(option.enxCPQ__TECH_External_Id__c)});
+        if(product.options){
+            product.options.forEach(option => {sourceProductIds.add(option.enxCPQ__TECH_External_Id__c)});
+        }
 
         return sourceProductIds;
     }
     private extractChargesIds(product:any){
         let chargesIds = new Set<String>();
-        product.chargesIds.forEach(chargesId => {chargesIds.add(chargesId['enxCPQ__TECH_External_Id__c'])});
+        if(product.chargesIds){
+            product.chargesIds.forEach(chargesId => {chargesIds.add(chargesId['enxCPQ__TECH_External_Id__c'])});
+        }
 
         return chargesIds;
     }
@@ -261,15 +273,19 @@ export class ProductImporter {
     }
     private extractAttributeIds(product:any){
         let attributeIds = new Set<String>();
-        product.productAttributes.forEach(attr => {attributeIds.add(attr.enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c)});
+        if(product.productAttributes){
+            product.productAttributes.forEach(attr => {attributeIds.add(attr.enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c)});
+        }
 
         return attributeIds;
     }
     
     private extractAttributeSetIds(product:any){
         let attributeSetIds = new Set<String>();
-        product.productAttributes.filter(attr => attr['enxCPQ__Attribute_Set__r'])
-                                 .forEach(attr =>  attributeSetIds.add(attr.enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c));
+        if(product.productAttributes){
+            product.productAttributes.filter(attr => attr['enxCPQ__Attribute_Set__r'])
+                                     .forEach(attr =>  attributeSetIds.add(attr.enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c));
+        }
 
         return attributeSetIds;
     }
@@ -354,19 +370,19 @@ export class ProductImporter {
         });
     }
     
-    private async extractProduct(conn: core.Connection) {
-        let productFileNameList = [];
+    private async extractProduct(conn: Connection) {
+        let productFileNameList= new Set<String>();
         // We need to query ID's of records in target org in order to delete or match ID's
         let prdAttrsTarget = await Queries.queryProductAttributeIds(conn, this.productList);                 // for delete                           
         let allStdPricebookEntriesTarget = await Queries.queryStdPricebookEntryIds(conn, this.productList);  // for delete
         let allPricebookEntriesTarget = await Queries.queryPricebookEntryIds(conn, this.productList);        // for delete
         prdAttrsTarget.forEach(prdAttr => {this.productAttributesIds.push(prdAttr['Id'])});
-        allStdPricebookEntriesTarget.forEach(stdPbeTarget => {this.stdPricebookEntryIds.push(stdPbeTarget['Id'])})
+        allStdPricebookEntriesTarget.forEach(stdPbeTarget => {this.stdPricebookEntryIds.push(stdPbeTarget['Id'])});
         allPricebookEntriesTarget.forEach(pbeTarget => {this.pricebookEntryIds.push(pbeTarget['Id'])});
 
         for (let productName of this.productList){
-            let prdNames = await Util.matchFileNames(productName, this.dir);
-            productFileNameList = [...productFileNameList, ...prdNames];
+            let prdNames = await Util.matchFileNames(productName);
+            productFileNameList = new Set([...productFileNameList, ...prdNames]);
         }
         // Collect all Ids' of products that will be inserted
         for (let prodname of productFileNameList) {
@@ -387,27 +403,29 @@ export class ProductImporter {
         for (let product of this.products) {
             delete product['root']['Id'];
             this.productsRoot.push(product['root']);
-            this.prdAttributeValues = [...this.prdAttributeValues, ...product['attributeValues']];
-            this.productOptions = [...this.productOptions, ...product['options']];
-            this.productAttributes = [...this.productAttributes, ...product['productAttributes']];
-            this.productRelationships = [...this.productRelationships, ...product['productRelationships']];
-            this.attributeDefaultValues = [...this.attributeDefaultValues, ...product['attributeDefaultValues']];
-            this.attributeValueDependencies = [...this.attributeValueDependencies, ...product['attributeValueDependencies']];
-            this.attributeRules = [...this.attributeRules, ...product['attributeRules']];
+
+            if(product['attributeValues']) {product['attributeValues'].forEach(attributeValue=> {this.prdAttributeValues.push(attributeValue)})};
+            if(product['options']) {product['options'].forEach(productOption=> {this.productOptions.push(productOption)})};
+            if(product['productAttributes']) {product['productAttributes'].forEach(productAttribute=> {this.productAttributes.push(productAttribute)})};
+            if(product['productRelationships']) {product['productRelationships'].forEach(productRelationship=> {this.productRelationships.push(productRelationship)})};
+            if(product['attributeDefaultValues']) {product['attributeDefaultValues'].forEach(attributeDefaultValue=> {this.attributeDefaultValues.push(attributeDefaultValue)})};
+            if(product['attributeValueDependencies']) {product['attributeValueDependencies'].forEach(attributeValueDependency=> {this.attributeValueDependencies.push(attributeValueDependency)})};
+            if(product['attributeRules']) {product['attributeRules'].forEach(attributeRule=> { this.attributeRules.push(attributeRule)})};
+ 
             if(this.isB2B){
-                this.provisioningPlanAssignments = [...this.provisioningPlanAssignments, ...product['provisioningPlanAssings']];
+                if(product['provisioningPlanAssings']) {product['provisioningPlanAssings'].forEach(provisioningPlanAssignment=> { this.provisioningPlanAssignments.push(provisioningPlanAssignment)})};
             }
         }
     }
 
     private async extractPricebooks() {
        // reading data for every pricebook
-       let dirNames = await Util.readDirNames('temp/pricebooks');
+       let dirNames = await Util.readDirNames('/pricebooks');
        let allPbes = [];
    
        for(let dirName of dirNames){
            if(dirName=== 'Standard Price Book' ){continue;}                        // <- to jest hardkod!!!
-           let pbes = await Util.readAllFiles('temp/pricebooks/' + dirName);
+           let pbes = await Util.readAllFiles('/pricebooks/' + dirName);
            allPbes.push(pbes);
        }
        
@@ -422,7 +440,7 @@ export class ProductImporter {
                this.pbes.push(...this.extractObjects(pbe['chargeElementPricebookEntries'], this.sourceProductIds, 'Product2'));
            }
        }    
-       let stdPbes = await Util.readAllFiles('temp/pricebooks/Standard Price Book');
+       let stdPbes = await Util.readAllFiles('/pricebooks/Standard Price Book');
        stdPbes.forEach(allstdpbe => {!this.isB2B ? Util.removeB2BFields(allstdpbe['stdEntries']) : null,
                                      this.stdPbes.push(...this.extractObjects(allstdpbe['stdEntries'], this.sourceProductIds, 'Product2'))});
 
@@ -430,25 +448,25 @@ export class ProductImporter {
                                      this.stdPbes.push(...this.extractObjects(allstdpbe['chargeElementStdPricebookEntries'], this.sourceProductIds, 'Product2'))});
     }
 
-    private async extractData(conn: core.Connection) {
+    private async extractData(conn: Connection) {
         //  Read all other than pricebook and product objects from local store
-        const allCategories = await Util.readAllFiles('temp/categories');
-        let allCharges = await Util.readAllFiles('temp/charges');
-        let allAttributes = await Util.readAllFiles('temp/attributes');
-        let allAttributeSets = await Util.readAllFiles('temp/attributeSets');
-        let allPricebooks = await Util.readAllFiles('temp/pricebooks');
+        const allCategories = await Util.readAllFiles('/categories');
+        let allCharges = await Util.readAllFiles('/charges');
+        let allAttributes = await Util.readAllFiles('/attributes');
+        let allAttributeSets = await Util.readAllFiles('/attributeSets');
+        let allPricebooks = await Util.readAllFiles('/pricebooks');
         if(this.isB2B){
             await this.extractB2BObjects(conn);
         }
         let attributeSetsRoot:any = [];
         let attributeSetAttributes:any = [];
-        allAttributeSets.forEach(attributeSet => {attributeSetsRoot.push(attributeSet['root']),
-                                                  attributeSet['values'].forEach(attrSetAttr => {attributeSetAttributes.push(attrSetAttr)})});
+        allAttributeSets.forEach(attributeSet => {attributeSetsRoot.push(attributeSet['root']);
+                                                  if(attributeSet['values']) {attributeSet['values'].forEach(attrSetAttr => {attributeSetAttributes.push(attrSetAttr)})}});
         
         let attributesRoot:any = [];
         let attributeValues:any = [];
-        allAttributes.forEach(attr => {attributesRoot.push(attr['root']),
-                                       attributeValues.push(attr['values'])});
+        allAttributes.forEach(attr => {attributesRoot.push(attr['root']);
+                                       if(attr['values']){attr['values'].forEach(attrValue => {attributeValues.push(attrValue)})}});
        
         allPricebooks.forEach(pricebook=>{this.sourcePricebooksIds = [...this.sourcePricebooksIds,...this.extractPricebookData(pricebook)],
                                           this.deleteJsonFields(pricebook, 'Id',  this.pricebooks, 'IsStandard')});
@@ -456,35 +474,37 @@ export class ProductImporter {
         let productCharges = [...this.extractProductObjects(allCharges, this.chargesIds)];
     
         productCharges.forEach(charge=>{this.charges.push(charge['root']);
-                                        this.chargeElements = [...this.chargeElements, ...charge['chargeElements']];
-                                        this.chargeTiers = [...this.chargeTiers, ...charge['chargeTier']]});                      
+                                        if(charge['chargeElements']){charge['chargeElements'].forEach(chargeElement =>{this.chargeElements.push(chargeElement)})};
+                                        if(charge['chargeTier']){charge['chargeTier'].forEach(chargeTier =>{this.chargeTiers.push(chargeTier)})}});
+
         this.chargeElements.forEach(chargeElement => {this.sourceProductIds.add(chargeElement['enxCPQ__TECH_External_Id__c'])});
         this.chargeTiers.forEach(chargeTier =>{this.sourceProductIds.add(chargeTier['enxCPQ__TECH_External_Id__c'])});
         this.categories.push(...this.extractProductObjects(allCategories, this.categoryIds));
- 
+
+
         this.allCategoriesChild = [...this.categories];
         this.extractParentCategories(this.categories, allCategories);
         this.allCategoriesChild.forEach(category => {delete category['enxCPQ__Parent_Category__r']});
         this.attributes.push(...this.extractProductObjects(attributesRoot, this.attributeIds));
-        attributeValues.forEach(attributeValue => {  this.attributeValues.push(...this.extractObjects(attributeValue, this.attributeIds, 'enxCPQ__Attribute__r', false))} )
-        //this.attributeValues.push(...this.extractObjects(attributeValues, this.attributeIds, 'enxCPQ__Attribute__r'));
+        attributeValues.forEach(attributeValue => {  this.attributeValues.push(attributeValue)});
+        //attributeValues.forEach(attributeValue => {  this.attributeValues.push(...this.extractObjects(attributeValue, this.attributeIds, 'enxCPQ__Attribute__r', false))} )
         this.attributeSets.push(...this.extractProductObjects(attributeSetsRoot, this.attributeSetIds));
-        this.attributeSetAttributes.push(...this.extractObjects(attributeSetAttributes, this.attributeSetIds, 'enxCPQ__Attribute_Set__r', false))
+        this.attributeSetAttributes.push(...this.extractObjects(attributeSetAttributes, this.attributeSetIds, 'enxCPQ__Attribute_Set__r', false));
     }
 
-    private async extractB2BObjects(conn: core.Connection){
+    private async extractB2BObjects(conn: Connection){
         //reading B2B objects from local store
-        let allProvisioningPlans = await Util.readAllFiles('./'+this.dir +'/provisioningPlans');
-        let allProvisioningTasks = await Util.readAllFiles('./'+this.dir +'/provisioningTasks');     
+        let allProvisioningPlans = await Util.readAllFiles('/provisioningPlans');
+        let allProvisioningTasks = await Util.readAllFiles('/provisioningTasks');     
         let planAssignmentsTarget = await Queries.queryProvisioningPlanAssignmentIds(conn);
         let taskAssignmentsTarget = await Queries.queryProvisioningTaskAssignmentIds(conn);
     
         planAssignmentsTarget.forEach(planAssignmentTarget => {this.provisioningPlanAssignmentIds.push(planAssignmentTarget['Id'])});
         taskAssignmentsTarget.forEach(taskAssignmentTarget => {this.provisioningTaskAssignmentIds.push(taskAssignmentTarget['Id'])});
         let provisioningPlans = [...this.extractObjects(allProvisioningPlans, this.provisionigPlansIds)];
-        provisioningPlans.forEach(provisioningPlan => {this.provisioningPlans.push(provisioningPlan['root']),
-                                                        this.provisioningTaskAssignments = [...this.provisioningTaskAssignments, ...provisioningPlan['values']]});
-        this.provisioningTaskAssignments.forEach(prvTaskAssignment => {this.provisioningTaskIds.add(prvTaskAssignment['enxB2B__Provisioning_Task__r']['enxB2B__TECH_External_Id__c'])})
-        this.provisioningTasks.push(...this.extractObjects(allProvisioningTasks, this.provisioningTaskIds));
+        provisioningPlans.forEach(provisioningPlan => {
+        this.provisioningPlans.push(provisioningPlan['root']);
+                                if(provisioningPlan['values']){ provisioningPlan['values'].forEach(value => { this.provisioningTaskAssignments.push(value)})}});
+        allProvisioningTasks.forEach(prvTask =>{this.provisioningTasks.push(prvTask)});
     }
 }

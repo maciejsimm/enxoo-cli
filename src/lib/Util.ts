@@ -6,6 +6,12 @@ import * as fsExtra from 'fs-extra'
 
 export class Util {
 
+    private static dir;
+
+    public static setDir(dir: string){
+        this.dir = dir;
+    }
+    
 	public static throwError(msg: any) {
 		throw new core.SfdxError(msg, "Error", null, -1);
     }
@@ -53,7 +59,10 @@ export class Util {
         }
 
         if (isObject) {
+            
             for (let prop in obj) {
+                if ( obj[prop] == "true")  obj[prop] = true;
+                if ( obj[prop] == "false")  obj[prop] = false;
                 if (prop === 'attributes') {
                     delete obj[prop];
                     continue;
@@ -96,7 +105,7 @@ export class Util {
     public static async readFile(directoryName: String, fileName: String) {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             let content;
-            fs.readFile('./' + directoryName + '/' + fileName, function read(err, data) {
+            fs.readFile('./'+this.dir + directoryName + '/' + fileName, function read(err, data) {
                 if (err) {
                     reject(err);
                 }
@@ -109,13 +118,12 @@ export class Util {
     public static async readAllFiles(directoryName: String) {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             let allFilePromiseArray = new Array<any>();
-
-            fs.readdir('./' + directoryName + '/', async (err, filenames) => {
+            fs.readdir('./' + this.dir + directoryName + '/', async (err, filenames) => {
                 if (err) {
                     throw err;
                 }
-                   filenames.filter(fileName => fileName.includes('.json')).forEach(async (fileName) => {
-                    const fileReadPromise = Util.readFile(directoryName, fileName)
+                   filenames.filter(fileName => fileName.includes('.json')).forEach(async fileName => {
+                    const fileReadPromise = this.readFile(directoryName, fileName);
                     allFilePromiseArray.push(fileReadPromise);
                 });
                 await Promise.all(allFilePromiseArray).then((allFileContents) => {
@@ -128,7 +136,7 @@ export class Util {
 
     public static async readDirNames(directoryName: String){
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-            fs.readdir('./' + directoryName + '/', async (err, filenames) => {
+            fs.readdir('./' + this.dir + directoryName + '/', async (err, filenames) => {
                 if (err) {
                     throw err;
                 }
@@ -139,9 +147,9 @@ export class Util {
             });            
     }
 
-    public static async matchFileNames(productName: string, dir: string){
+    public static async matchFileNames(productName: string){
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-            fs.readdir('./' + dir +'/products/' , async (err, filenames) => {
+            fs.readdir('./' + this.dir +'/products/' , async (err, filenames) => {
                 let fileNamesToResolve = filenames.filter(fileName => fileName.startsWith(productName));
                 if(!fileNamesToResolve[0] || err){
                     reject('Failed to find Product:'+ productName + err);
@@ -150,9 +158,17 @@ export class Util {
             });   
         });            
     }
+    public static async retrieveAllFileName(){
+        let allProducts = await this.readAllFiles('/products');
+        let allProductsNames = new Set<string>();
+
+        allProducts.forEach(product => allProductsNames.add(product['root']['Name']));
+        Util.log('retrieved: ' + allProductsNames.size + ' file names')
+        return allProductsNames;
+    }
 
     public static async writeFile(path:string, dataToSanitaze:any){
-        await fs.writeFile(path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {
+        await fs.writeFile('./' + this.dir + path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {
             if(err) {
                 return Util.log(err);
             }
@@ -188,6 +204,60 @@ export class Util {
     }
 
     public static sanitizeFileName(fileName: string){
-        return fileName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g,'_');
+        if(fileName){
+            return fileName.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g,'_');
+        }
+        return fileName;
+    }
+
+    public static isBulkApi(objectToCheck: String[]){
+        if(!objectToCheck || objectToCheck[0] !== 'useBulkApi'){
+            return false;
+        }
+        return true;
+    }
+    public static sanitizeResult(result: any){
+        for(let props of result){
+            for(let prop in props){
+            if(prop.includes('.')){
+                let separatedProp = prop.split('.');
+                if(props[prop]){
+                   props[separatedProp[0]] = {};
+                   props[separatedProp[0]][separatedProp[1]] = props[prop];
+                }else{
+                    props[separatedProp[0]] = null;
+                }
+                delete props[prop]
+            }}
+        }
+    }
+    public static sanitizeForBulkImport(objs: any){
+
+        for(let obj of objs){
+ 
+            for(let prop in obj){
+                if(typeof obj[prop] == 'object'){
+                    let newProp;
+                    for(let innerProp in obj[prop]){
+                        newProp = prop +'.'+innerProp;
+                        obj[newProp] = obj[prop][innerProp];
+                    }
+                    delete obj[prop];
+            }
+        }}
+    }
+
+    public static async readQueryJson(queryDir: string){
+        return new Promise<String>((resolve: Function, reject: Function) => {
+        let content;
+        fs.readFile('./' +queryDir+ '/queries.json', function read(err, data) {
+            if (err) {
+                reject(err);
+            }
+            content = data.toString('utf8');
+            resolve(JSON.parse(content));
+        });
+    });
+
     }
 }

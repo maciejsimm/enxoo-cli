@@ -1,8 +1,6 @@
 import {core, flags, SfdxCommand} from '@salesforce/command';
 import {AnyJson} from '@salesforce/ts-types';
-import { ProductImporter } from '../../../../lib/ProductImporter';
-import {getJsforceConnection } from '../../../../lib/jsforceHelper';
-import { Connection } from 'jsforce';
+import { Describer } from '../../../../lib/Describer';
 
 // Initialize Messages with the current plugin directory
 core.Messages.importMessagesDirectory(__dirname);
@@ -29,8 +27,6 @@ export default class Org extends SfdxCommand {
 
   protected static flagsConfig = {
     // flag with a value (-p, --product=VALUE)
-    products: flags.array({char: 'p', required: true, description: messages.getMessage('productsFlagDescription')}),
-    force: flags.boolean({char: 'f', description: messages.getMessage('forceFlagDescription')}),
     b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('b2bFlagDescription')}),
     dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')})
   };
@@ -47,20 +43,16 @@ export default class Org extends SfdxCommand {
   public async run(): Promise<AnyJson> {
 
     // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
-    let conn: Connection;
-    conn = await getJsforceConnection(this.org.getConnection().getConnectionOptions());
-    let userName = this.org.getUsername();
-
+    const conn = this.org.getConnection();
     conn.bulk.pollInterval = 5000; // 5 sec
-    conn.bulk.pollTimeout = 180000; //180 sec
-    const products = this.flags.products;
+    conn.bulk.pollTimeout = 180000; // 180 sec
     const b2b = this.flags.b2b;
     const dir = this.flags.dir;
 
-    this.ux.log('*** Begin Importing ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
+    this.ux.log('*** Begin Describing  ' + (b2b ? 'B2B + CPQ' : 'CPQ') + ' objects ***');
 
-    const importer = new ProductImporter(products, b2b, dir, userName);
-    await importer.all(conn);
+    const describer = new Describer(b2b, dir);
+    await describer.all(conn);
 
     this.ux.log('*** Finished ***');
     
