@@ -1331,9 +1331,10 @@ public static async queryChargeElementPricebookEntries (conn: Connection, produc
     // FIELDS removed from query because they were putting "0" instead of null -> enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c
 public static async bulkQueryChargeElementPricebookEntries (conn: Connection, productList:  Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting Charge Element Pricebook Entries');
+        let query = "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true";
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery +  + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
