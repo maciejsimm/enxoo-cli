@@ -67,9 +67,10 @@ public static async queryAllProductNames(conn: Connection):Promise<String[]> {
 
 public static async bulkQueryAllProductNames(conn: Connection):  Promise<String[]> {
         Util.showSpinner('---bulk exporting all Product Names');
+        let query = "SELECT Name FROM Product2 WHERE RecordType.Name = 'Product' OR RecordType.Name = 'Bundle'";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT Name FROM Product2 WHERE RecordType.Name = 'Product' OR RecordType.Name = 'Bundle'")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -192,9 +193,10 @@ public static async queryStdPricebookEntries(conn: Connection, productList: Set<
   
 public static async bulkQueryStdPricebookEntries(conn: Connection, productList: Set<String>): Promise<String[]> {
     Util.showSpinner('---bulk exporting standard PricebookEntry');
+    let query = "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element' AND IsActive = true";
    return new  Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element' AND IsActive = true")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -235,9 +237,10 @@ public static async queryPricebookEntryCurrencies(conn: Connection, productList:
 
 public static async bulkQueryPricebookEntryCurrencies(conn: Connection, productList: Set<String>): Promise<String[]> {
     Util.showSpinner('---bulk exporting pricebook entry currencies');
+    let query = "SELECT Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND (IsActive = true OR Pricebook2.IsStandard = true)";
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND (IsActive = true OR Pricebook2.IsStandard = true)")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -278,9 +281,10 @@ public static async queryPricebooks(conn: Connection): Promise<String[]> {
 
 public static async bulkQueryPricebooks(conn: Connection): Promise<String[]> {
         Util.showSpinner('---bulk exporting pricebooks');
+        let query = "SELECT IsStandard, "+ this.pricebookQuery+" FROM Pricebook2 WHERE IsActive = true OR IsStandard = true";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT IsStandard, "+ this.pricebookQuery+" FROM Pricebook2 WHERE IsActive = true OR IsStandard = true")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -321,9 +325,10 @@ public static async queryPricebookEntries(conn: Connection, productList: Set<Str
 
 public static async bulkQueryPricebookEntries(conn: Connection, productList: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting PricebookEntry');
+        let query = "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id, " + this.pbeQuery + " FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element' AND IsActive = true";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id, " + this.pbeQuery + " FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element' AND IsActive = true")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -367,9 +372,10 @@ public static async queryProduct(conn: Connection, productList: Set<String>): Pr
 
 public static async bulkQueryProduct(conn: Connection, productList: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting product');
+        let query = "SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE Name IN (" + Util.setToIdString(productList) + ")";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE Name IN (" + Util.setToIdString(productList) + ")")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -413,9 +419,10 @@ public static async queryProductAttributes(conn: Connection, productList: Set<St
 
 public static async bulkQueryProductAttributes(conn: Connection, productList: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting product attributes');
+        let query = "SELECT  enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Value_Attribute__r.enxCPQ__TECH_External_Id__c,  enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c" + this.productAttrQuery + " FROM enxCPQ__ProductAttribute__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Order__c";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT  enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Value_Attribute__r.enxCPQ__TECH_External_Id__c,  enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c" + this.productAttrQuery + " FROM enxCPQ__ProductAttribute__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Order__c")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -457,9 +464,10 @@ public static async queryProductOptions(conn: Connection, productList: Set<Strin
 
 public static async bulkQueryProductOptions(conn: Connection, productList: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting product options');
+        let query = "SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+ "FROM Product2 WHERE RecordType.Name = 'Option' AND enxCPQ__Parent_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Sorting_Order__c";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+ "FROM Product2 WHERE RecordType.Name = 'Option' AND enxCPQ__Parent_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Sorting_Order__c")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -503,9 +511,10 @@ public static async queryAttributeSetAttributes(conn: Connection, attributeSetId
 
 public static async bulkQueryAttributeSetAttributes(conn: Connection): Promise<String[]> {
         Util.showSpinner('---bulk exporting attributes set attributes');
+        let query = "SELECT enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, "+ this.attrSetAttrQuery +" FROM enxCPQ__AttributeSetAttribute__c ORDER BY enxCPQ__Order__c ";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, "+ this.attrSetAttrQuery +" FROM enxCPQ__AttributeSetAttribute__c ORDER BY enxCPQ__Order__c ")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -551,9 +560,10 @@ public static async queryAttributes(conn: Connection, attributeIds: Set<String>)
 
 public static async bulkQueryAttributes(conn: Connection, attributeIds: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting attributes');
+        let query = "SELECT "+ this.attrQuery +" FROM enxCPQ__Attribute__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT "+ this.attrQuery +" FROM enxCPQ__Attribute__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -594,9 +604,10 @@ public static async queryProvisioningTasks(conn: Connection): Promise<String[]> 
 
 public static async bulkQueryProvisioningTasks(conn: Connection): Promise<String[]> {
     Util.showSpinner('--- bulk exporting provisioning tasks');
+    let query = "SELECT "+ this.prvTaskQuery+" FROM enxB2B__ProvisioningTask__c";
     return new Promise<string[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT "+ this.prvTaskQuery+" FROM enxB2B__ProvisioningTask__c")
+        conn.bulk.query(query)
             .on('record', function(rec) {  
                 records.push(rec);
             })
@@ -636,9 +647,10 @@ public static async queryProvisioningPlans(conn: Connection): Promise<String[]> 
 
 public static async bulkQueryProvisioningPlans(conn: Connection): Promise<String[]> {
     Util.showSpinner('--- bulk exporting provisioning plans');
+    let query = "SELECT "+ this.prvPlanQuery+" FROM enxB2B__ProvisioningPlan__c";
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT "+ this.prvPlanQuery+" FROM enxB2B__ProvisioningPlan__c")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -680,9 +692,10 @@ public static async  queryProductCharges(conn: Connection, productList: Set<Stri
 
 public static async  bulkQueryProductCharges(conn: Connection, productList: Set<String>): Promise<String[]> {
     Util.showSpinner('--- bulk exporting product charges');
+    let query = "SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE RecordType.Name = 'Charge' AND (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Charge_Reference__c !=null)  ORDER BY enxCPQ__Sorting_Order__c";
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE RecordType.Name = 'Charge' AND (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Charge_Reference__c !=null)  ORDER BY enxCPQ__Sorting_Order__c")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -724,9 +737,10 @@ public static async queryProductChargesIds(conn: Connection, productList: Set<St
 }
 public static async bulkQueryProductChargesIds(conn: Connection, productList: Set<String>): Promise<String[]> {
     Util.showSpinner('---bulk exporting product charges ids');
+    let query = "SELECT enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c FROM Product2 WHERE RecordType.Name = 'Charge' AND enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Sorting_Order__c";
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c FROM Product2 WHERE RecordType.Name = 'Charge' AND enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Sorting_Order__c")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -769,9 +783,10 @@ public static async queryProductAttributeValues(conn: Connection, productList: S
 
 public static async bulkQueryProductAttributeValues(conn: Connection, productList: Set<String>): Promise<String[]> {
     Util.showSpinner('---bulk exporting product attribute values');
+    let query = "SELECT enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery +" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = false AND enxCPQ__Exclusive_for_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Order__c";
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery +" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = false AND enxCPQ__Exclusive_for_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Order__c")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -814,9 +829,10 @@ public static async queryAttributeDefaultValues(conn: Connection, productList: S
 
 public static async bulkQueryAttributeDefaultValues(conn: Connection, productList: Set<String>): Promise<String[]> {
     Util.showSpinner('---bulk exporting attribute default values');
+    let query = "SELECT enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, "+ this.attrDefaultValuesQuery +" FROM enxCPQ__AttributeDefaultValue__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__TECH_External_Id__c";
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, "+ this.attrDefaultValuesQuery +" FROM enxCPQ__AttributeDefaultValue__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__TECH_External_Id__c")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -859,9 +875,10 @@ public static async queryProductRelationships(conn: Connection, productList: Set
 
 public static async bulkQueryProductRelationships(conn: Connection, productList: Set<String>): Promise<String[]> {
     Util.showSpinner('---bulk exporting product relationships');
+    let query = "SELECT enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Secondary_Product__r.enxCPQ__TECH_External_Id__c, "+ this.productRelationshipsQuery+" FROM enxCPQ__ProductRelationship__c WHERE enxCPQ__Primary_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND enxCPQ__Secondary_Product__c != null";
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Secondary_Product__r.enxCPQ__TECH_External_Id__c, "+ this.productRelationshipsQuery+" FROM enxCPQ__ProductRelationship__c WHERE enxCPQ__Primary_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND enxCPQ__Secondary_Product__c != null")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -904,9 +921,10 @@ public static async queryAttributeValueDependencies(conn: Connection, productLis
 
 public static async bulkQueryAttributeValueDependencies(conn: Connection, productList: Set<String>): Promise<String[]> {
     Util.showSpinner('---bulk exporting attribute value dependency');
+    let query = "SELECT enxCPQ__Dependent_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Dependent_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c,  enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Product__r.enxCPQ__TECH_External_Id__c, "+ this.attrValueDependecyQuery +" FROM enxCPQ__AttributeValueDependency__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__TECH_External_Id__c";
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT enxCPQ__Dependent_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Dependent_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c,  enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Product__r.enxCPQ__TECH_External_Id__c, "+ this.attrValueDependecyQuery +" FROM enxCPQ__AttributeValueDependency__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__TECH_External_Id__c")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -948,9 +966,10 @@ public static async queryAttributeRules(conn: Connection, productList: Set<Strin
 
 public static async bulkQueryAttributeRules(conn: Connection, productList: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting attribute rules');
+        let query = "SELECT enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, "+ this.attrRulesQuery +" FROM enxCPQ__AttributeRule__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Order__c";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, "+ this.attrRulesQuery +" FROM enxCPQ__AttributeRule__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Order__c")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -993,9 +1012,10 @@ public static async queryProvisioningPlanAssigns(conn: Connection, productList: 
 
 public static async bulkQueryProvisioningPlanAssigns(conn: Connection, productList: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting provisioning plan assignments');
+        let query = "SELECT  enxB2B__Product__r.enxCPQ__TECH_External_Id__c, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, "+ this.prvPlanAssignmentQuery +" FROM enxB2B__ProvisioningPlanAssignment__c WHERE enxB2B__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxB2B__Order__c";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT  enxB2B__Product__r.enxCPQ__TECH_External_Id__c, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, "+ this.prvPlanAssignmentQuery +" FROM enxB2B__ProvisioningPlanAssignment__c WHERE enxB2B__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxB2B__Order__c")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -1041,9 +1061,10 @@ public static async queryCategories(conn: Connection, categoryIds: Set<String>):
 
 public static async bulkQueryCategories(conn: Connection, categoryIds: Set<String>): Promise<String[]> {
         Util.showSpinner('--- bulk exporting categories');
+        let query = "SELECT enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c, " + this.categoryQuery +" FROM enxCPQ__Category__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(categoryIds) + ") ";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c, " + this.categoryQuery +" FROM enxCPQ__Category__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(categoryIds) + ") ")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -1088,9 +1109,10 @@ public static async queryAttributeValues(conn: Connection, attributeIds: Set<Str
 }
 public static async bulkQueryAttributeValues(conn: Connection, attributeIds: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting product attribute values');
+        let query = "SELECT enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery+" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery+" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -1135,9 +1157,10 @@ public static async queryAttributeSets(conn: Connection, attributeSetIds: Set<St
 
 public static async bulkQueryAttributeSets(conn: Connection): Promise<String[]> {
         Util.showSpinner('---bulk exporting attributes sets');
+        let query = "SELECT "+ this.attrSetQuery+" FROM enxCPQ__AttributeSet__c ";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT "+ this.attrSetQuery+" FROM enxCPQ__AttributeSet__c ")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -1204,9 +1227,10 @@ public static async queryProvisioningTaskAssignments (conn: Connection): Promise
 
 public static async bulkQueryProvisioningTaskAssignments (conn: Connection): Promise<String[]> {
         Util.showSpinner('---bulk exporting Provisioning task assignments');
+        let query = "SELECT enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__Provisioning_Task__r.enxB2B__TECH_External_Id__c, "+ this.prvTaskAssignmentQuery +" FROM enxB2B__ProvisioningTaskAssignment__c"
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
-            conn.bulk.query("SELECT enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__Provisioning_Task__r.enxB2B__TECH_External_Id__c, "+ this.prvTaskAssignmentQuery +" FROM enxB2B__ProvisioningTaskAssignment__c")
+            conn.bulk.query(query)
                 .on('record', function(rec) { 
                     records.push(rec);
                 })
@@ -1286,10 +1310,10 @@ public static async queryChargeElementStdPricebookEntries (conn: Connection, pro
 
 public static async bulkQueryChargeElementStdPricebookEntries (conn: Connection, productList:  Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting charge element standard pricebook entries');
-
+        let query = "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery +" FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true";
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery +" FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element' AND IsActive = true")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -1376,9 +1400,10 @@ public static async queryChargeElements (conn: Connection, productList: Set<Stri
 }
 public static async bulkQueryChargeElements (conn: Connection, productList: Set<String>, chargeList: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting charge elements');
+        let query = "SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Element' AND IsActive = true";
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Element' AND IsActive = true")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -1420,9 +1445,10 @@ public static async queryChargeTiers (conn: Connection,  productList: Set<String
 
 public static async bulkQueryChargeTiers (conn: Connection,  productList: Set<String>, chargeList: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting charge Tiers');
+        let query = "SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Tier' AND IsActive = true";
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Tier' AND IsActive = true")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -1440,9 +1466,10 @@ public static async bulkQueryChargeTiers (conn: Connection,  productList: Set<St
     // FIELDS removed from query because they were putting "0" instead of null -> enxCPQ__Price_Modifier_Amount__c, enxCPQ__Price_Modifier_Percent__c, enxCPQ__Price_Override__c
 public static async bulkQueryChargeElementPricebookEntryIds (conn: Connection, productName: String): Promise<string> {
         Util.showSpinner('---bulk exporting charge element pricebook entries ids');
+        let query = "SELECT Id FROM PricebookEntry WHERE Product2.RecordType.Name = 'Charge Element' AND Product2.enxCPQ__Root_Product__r.Name = '" + productName + "'";
         return new Promise<string>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT Id FROM PricebookEntry WHERE Product2.RecordType.Name = 'Charge Element' AND Product2.enxCPQ__Root_Product__r.Name = '" + productName + "'")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -1458,9 +1485,10 @@ public static async bulkQueryChargeElementPricebookEntryIds (conn: Connection, p
     }
 public static async bulkQueryProductIds (conn: Connection, productName: String): Promise<String[]> {
         Util.showSpinner('---bulk exporting product ids');
+        let query = "SELECT Id, enxCPQ__TECH_External_Id__c FROM Product2 WHERE RecordType.Name = 'Charge Element'  AND enxCPQ__Root_Product__r.Name = '" + productName + "'";
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT Id, enxCPQ__TECH_External_Id__c FROM Product2 WHERE RecordType.Name = 'Charge Element'  AND enxCPQ__Root_Product__r.Name = '" + productName + "'")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -1476,9 +1504,10 @@ public static async bulkQueryProductIds (conn: Connection, productName: String):
     }
 public static async bulkQueryStdPricebookEntryIds (conn: Connection): Promise<string> {
         Util.showSpinner('---bulk exporting standard PricebookEntry ids');
+        let query = "SELECT Id FROM PricebookEntry WHERE Pricebook2Id != null AND Pricebook2.IsStandard = true AND product2.isactive = true AND Product2.RecordType.Name = 'Charge Element'"
         return new Promise<string>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT Id FROM PricebookEntry WHERE Pricebook2Id != null AND Pricebook2.IsStandard = true AND product2.isactive = true AND Product2.RecordType.Name = 'Charge Element'")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
@@ -1494,9 +1523,10 @@ public static async bulkQueryStdPricebookEntryIds (conn: Connection): Promise<st
 }
 public static async bulkQueryPricebookEntryIds (conn: Connection): Promise<string> {
         Util.showSpinner('---bulk exporting PricebookEntry ids');
+        let query = "SELECT Id FROM PricebookEntry WHERE Pricebook2Id != null AND Pricebook2.IsStandard = false AND product2.isactive = true AND Product2.RecordType.Name = 'Charge Element'";
         return new Promise<string>((resolve: Function, reject: Function) => {
         var records = []; 
-        conn.bulk.query("SELECT Id FROM PricebookEntry WHERE Pricebook2Id != null AND Pricebook2.IsStandard = false AND product2.isactive = true AND Product2.RecordType.Name = 'Charge Element'")
+        conn.bulk.query(query)
             .on('record', function(rec) { 
                 records.push(rec);
             })
