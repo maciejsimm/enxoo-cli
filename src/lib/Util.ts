@@ -250,7 +250,7 @@ export class Util {
     public static async readQueryJson(queryDir: string){
         return new Promise<String>((resolve: Function, reject: Function) => {
         let content;
-        fs.readFile('./' +queryDir+ '/queries.json', function read(err, data) {
+        fs.readFile('./' +queryDir+ '/queryConfiguration.json', function read(err, data) {
             if (err) {
                 reject(err);
             }

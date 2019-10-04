@@ -36,7 +36,7 @@ export class Describer {
             queryFields.prvTaskAssignmentFieldNames = await this.describePrvTaskAssignment(conn);
         }
 
-        Util.writeFile('/queries.json', queryFields);
+        Util.writeFile('/queryConfiguration.json', queryFields);
     }
 
     public retrieveFieldNames(metaData: String[]){
