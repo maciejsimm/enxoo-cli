@@ -342,6 +342,7 @@ export class Upsert {
          });
     }
     public static async deleteBulkObject(conn, sObjectName, data): Promise<string> {
+        Util.log('--- bulk deleting ' + sObjectName + ': ' + data.length + ' records');
         return new Promise<string>((resolve: Function, reject: Function) => {
             conn.bulk.load(sObjectName, "delete", data,  async (err:any, rets:RecordResult[]) => {
                 if (err) {
