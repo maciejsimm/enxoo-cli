@@ -1,8 +1,8 @@
-import { expect, test } from '@salesforce/command/lib/test';
-import { ensureJsonMap, ensureString } from '@salesforce/ts-types';
+// import { expect, test } from '@salesforce/command/lib/test';
+// import { ensureJsonMap, ensureString } from '@salesforce/ts-types';
 
 describe('hello:org', () => {
-  test
+  // test
     // .withOrg({ username: 'test@org.com' }, true)
     // .withConnectionRequest(request => {
     //   const requestMap = ensureJsonMap(request);
