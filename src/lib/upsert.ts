@@ -318,6 +318,10 @@ export class Upsert {
         if(data.length===0){
             return;
          }
+         if(data.length > 199){
+            await this.deleteBulkObject(conn, sObjectName, data);
+            return;
+        }
          Util.log('--- deleting ' + sObjectName + ': ' + data.length + ' records');
          return new Promise<string>((resolve: Function, reject: Function) => {
              conn.sobject(sObjectName).del(data, function(err: any, rets: RecordResult[]) {
@@ -336,5 +340,34 @@ export class Upsert {
              resolve();
              });
          });
+    }
+
+    public static async deleteBulkObject(connection: Connection, sObjectName: string, objectsIds: string[]): Promise<string> {
+        Util.log('--- bulk deleting ' + sObjectName + ': ' + objectsIds.length + ' records');
+       
+        const recordsToDelete = objectsIds.map((objectId: string) => (
+            {Id: objectId}
+        ));
+
+        return new Promise<string>((resolve: Function, reject: Function) => {
+            connection.bulk.load(sObjectName, 'delete', {extIdField: 'enxCPQ__TECH_External_Id__c'}, recordsToDelete, async (error:any, results:RecordResult[]) => {
+                if (error) {
+                    Util.log(error);
+                    reject('error deleting ' + sObjectName + ': ' + error);
+                    return;
+                }
+                
+                let successCount = results.filter((recordResult:RecordResult) => recordResult.success).length;
+
+                await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (recordsToDelete.length - successCount)); 
+                results.forEach(async (recordResult: RecordResult, index: number) => {
+                    if (recordResult.success === false) {
+                        await Util.log('----- ['+ index +'] errors: ' + recordResult.errors);
+                    } 
+                })
+
+                resolve('OK');
+            });
+        });
     }
 }
