@@ -27,6 +27,7 @@
 import { Util } from './Util';
 import { Connection } from 'jsforce';
 import { Queries } from './query';
+import { debug } from 'util';
 
 export class ProductExporter {
     private categoryIds:Set<String>;
@@ -50,7 +51,10 @@ export class ProductExporter {
     }
 
     public async all(conn: Connection) {
+        debugger;
+        Util.log('BARTDBG: all method');
         if(this.productList[0] === '*ALL'){
+            debugger;
             this.productList = new Set<string>();
             let productList = await Queries.queryAllProductNames(conn);
             for(let product of productList){
@@ -59,6 +63,7 @@ export class ProductExporter {
         }
         Util.setDir(this.dir);
         await Queries.retrieveQueryJson(this.dir);
+        debugger;
         await this.retrievePriceBooks(conn, this.productList);
         Util.createAllDirs(this.isB2B, this.dir);
 
@@ -251,12 +256,26 @@ export class ProductExporter {
     }
 
     private async retrievePriceBooks(conn: Connection, productList: Set<String>){
+        debugger;
         let priceBooks = await Queries.queryPricebooks(conn);
         let currencies = await Queries.queryPricebookEntryCurrencies(conn, productList);
         let priceBookEntries = await Queries.queryPricebookEntries(conn, productList);
         let stdPriceBookEntries = await Queries.queryStdPricebookEntries(conn, productList);
         let chargeElementPricebookEntries = await Queries.queryChargeElementPricebookEntries(conn, productList);
         let chargeElementStdPricebookEntries = await Queries.queryChargeElementStdPricebookEntries(conn, productList);
+        
+        let objectsMissingTechId = Util.getObjectsMissingTechId([
+            ...chargeElementPricebookEntries,
+            ...chargeElementStdPricebookEntries,
+            ...priceBooks, 
+            ...priceBookEntries, 
+            ...stdPriceBookEntries
+        ]);
+
+        if(objectsMissingTechId.length !== 0){
+            
+        }
+
         if(priceBooks){
         priceBooks.forEach(priceBook => {
 

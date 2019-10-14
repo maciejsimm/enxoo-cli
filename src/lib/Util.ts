@@ -3,10 +3,15 @@
 import { core, UX } from "@salesforce/command";
 import * as fs from 'fs';
 import * as fsExtra from 'fs-extra'
+import { SObject } from "jsforce";
 
 export class Util {
 
     private static dir;
+
+    public static getObjectsMissingTechId(objectArray: any){
+        return objectArray.filter(object => !object.enxCPQ__TECH_External_Id__c);
+    }
 
     public static setDir(dir: string){
         this.dir = dir;
