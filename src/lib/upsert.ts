@@ -1,5 +1,6 @@
 import { RecordResult, Connection } from 'jsforce';
 import { Util } from './Util';
+import { debug } from 'util';
 export class Upsert {
     private static idMapping = {};
 
@@ -341,24 +342,28 @@ export class Upsert {
              });
          });
     }
-    public static async deleteBulkObject(conn, sObjectName, data): Promise<string> {
-        Util.log('--- bulk deleting ' + sObjectName + ': ' + data.length + ' records');
+
+    public static async deleteBulkObject(connection: Connection, sObjectName: string, objectsIds: string[]): Promise<string> {
+        Util.log('--- bulk deleting ' + sObjectName + ': ' + objectsIds.length + ' records');
+       
+        const recordsToDelete = objectsIds.map((objectId) => (
+            {Id: objectId}
+        ));
+
         return new Promise<string>((resolve: Function, reject: Function) => {
-            conn.bulk.load(sObjectName, "delete", data,  async (err:any, rets:RecordResult[]) => {
-                if (err) {
-                    Util.log(err);
-                    reject('error deleting ' + sObjectName + ': ' + err);
+            connection.bulk.load(sObjectName, 'delete', {extIdField: 'enxCPQ__TECH_External_Id__c'}, recordsToDelete, async (error:any, results:RecordResult[]) => {
+                if (error) {
+                    Util.log(error);
+                    reject('error deleting ' + sObjectName + ': ' + error);
                     return;
                 }
                 
-                let successCount = rets
-                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
-                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+                let successCount = results.filter((recordResult:RecordResult) => recordResult.success).length;
 
-                await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
-                rets.forEach(async (ret, i) => {
-                    if (ret.success === false) {
-                        await Util.log('----- ['+ i +'] errors: ' + ret.errors);
+                await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (recordsToDelete.length - successCount)); 
+                results.forEach(async (recordResult: RecordResult, index: number) => {
+                    if (recordResult.success === false) {
+                        await Util.log('----- ['+ index +'] errors: ' + recordResult.errors);
                     } 
                 })
 
