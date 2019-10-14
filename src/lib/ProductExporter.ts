@@ -159,7 +159,6 @@ export class ProductExporter {
                 this.provisioningPlanIds.add(assign.enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c);
             }
         }
-        debugger;
     }
     private async retrieveCategoriesHelper(conn: Connection, categories:any){
         let parentCategoriesIds =  new Set<String>();
