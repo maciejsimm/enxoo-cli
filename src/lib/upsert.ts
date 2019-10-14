@@ -1,6 +1,5 @@
 import { RecordResult, Connection } from 'jsforce';
 import { Util } from './Util';
-import { debug } from 'util';
 export class Upsert {
     private static idMapping = {};
 
