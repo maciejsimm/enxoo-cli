@@ -345,7 +345,7 @@ export class Upsert {
     public static async deleteBulkObject(connection: Connection, sObjectName: string, objectsIds: string[]): Promise<string> {
         Util.log('--- bulk deleting ' + sObjectName + ': ' + objectsIds.length + ' records');
        
-        const recordsToDelete = objectsIds.map((objectId) => (
+        const recordsToDelete = objectsIds.map((objectId: string) => (
             {Id: objectId}
         ));
 
