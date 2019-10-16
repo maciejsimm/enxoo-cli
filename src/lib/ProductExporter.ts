@@ -79,40 +79,37 @@ export class ProductExporter {
 
     private async retrieveProduct(conn: Connection, productList: Set<string>) {
         Util.showSpinner('products export');
+        
         let productDefinitions = await Queries.queryProduct(conn, productList);
+        this.checkTechIds(productDefinitions);
+
         let options = await Queries.queryProductOptions(conn, productList);
+        this.checkTechIds(options);
+
         let chargesIds = await Queries.queryProductChargesIds(conn, productList);
+        
         let productAttributes = await Queries.queryProductAttributes(conn, productList);
+        this.checkTechIds(productAttributes);
+
         let attributeValues = await Queries.queryProductAttributeValues(conn, productList);
+        this.checkTechIds(attributeValues);
+
         let attributeDefaultValues = await Queries.queryAttributeDefaultValues(conn, productList);
+        this.checkTechIds(attributeDefaultValues);
+
         let attributeValueDependencies = await Queries.queryAttributeValueDependencies(conn, productList);
+        this.checkTechIds(attributeValueDependencies);
+
         let attributeRules = await Queries.queryAttributeRules(conn, productList);
+        this.checkTechIds(attributeRules);
+
         let productRelationships = await Queries.queryProductRelationships(conn, productList);
-
-
-        const objectsToCheckTechId = [
-            ...productDefinitions,
-            ...options,
-            ...productAttributes, 
-            ...attributeValues, 
-            ...attributeDefaultValues,
-            ...attributeValueDependencies,
-            ...attributeRules,
-            ...productRelationships
-        ];
+        this.checkTechIds(productRelationships);
 
         let provisioningPlanAssings:any = {};
         if(this.isB2B){
-           provisioningPlanAssings = await Queries.queryProvisioningPlanAssigns(conn, productList);
-           objectsToCheckTechId.push(...provisioningPlanAssings);
-        }
-
-        const objectsMissingTechId = Util.getObjectsMissingTechId(objectsToCheckTechId);
-
-        if(objectsMissingTechId.length !== 0){
-            objectsMissingTechId.forEach((object) => {
-                Util.log(Util.OBJECT_MISSING_TECH_ID_ERROR + ': ' + object.Id);
-            });
+            provisioningPlanAssings = await Queries.queryProvisioningPlanAssigns(conn, productList);
+            this.checkTechIds(provisioningPlanAssings);
         }
        
         for(let productDefinition of productDefinitions){
@@ -284,23 +281,6 @@ export class ProductExporter {
         let stdPriceBookEntries = await Queries.queryStdPricebookEntries(conn, productList);
         let chargeElementPricebookEntries = await Queries.queryChargeElementPricebookEntries(conn, productList);
         let chargeElementStdPricebookEntries = await Queries.queryChargeElementStdPricebookEntries(conn, productList);
-        
-        
-
-        // let objectsMissingTechId = Util.getObjectsMissingTechId([
-        //     ...chargeElementPricebookEntries,
-        //     ...chargeElementStdPricebookEntries,
-        //     ...priceBooks, 
-        //     ...priceBookEntries, 
-        //     ...stdPriceBookEntries
-        // ]);
-
-        // if(objectsMissingTechId.length !== 0){
-        //     debugger;
-        //     objectsMissingTechId.forEach((object) => {
-        //         Util.log(Util.OBJECT_MISSING_TECH_ID_ERROR + ': ' + object.Id);
-        //     });
-        // }
 
         if(priceBooks){
         priceBooks.forEach(priceBook => {

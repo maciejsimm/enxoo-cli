@@ -6,12 +6,14 @@ import * as fsExtra from 'fs-extra'
 
 export class Util {
 
-    public static OBJECT_MISSING_TECH_ID_ERROR: string = 'Object is missing enxCPQ__TECH_External_Id__c';
+    public static OBJECT_MISSING_TECH_ID_ERROR: string = 'Object is missing TECH_External_Id__c field value';
     
     private static dir: string;
 
     public static getObjectsMissingTechId(objectArray: any){
-        return objectArray.filter(object => !object.enxCPQ__TECH_External_Id__c);
+        return objectArray.filter(object => (
+            !(object.enxCPQ__TECH_External_Id__c || object.enxB2B__TECH_External_Id__c || object.enxB2B__TECH_External_ID__c)
+        ));
     }
 
     public static setDir(dir: string){
