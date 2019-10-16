@@ -51,10 +51,8 @@ export class ProductExporter {
     }
 
     public async all(conn: Connection) {
-        debugger;
         Util.log('BARTDBG: all method');
         if(this.productList[0] === '*ALL'){
-            debugger;
             this.productList = new Set<string>();
             let productList = await Queries.queryAllProductNames(conn);
             for(let product of productList){
@@ -91,9 +89,30 @@ export class ProductExporter {
         let attributeRules = await Queries.queryAttributeRules(conn, productList);
         let productRelationships = await Queries.queryProductRelationships(conn, productList);
 
+
+        const objectsToCheckTechId = [
+            ...productDefinitions,
+            ...options,
+            ...productAttributes, 
+            ...attributeValues, 
+            ...attributeDefaultValues,
+            ...attributeValueDependencies,
+            ...attributeRules,
+            ...productRelationships
+        ];
+
         let provisioningPlanAssings:any = {};
         if(this.isB2B){
            provisioningPlanAssings = await Queries.queryProvisioningPlanAssigns(conn, productList);
+           objectsToCheckTechId.push(...provisioningPlanAssings);
+        }
+
+        const objectsMissingTechId = Util.getObjectsMissingTechId(objectsToCheckTechId);
+
+        if(objectsMissingTechId.length !== 0){
+            objectsMissingTechId.forEach((object) => {
+                Util.log(Util.OBJECT_MISSING_TECH_ID_ERROR + ': ' + object.Id);
+            });
         }
        
         for(let productDefinition of productDefinitions){
@@ -258,23 +277,30 @@ export class ProductExporter {
     private async retrievePriceBooks(conn: Connection, productList: Set<String>){
         debugger;
         let priceBooks = await Queries.queryPricebooks(conn);
+        this.checkTechIds(priceBooks);
+
         let currencies = await Queries.queryPricebookEntryCurrencies(conn, productList);
         let priceBookEntries = await Queries.queryPricebookEntries(conn, productList);
         let stdPriceBookEntries = await Queries.queryStdPricebookEntries(conn, productList);
         let chargeElementPricebookEntries = await Queries.queryChargeElementPricebookEntries(conn, productList);
         let chargeElementStdPricebookEntries = await Queries.queryChargeElementStdPricebookEntries(conn, productList);
         
-        let objectsMissingTechId = Util.getObjectsMissingTechId([
-            ...chargeElementPricebookEntries,
-            ...chargeElementStdPricebookEntries,
-            ...priceBooks, 
-            ...priceBookEntries, 
-            ...stdPriceBookEntries
-        ]);
+        
 
-        if(objectsMissingTechId.length !== 0){
-            
-        }
+        // let objectsMissingTechId = Util.getObjectsMissingTechId([
+        //     ...chargeElementPricebookEntries,
+        //     ...chargeElementStdPricebookEntries,
+        //     ...priceBooks, 
+        //     ...priceBookEntries, 
+        //     ...stdPriceBookEntries
+        // ]);
+
+        // if(objectsMissingTechId.length !== 0){
+        //     debugger;
+        //     objectsMissingTechId.forEach((object) => {
+        //         Util.log(Util.OBJECT_MISSING_TECH_ID_ERROR + ': ' + object.Id);
+        //     });
+        // }
 
         if(priceBooks){
         priceBooks.forEach(priceBook => {
@@ -341,6 +367,17 @@ export class ProductExporter {
             chargeToSave.chargeElements = chargeElementsToSave;
             chargeToSave.chargeTier = chargeTiersToSave;
             Util.writeFile('/charges/' + Util.sanitizeFileName(chargeName) + '.json', chargeToSave);
+        }
+    }
+
+    private checkTechIds(objects: Array<any>){
+        const objectsMissingTechId: Array<any> = Util.getObjectsMissingTechId(objects);
+        if(objectsMissingTechId.length !== 0){
+            debugger;
+            objectsMissingTechId.forEach((object) => {
+                Util.log(Util.OBJECT_MISSING_TECH_ID_ERROR + ': ' + object.Id);
+            });
+            Util.throwError(Util.OBJECT_MISSING_TECH_ID_ERROR);
         }
     }
 }

@@ -3,11 +3,12 @@
 import { core, UX } from "@salesforce/command";
 import * as fs from 'fs';
 import * as fsExtra from 'fs-extra'
-import { SObject } from "jsforce";
 
 export class Util {
 
-    private static dir;
+    public static OBJECT_MISSING_TECH_ID_ERROR: string = 'Object is missing enxCPQ__TECH_External_Id__c';
+    
+    private static dir: string;
 
     public static getObjectsMissingTechId(objectArray: any){
         return objectArray.filter(object => !object.enxCPQ__TECH_External_Id__c);

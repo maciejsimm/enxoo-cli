@@ -258,7 +258,7 @@ public static async bulkQueryPricebookEntryCurrencies(conn: Connection, productL
 public static async queryPricebooks(conn: Connection): Promise<String[]> {
         Util.log('--- exporting pricebooks');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-        conn.query("SELECT IsStandard, "+ this.pricebookQuery+" FROM Pricebook2 WHERE IsActive = true OR IsStandard = true", 
+        conn.query("SELECT Id, IsStandard, "+ this.pricebookQuery+" FROM Pricebook2 WHERE IsActive = true OR IsStandard = true", 
         null,
         function (err, res) {
             if (err) reject('error retrieving pricebooks: ' + err);
