@@ -14,9 +14,9 @@ jobs:
       - run:
           name: Install dependencies
           command: yarn
-      - run:
-          name: Testing
-          command: yarn test
+      # - run:
+      #     name: Testing
+      #     command: yarn test
       - run:
           name: Submitting code coverage to codecov
           command: |
