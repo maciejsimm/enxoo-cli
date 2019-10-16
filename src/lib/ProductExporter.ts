@@ -108,6 +108,18 @@ export class ProductExporter {
             provisioningPlanAssings = await Queries.queryProvisioningPlanAssigns(conn, productList);
             this.checkTechIds(provisioningPlanAssings);
         }
+
+        Util.removeIdFields([
+            ...productDefinitions,
+            ...options,
+            ...productAttributes,
+            ...attributeValues,
+            ...attributeDefaultValues,
+            ...attributeValueDependencies,
+            ...attributeRules,
+            ...productRelationships,
+            ...provisioningPlanAssings
+        ]);
        
         for(let productDefinition of productDefinitions){
            let product:any = {};
@@ -190,6 +202,9 @@ export class ProductExporter {
             Util.writeFile('/categories/' + category['Name'] +'_' +category['enxCPQ__TECH_External_Id__c']+ '.json', category);
         }
         let newParentCategories = await Queries.queryCategories(conn, parentCategoriesIds);
+        this.checkTechIds(newParentCategories);
+
+        Util.removeIdFields(newParentCategories);
 
         if(newParentCategories){
             this.retrieveCategoriesHelper(conn, newParentCategories);
@@ -199,6 +214,8 @@ export class ProductExporter {
     private async retrieveCategories(conn: Connection) {
         let categories = await Queries.queryCategories(conn, this.categoryIds);
         this.checkTechIds(categories);
+
+        Util.removeIdFields(categories);
         
         if(categories){
            await this.retrieveCategoriesHelper(conn, categories);
@@ -211,6 +228,11 @@ export class ProductExporter {
 
         let attributeValues = await Queries.queryAttributeValues(conn, this.attributeIds);
         this.checkTechIds(attributeValues);
+
+        Util.removeIdFields([
+            ...attributes,
+            ...attributeValues
+        ]);
 
         if(attributes){
             attributes.forEach(attribute => {
@@ -234,6 +256,11 @@ export class ProductExporter {
         let attributeSetAttributes = await Queries.queryAttributeSetAttributes(conn, this.attributeSetIds);
         this.checkTechIds(attributeSetAttributes);
 
+        Util.removeIdFields([
+            ...attributeSets,
+            ...attributeSetAttributes
+        ]);
+
         if (attributeSets){
         attributeSets.forEach(attributeSet => {
         
@@ -256,6 +283,11 @@ export class ProductExporter {
         let prvTaskAssignments = await Queries.queryProvisioningTaskAssignments(conn)
         this.checkTechIds(prvTaskAssignments);
 
+        Util.removeIdFields([
+            ...provisioningPlans,
+            ...prvTaskAssignments
+        ]);
+
         provisioningPlans.forEach(provisioningPlan=>{
         
             let provisioningPlanToSave:any = {};
@@ -274,6 +306,8 @@ export class ProductExporter {
         let provisioningTasks = await Queries.queryProvisioningTasks(conn);
         this.checkTechIds(provisioningTasks);
 
+        Util.removeIdFields(provisioningTasks);
+
         provisioningTasks.forEach(provisioningTask => {
             Util.writeFile('/provisioningTasks/' + Util.sanitizeFileName(provisioningTask['Name']) +'_' + provisioningTask['enxB2B__TECH_External_Id__c']+ '.json', provisioningTask);
         });
@@ -288,6 +322,8 @@ export class ProductExporter {
         let stdPriceBookEntries = await Queries.queryStdPricebookEntries(conn, productList);
         let chargeElementPricebookEntries = await Queries.queryChargeElementPricebookEntries(conn, productList);
         let chargeElementStdPricebookEntries = await Queries.queryChargeElementStdPricebookEntries(conn, productList);
+
+        Util.removeIdFields(priceBooks);
 
         if(priceBooks){
         priceBooks.forEach(priceBook => {
@@ -339,6 +375,12 @@ export class ProductExporter {
 
         let chargeTiers = await Queries.queryChargeTiers(conn, productList, chargeList);
         this.checkTechIds(chargeTiers);
+
+        Util.removeIdFields([
+            ...charges,
+            ...chargeElements,
+            ...chargeTiers
+        ]);
       
         for(let charge of charges){
 
