@@ -27,7 +27,6 @@
 import { Util } from './Util';
 import { Connection } from 'jsforce';
 import { Queries } from './query';
-import { debug } from 'util';
 
 export class ProductExporter {
     private categoryIds:Set<String>;
@@ -51,7 +50,6 @@ export class ProductExporter {
     }
 
     public async all(conn: Connection) {
-        Util.log('BARTDBG: all method');
         if(this.productList[0] === '*ALL'){
             this.productList = new Set<string>();
             let productList = await Queries.queryAllProductNames(conn);
@@ -61,7 +59,6 @@ export class ProductExporter {
         }
         Util.setDir(this.dir);
         await Queries.retrieveQueryJson(this.dir);
-        debugger;
         await this.retrievePriceBooks(conn, this.productList);
         Util.createAllDirs(this.isB2B, this.dir);
 
@@ -201,6 +198,7 @@ export class ProductExporter {
 
     private async retrieveCategories(conn: Connection) {
         let categories = await Queries.queryCategories(conn, this.categoryIds);
+        this.checkTechIds(categories);
         
         if(categories){
            await this.retrieveCategoriesHelper(conn, categories);
@@ -209,7 +207,10 @@ export class ProductExporter {
 
     private async retrieveAttributes(conn: Connection) {
         let attributes = await Queries.queryAttributes(conn, this.attributeIds);
+        this.checkTechIds(attributes);
+
         let attributeValues = await Queries.queryAttributeValues(conn, this.attributeIds);
+        this.checkTechIds(attributeValues);
 
         if(attributes){
             attributes.forEach(attribute => {
@@ -228,7 +229,10 @@ export class ProductExporter {
 
     private async retrieveAttributeSets(conn: Connection) {
         let attributeSets = await Queries.queryAttributeSets(conn, this.attributeSetIds);
+        this.checkTechIds(attributeSets);
+
         let attributeSetAttributes = await Queries.queryAttributeSetAttributes(conn, this.attributeSetIds);
+        this.checkTechIds(attributeSetAttributes);
 
         if (attributeSets){
         attributeSets.forEach(attributeSet => {
@@ -247,8 +251,11 @@ export class ProductExporter {
 
     private async retrieveProvisioningPlans(conn: Connection) {
         let provisioningPlans = await Queries.queryProvisioningPlans(conn);
+        this.checkTechIds(provisioningPlans);
+
         let prvTaskAssignments = await Queries.queryProvisioningTaskAssignments(conn)
-        
+        this.checkTechIds(prvTaskAssignments);
+
         provisioningPlans.forEach(provisioningPlan=>{
         
             let provisioningPlanToSave:any = {};
@@ -265,6 +272,7 @@ export class ProductExporter {
     
     private async retrieveProvisioningTasks(conn: Connection){
         let provisioningTasks = await Queries.queryProvisioningTasks(conn);
+        this.checkTechIds(provisioningTasks);
 
         provisioningTasks.forEach(provisioningTask => {
             Util.writeFile('/provisioningTasks/' + Util.sanitizeFileName(provisioningTask['Name']) +'_' + provisioningTask['enxB2B__TECH_External_Id__c']+ '.json', provisioningTask);
@@ -272,9 +280,8 @@ export class ProductExporter {
     }
 
     private async retrievePriceBooks(conn: Connection, productList: Set<String>){
-        debugger;
         let priceBooks = await Queries.queryPricebooks(conn);
-        this.checkTechIds(priceBooks);
+        // this.checkTechIds(priceBooks);
 
         let currencies = await Queries.queryPricebookEntryCurrencies(conn, productList);
         let priceBookEntries = await Queries.queryPricebookEntries(conn, productList);
@@ -322,11 +329,16 @@ export class ProductExporter {
 
     private async retrieveCharges(conn: Connection, productList: Set<string>){
         let charges = await Queries.queryProductCharges(conn, productList);
+        this.checkTechIds(charges);
+
         let chargeList = new Set<String>();
         charges.forEach(charge => {chargeList.add(charge['Name'])});
 
         let chargeElements = await Queries.queryChargeElements(conn, productList, chargeList);
+        this.checkTechIds(chargeElements);
+
         let chargeTiers = await Queries.queryChargeTiers(conn, productList, chargeList);
+        this.checkTechIds(chargeTiers);
       
         for(let charge of charges){
 
@@ -350,12 +362,11 @@ export class ProductExporter {
         }
     }
 
-    private checkTechIds(objects: Array<any>){
+    private checkTechIds(objects: Array<any>): void{
         const objectsMissingTechId: Array<any> = Util.getObjectsMissingTechId(objects);
         if(objectsMissingTechId.length !== 0){
-            debugger;
             objectsMissingTechId.forEach((object) => {
-                Util.log(Util.OBJECT_MISSING_TECH_ID_ERROR + ': ' + object.Id);
+                Util.log(Util.OBJECT_MISSING_TECH_ID_ERROR + ' Id: ' + object.Id);
             });
             Util.throwError(Util.OBJECT_MISSING_TECH_ID_ERROR);
         }

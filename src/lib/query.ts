@@ -485,11 +485,12 @@ public static async bulkQueryProductOptions(conn: Connection, productList: Set<S
 public static async queryAttributeSetAttributes(conn: Connection, attributeSetIds: Set<String>): Promise<String[]> {
         Util.log('--- exporting attributes set attributes ');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-            conn.query("SELECT enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, "+ this.attrSetAttrQuery +" FROM enxCPQ__AttributeSetAttribute__c ORDER BY enxCPQ__Order__c ", 
+            conn.query("SELECT Id, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, "+ this.attrSetAttrQuery +
+                " FROM enxCPQ__AttributeSetAttribute__c WHERE enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeSetIds) + ") ORDER BY enxCPQ__Order__c", 
+
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve attribute set attributes. Error: ' + err);
-                if( attributeSetIds.size === 0) resolve([""]);
                 if (res.records.length < 200){
                     Util.log("--- attribute set attributes: " + res.records.length);
                     resolve(res.records);
@@ -501,7 +502,7 @@ public static async queryAttributeSetAttributes(conn: Connection, attributeSetId
 
         }).then(async result =>{
             if(result[0] === 'useBulkApi'){
-                return await this.bulkQueryAttributeSetAttributes(conn);
+                return await this.bulkQueryAttributeSetAttributes(conn, attributeSetIds);
             }else{
                 return result;
             }
@@ -509,9 +510,10 @@ public static async queryAttributeSetAttributes(conn: Connection, attributeSetId
   );
     }
 
-public static async bulkQueryAttributeSetAttributes(conn: Connection): Promise<String[]> {
+public static async bulkQueryAttributeSetAttributes(conn: Connection, attributeSetIds: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting attributes set attributes');
-        let query = "SELECT enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, "+ this.attrSetAttrQuery +" FROM enxCPQ__AttributeSetAttribute__c ORDER BY enxCPQ__Order__c ";
+        let query = "SELECT Id, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, "+ this.attrSetAttrQuery +
+            " FROM enxCPQ__AttributeSetAttribute__c WHERE enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeSetIds) + ") ORDER BY enxCPQ__Order__c";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
             conn.bulk.query(query)
@@ -536,7 +538,7 @@ public static async queryAttributes(conn: Connection, attributeIds: Set<String>)
         }
         return new Promise<String[]>((resolve: Function, reject: Function) => {
 
-            conn.query("SELECT "+ this.attrQuery +" FROM enxCPQ__Attribute__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ", 
+            conn.query("SELECT Id, "+ this.attrQuery +" FROM enxCPQ__Attribute__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ", 
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve attributes. Error: ' + err);
@@ -560,7 +562,7 @@ public static async queryAttributes(conn: Connection, attributeIds: Set<String>)
 
 public static async bulkQueryAttributes(conn: Connection, attributeIds: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting attributes');
-        let query = "SELECT "+ this.attrQuery +" FROM enxCPQ__Attribute__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ";
+        let query = "SELECT Id, "+ this.attrQuery +" FROM enxCPQ__Attribute__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
             conn.bulk.query(query)
@@ -582,7 +584,7 @@ public static async queryProvisioningTasks(conn: Connection): Promise<String[]> 
         Util.log('--- exporting provisioning tasks ');
 
     return new Promise<String[]>((resolve: Function, reject: Function) => {
-        conn.query("SELECT "+ this.prvTaskQuery+" FROM enxB2B__ProvisioningTask__c",null, function(err, res) {
+        conn.query("SELECT Id, "+ this.prvTaskQuery+" FROM enxB2B__ProvisioningTask__c",null, function(err, res) {
             if (err) reject('error retrieving provisioning tasks: ' + err);
             if(res.records.length<200){
                 Util.log('---provisioning tasks: ' + res.records.length);
@@ -604,7 +606,7 @@ public static async queryProvisioningTasks(conn: Connection): Promise<String[]> 
 
 public static async bulkQueryProvisioningTasks(conn: Connection): Promise<String[]> {
     Util.showSpinner('--- bulk exporting provisioning tasks');
-    let query = "SELECT "+ this.prvTaskQuery+" FROM enxB2B__ProvisioningTask__c";
+    let query = "SELECT Id "+ this.prvTaskQuery+" FROM enxB2B__ProvisioningTask__c";
     return new Promise<string[]>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query(query)
@@ -625,7 +627,7 @@ public static async bulkQueryProvisioningTasks(conn: Connection): Promise<String
 public static async queryProvisioningPlans(conn: Connection): Promise<String[]> {
         Util.log('--- exporting provisioning plans');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-        conn.query("SELECT "+ this.prvPlanQuery+" FROM enxB2B__ProvisioningPlan__c", null, function(err, res) {
+        conn.query("SELECT Id, "+ this.prvPlanQuery+" FROM enxB2B__ProvisioningPlan__c", null, function(err, res) {
             if (err) reject('error retrieving provisioning plans: ' + err);
             if (res.records.length < 200){
                 Util.log("--- provisioning plans: " + res.records.length);
@@ -647,7 +649,7 @@ public static async queryProvisioningPlans(conn: Connection): Promise<String[]> 
 
 public static async bulkQueryProvisioningPlans(conn: Connection): Promise<String[]> {
     Util.showSpinner('--- bulk exporting provisioning plans');
-    let query = "SELECT "+ this.prvPlanQuery+" FROM enxB2B__ProvisioningPlan__c";
+    let query = "SELECT Id, "+ this.prvPlanQuery+" FROM enxB2B__ProvisioningPlan__c";
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query(query)
@@ -667,7 +669,7 @@ public static async bulkQueryProvisioningPlans(conn: Connection): Promise<String
 public static async  queryProductCharges(conn: Connection, productList: Set<String>): Promise<String[]> {
          Util.log('--- exporting product charges ');
          return new Promise<String[]>((resolve: Function, reject: Function) => {
-         conn.query("SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE RecordType.Name = 'Charge' AND (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Charge_Reference__c !=null)  ORDER BY enxCPQ__Sorting_Order__c", 
+         conn.query("SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE RecordType.Name = 'Charge' AND (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Charge_Reference__c !=null)  ORDER BY enxCPQ__Sorting_Order__c", 
          null,
          function (err, res) {
             if (err) reject('Failed to retrieve charges error: ' + err);
@@ -692,7 +694,7 @@ public static async  queryProductCharges(conn: Connection, productList: Set<Stri
 
 public static async  bulkQueryProductCharges(conn: Connection, productList: Set<String>): Promise<String[]> {
     Util.showSpinner('--- bulk exporting product charges');
-    let query = "SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE RecordType.Name = 'Charge' AND (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Charge_Reference__c !=null)  ORDER BY enxCPQ__Sorting_Order__c";
+    let query = "SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE RecordType.Name = 'Charge' AND (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Charge_Reference__c !=null)  ORDER BY enxCPQ__Sorting_Order__c";
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query(query)
@@ -1037,7 +1039,7 @@ public static async queryCategories(conn: Connection, categoryIds: Set<String>):
         }
         return new Promise<String[]>((resolve: Function, reject: Function) => {
 
-            conn.query("SELECT enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c, " + this.categoryQuery +" FROM enxCPQ__Category__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(categoryIds) + ") ", 
+            conn.query("SELECT Id, enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c, " + this.categoryQuery +" FROM enxCPQ__Category__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(categoryIds) + ") ", 
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve categories. Error: ' + err);
@@ -1061,7 +1063,7 @@ public static async queryCategories(conn: Connection, categoryIds: Set<String>):
 
 public static async bulkQueryCategories(conn: Connection, categoryIds: Set<String>): Promise<String[]> {
         Util.showSpinner('--- bulk exporting categories');
-        let query = "SELECT enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c, " + this.categoryQuery +" FROM enxCPQ__Category__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(categoryIds) + ") ";
+        let query = "SELECT Id, enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c, " + this.categoryQuery +" FROM enxCPQ__Category__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(categoryIds) + ") ";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
             conn.bulk.query(query)
@@ -1086,7 +1088,7 @@ public static async queryAttributeValues(conn: Connection, attributeIds: Set<Str
         }
         return new Promise<String[]>((resolve: Function, reject: Function) => {
 
-            conn.query("SELECT enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery+" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c", 
+            conn.query("SELECT Id, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery+" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c", 
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve product attribute values: ' + attributeIds + '. Error: ' + err);
@@ -1109,7 +1111,7 @@ public static async queryAttributeValues(conn: Connection, attributeIds: Set<Str
 }
 public static async bulkQueryAttributeValues(conn: Connection, attributeIds: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting product attribute values');
-        let query = "SELECT enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery+" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c";
+        let query = "SELECT Id, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery+" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
             conn.bulk.query(query)
@@ -1131,11 +1133,10 @@ public static async queryAttributeSets(conn: Connection, attributeSetIds: Set<St
         Util.log('--- exporting attributes sets');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             
-            conn.query("SELECT "+ this.attrSetQuery+" FROM enxCPQ__AttributeSet__c ", 
+            conn.query("SELECT Id, "+ this.attrSetQuery+" FROM enxCPQ__AttributeSet__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeSetIds) + ") ", 
             null,
             function (err, res) {
                 if (err) reject('Failed to retrieve attribute sets. Error: ' + err);
-                if( attributeSetIds.size === 0) resolve([""]);
                 if (res.records.length < 200){
                     Util.log("--- attributes sets: " + res.records.length);
                     resolve(res.records);
@@ -1147,7 +1148,7 @@ public static async queryAttributeSets(conn: Connection, attributeSetIds: Set<St
 
         }).then(async result =>{
             if(result[0] === 'useBulkApi'){
-                return await this.bulkQueryAttributeSets(conn);
+                return await this.bulkQueryAttributeSets(conn, attributeSetIds);
             }else{
                 return result;
             }
@@ -1155,9 +1156,9 @@ public static async queryAttributeSets(conn: Connection, attributeSetIds: Set<St
    );
 }
 
-public static async bulkQueryAttributeSets(conn: Connection): Promise<String[]> {
+public static async bulkQueryAttributeSets(conn: Connection, attributeSetIds: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting attributes sets');
-        let query = "SELECT "+ this.attrSetQuery+" FROM enxCPQ__AttributeSet__c ";
+        let query = "SELECT Id, "+ this.attrSetQuery+" FROM enxCPQ__AttributeSet__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeSetIds) + ") ";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
             conn.bulk.query(query)
@@ -1203,7 +1204,7 @@ public static async queryProvisioningTaskAssignmentIds (conn: Connection): Promi
 public static async queryProvisioningTaskAssignments (conn: Connection): Promise<String[]> {
         Util.log('--- exporting Provisioning task assignments');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-        conn.query("SELECT enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__Provisioning_Task__r.enxB2B__TECH_External_Id__c, "+ this.prvTaskAssignmentQuery +" FROM enxB2B__ProvisioningTaskAssignment__c",
+        conn.query("SELECT Id, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__Provisioning_Task__r.enxB2B__TECH_External_Id__c, "+ this.prvTaskAssignmentQuery +" FROM enxB2B__ProvisioningTaskAssignment__c",
         null,
         function(err, res) {
             if (err) reject('error retrieving provisioning task assignments: ' + err);
@@ -1227,7 +1228,7 @@ public static async queryProvisioningTaskAssignments (conn: Connection): Promise
 
 public static async bulkQueryProvisioningTaskAssignments (conn: Connection): Promise<String[]> {
         Util.showSpinner('---bulk exporting Provisioning task assignments');
-        let query = "SELECT enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__Provisioning_Task__r.enxB2B__TECH_External_Id__c, "+ this.prvTaskAssignmentQuery +" FROM enxB2B__ProvisioningTaskAssignment__c"
+        let query = "SELECT Id, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__Provisioning_Task__r.enxB2B__TECH_External_Id__c, "+ this.prvTaskAssignmentQuery +" FROM enxB2B__ProvisioningTaskAssignment__c"
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             var records = []; 
             conn.bulk.query(query)
@@ -1376,7 +1377,7 @@ public static async bulkQueryChargeElementPricebookEntries (conn: Connection, pr
 public static async queryChargeElements (conn: Connection, productList: Set<String>, chargeList: Set<String>): Promise<String[]> {
         Util.showSpinner('--- exporting charge elements ');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-            conn.query("SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Element'",
+            conn.query("SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Element'",
             null,
             function(err, res) {
                 if (err) reject('error retrieving charge elements: ' + err);
@@ -1400,7 +1401,7 @@ public static async queryChargeElements (conn: Connection, productList: Set<Stri
 }
 public static async bulkQueryChargeElements (conn: Connection, productList: Set<String>, chargeList: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting charge elements');
-        let query = "SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Element'";
+        let query = "SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Element'";
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query(query)
@@ -1421,7 +1422,7 @@ public static async bulkQueryChargeElements (conn: Connection, productList: Set<
 public static async queryChargeTiers (conn: Connection,  productList: Set<String>, chargeList: Set<String>): Promise<String[]> {
         Util.log('--- exporting charge Tiers ');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-            conn.query("SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Tier'",
+            conn.query("SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Tier'",
             null,
             function(err, res) {
                 if (err) reject('error retrieving charge Tiers: ' + err);
@@ -1445,7 +1446,7 @@ public static async queryChargeTiers (conn: Connection,  productList: Set<String
 
 public static async bulkQueryChargeTiers (conn: Connection,  productList: Set<String>, chargeList: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting charge Tiers');
-        let query = "SELECT enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Tier'";
+        let query = "SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Tier'";
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         var records = []; 
         conn.bulk.query(query)
