@@ -315,7 +315,7 @@ export class ProductExporter {
 
     private async retrievePriceBooks(conn: Connection, productList: Set<String>){
         let priceBooks = await Queries.queryPricebooks(conn);
-        // this.checkTechIds(priceBooks);
+        this.checkTechIds(priceBooks.filter(pricebook => !pricebook['IsStandard']));
 
         let currencies = await Queries.queryPricebookEntryCurrencies(conn, productList);
         let priceBookEntries = await Queries.queryPricebookEntries(conn, productList);
@@ -342,22 +342,29 @@ export class ProductExporter {
                 currencyToSave.chargeElementPricebookEntries = new Array<any>();
                 currencyToSave.chargeElementStdPricebookEntries = new Array<any>();
                 
-                priceBookEntries.filter(pbe => pbe['Pricebook2'] && pbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId 
-                                               && currency === pbe['CurrencyIsoCode'])
-                                .forEach(pbe=>{currencyToSave.entries.push(pbe)});
+                if(priceBook['IsStandard']){
+                    stdPriceBookEntries
+                        .filter(stdPbe => currency === stdPbe['CurrencyIsoCode'])
+                        .forEach(stdPbe=> currencyToSave.stdEntries.push(stdPbe));
 
-                stdPriceBookEntries.filter(stdPbe => stdPbe['Pricebook2'] && stdPbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId
-                                   && currency === stdPbe['CurrencyIsoCode'])
-                                   .forEach(stdPbe=>{ currencyToSave.stdEntries.push(stdPbe)});
-                                
-                chargeElementPricebookEntries.filter(chargeElementPbe => chargeElementPbe['Pricebook2'] && chargeElementPbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId
-                                                                         && currency === chargeElementPbe['CurrencyIsoCode'])
-                                             .forEach(chargeElementPbe=>{ currencyToSave.chargeElementPricebookEntries.push(chargeElementPbe)});
+                    chargeElementStdPricebookEntries
+                        .filter(chargeElementStdPbe => currency === chargeElementStdPbe['CurrencyIsoCode'])
+                        .forEach(chargeElementStdPbe => currencyToSave.chargeElementStdPricebookEntries.push(chargeElementStdPbe));
+                } else{
+                    priceBookEntries
+                        .filter(pbe => pbe['Pricebook2'] && pbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId 
+                            && currency === pbe['CurrencyIsoCode'])
+                        .forEach(pbe => currencyToSave.entries.push(pbe));
 
-                chargeElementStdPricebookEntries.filter(chargeElementStdPbe => chargeElementStdPbe['Pricebook2'] && chargeElementStdPbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId
-                                                                               && currency === chargeElementStdPbe['CurrencyIsoCode'])
-                                                .forEach(chargeElementStdPbe=>{currencyToSave.chargeElementStdPricebookEntries.push(chargeElementStdPbe)});
-
+                    chargeElementPricebookEntries
+                        .filter(chargeElementPbe => (
+                            chargeElementPbe['Pricebook2'] 
+                                && chargeElementPbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId
+                                && currency === chargeElementPbe['CurrencyIsoCode']
+                        ))
+                        .forEach(chargeElementPbe => currencyToSave.chargeElementPricebookEntries.push(chargeElementPbe));
+                }
+                
                 Util.writeFile('/priceBooks/' + Util.sanitizeFileName(priceBook['Name']) + '/' + currency + '.json', currencyToSave);
             });
         });}
