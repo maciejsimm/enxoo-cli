@@ -76,20 +76,50 @@ export class ProductExporter {
 
     private async retrieveProduct(conn: Connection, productList: Set<string>) {
         Util.showSpinner('products export');
+        
         let productDefinitions = await Queries.queryProduct(conn, productList);
+        this.checkTechIds(productDefinitions);
+
         let options = await Queries.queryProductOptions(conn, productList);
+        this.checkTechIds(options);
+
         let chargesIds = await Queries.queryProductChargesIds(conn, productList);
+        
         let productAttributes = await Queries.queryProductAttributes(conn, productList);
+        this.checkTechIds(productAttributes);
+
         let attributeValues = await Queries.queryProductAttributeValues(conn, productList);
+        this.checkTechIds(attributeValues);
+
         let attributeDefaultValues = await Queries.queryAttributeDefaultValues(conn, productList);
+        this.checkTechIds(attributeDefaultValues);
+
         let attributeValueDependencies = await Queries.queryAttributeValueDependencies(conn, productList);
+        this.checkTechIds(attributeValueDependencies);
+
         let attributeRules = await Queries.queryAttributeRules(conn, productList);
+        this.checkTechIds(attributeRules);
+
         let productRelationships = await Queries.queryProductRelationships(conn, productList);
+        this.checkTechIds(productRelationships);
 
         let provisioningPlanAssings:any = {};
         if(this.isB2B){
-           provisioningPlanAssings = await Queries.queryProvisioningPlanAssigns(conn, productList);
+            provisioningPlanAssings = await Queries.queryProvisioningPlanAssigns(conn, productList);
+            this.checkTechIds(provisioningPlanAssings);
         }
+
+        Util.removeIdFields([
+            ...productDefinitions,
+            ...options,
+            ...productAttributes,
+            ...attributeValues,
+            ...attributeDefaultValues,
+            ...attributeValueDependencies,
+            ...attributeRules,
+            ...productRelationships,
+            ...provisioningPlanAssings
+        ]);
        
         for(let productDefinition of productDefinitions){
            let product:any = {};
@@ -172,6 +202,9 @@ export class ProductExporter {
             Util.writeFile('/categories/' + category['Name'] +'_' +category['enxCPQ__TECH_External_Id__c']+ '.json', category);
         }
         let newParentCategories = await Queries.queryCategories(conn, parentCategoriesIds);
+        this.checkTechIds(newParentCategories);
+
+        Util.removeIdFields(newParentCategories);
 
         if(newParentCategories){
             this.retrieveCategoriesHelper(conn, newParentCategories);
@@ -180,6 +213,9 @@ export class ProductExporter {
 
     private async retrieveCategories(conn: Connection) {
         let categories = await Queries.queryCategories(conn, this.categoryIds);
+        this.checkTechIds(categories);
+
+        Util.removeIdFields(categories);
         
         if(categories){
            await this.retrieveCategoriesHelper(conn, categories);
@@ -188,7 +224,15 @@ export class ProductExporter {
 
     private async retrieveAttributes(conn: Connection) {
         let attributes = await Queries.queryAttributes(conn, this.attributeIds);
+        this.checkTechIds(attributes);
+
         let attributeValues = await Queries.queryAttributeValues(conn, this.attributeIds);
+        this.checkTechIds(attributeValues);
+
+        Util.removeIdFields([
+            ...attributes,
+            ...attributeValues
+        ]);
 
         if(attributes){
             attributes.forEach(attribute => {
@@ -207,7 +251,15 @@ export class ProductExporter {
 
     private async retrieveAttributeSets(conn: Connection) {
         let attributeSets = await Queries.queryAttributeSets(conn, this.attributeSetIds);
+        this.checkTechIds(attributeSets);
+
         let attributeSetAttributes = await Queries.queryAttributeSetAttributes(conn, this.attributeSetIds);
+        this.checkTechIds(attributeSetAttributes);
+
+        Util.removeIdFields([
+            ...attributeSets,
+            ...attributeSetAttributes
+        ]);
 
         if (attributeSets){
         attributeSets.forEach(attributeSet => {
@@ -226,8 +278,16 @@ export class ProductExporter {
 
     private async retrieveProvisioningPlans(conn: Connection) {
         let provisioningPlans = await Queries.queryProvisioningPlans(conn);
+        this.checkTechIds(provisioningPlans);
+
         let prvTaskAssignments = await Queries.queryProvisioningTaskAssignments(conn)
-        
+        this.checkTechIds(prvTaskAssignments);
+
+        Util.removeIdFields([
+            ...provisioningPlans,
+            ...prvTaskAssignments
+        ]);
+
         provisioningPlans.forEach(provisioningPlan=>{
         
             let provisioningPlanToSave:any = {};
@@ -244,6 +304,9 @@ export class ProductExporter {
     
     private async retrieveProvisioningTasks(conn: Connection){
         let provisioningTasks = await Queries.queryProvisioningTasks(conn);
+        this.checkTechIds(provisioningTasks);
+
+        Util.removeIdFields(provisioningTasks);
 
         provisioningTasks.forEach(provisioningTask => {
             Util.writeFile('/provisioningTasks/' + Util.sanitizeFileName(provisioningTask['Name']) +'_' + provisioningTask['enxB2B__TECH_External_Id__c']+ '.json', provisioningTask);
@@ -252,11 +315,16 @@ export class ProductExporter {
 
     private async retrievePriceBooks(conn: Connection, productList: Set<String>){
         let priceBooks = await Queries.queryPricebooks(conn);
+        this.checkTechIds(priceBooks.filter(pricebook => !pricebook['IsStandard']));
+
         let currencies = await Queries.queryPricebookEntryCurrencies(conn, productList);
         let priceBookEntries = await Queries.queryPricebookEntries(conn, productList);
         let stdPriceBookEntries = await Queries.queryStdPricebookEntries(conn, productList);
         let chargeElementPricebookEntries = await Queries.queryChargeElementPricebookEntries(conn, productList);
         let chargeElementStdPricebookEntries = await Queries.queryChargeElementStdPricebookEntries(conn, productList);
+
+        Util.removeIdFields(priceBooks);
+
         if(priceBooks){
         priceBooks.forEach(priceBook => {
 
@@ -274,22 +342,29 @@ export class ProductExporter {
                 currencyToSave.chargeElementPricebookEntries = new Array<any>();
                 currencyToSave.chargeElementStdPricebookEntries = new Array<any>();
                 
-                priceBookEntries.filter(pbe => pbe['Pricebook2'] && pbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId 
-                                               && currency === pbe['CurrencyIsoCode'])
-                                .forEach(pbe=>{currencyToSave.entries.push(pbe)});
+                if(priceBook['IsStandard']){
+                    stdPriceBookEntries
+                        .filter(stdPbe => currency === stdPbe['CurrencyIsoCode'])
+                        .forEach(stdPbe=> currencyToSave.stdEntries.push(stdPbe));
 
-                stdPriceBookEntries.filter(stdPbe => stdPbe['Pricebook2'] && stdPbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId
-                                   && currency === stdPbe['CurrencyIsoCode'])
-                                   .forEach(stdPbe=>{ currencyToSave.stdEntries.push(stdPbe)});
-                                
-                chargeElementPricebookEntries.filter(chargeElementPbe => chargeElementPbe['Pricebook2'] && chargeElementPbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId
-                                                                         && currency === chargeElementPbe['CurrencyIsoCode'])
-                                             .forEach(chargeElementPbe=>{ currencyToSave.chargeElementPricebookEntries.push(chargeElementPbe)});
+                    chargeElementStdPricebookEntries
+                        .filter(chargeElementStdPbe => currency === chargeElementStdPbe['CurrencyIsoCode'])
+                        .forEach(chargeElementStdPbe => currencyToSave.chargeElementStdPricebookEntries.push(chargeElementStdPbe));
+                } else{
+                    priceBookEntries
+                        .filter(pbe => pbe['Pricebook2'] && pbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId 
+                            && currency === pbe['CurrencyIsoCode'])
+                        .forEach(pbe => currencyToSave.entries.push(pbe));
 
-                chargeElementStdPricebookEntries.filter(chargeElementStdPbe => chargeElementStdPbe['Pricebook2'] && chargeElementStdPbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId
-                                                                               && currency === chargeElementStdPbe['CurrencyIsoCode'])
-                                                .forEach(chargeElementStdPbe=>{currencyToSave.chargeElementStdPricebookEntries.push(chargeElementStdPbe)});
-
+                    chargeElementPricebookEntries
+                        .filter(chargeElementPbe => (
+                            chargeElementPbe['Pricebook2'] 
+                                && chargeElementPbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === priceBookTechExtId
+                                && currency === chargeElementPbe['CurrencyIsoCode']
+                        ))
+                        .forEach(chargeElementPbe => currencyToSave.chargeElementPricebookEntries.push(chargeElementPbe));
+                }
+                
                 Util.writeFile('/priceBooks/' + Util.sanitizeFileName(priceBook['Name']) + '/' + currency + '.json', currencyToSave);
             });
         });}
@@ -297,11 +372,22 @@ export class ProductExporter {
 
     private async retrieveCharges(conn: Connection, productList: Set<string>){
         let charges = await Queries.queryProductCharges(conn, productList);
+        this.checkTechIds(charges);
+
         let chargeList = new Set<String>();
         charges.forEach(charge => {chargeList.add(charge['Name'])});
 
         let chargeElements = await Queries.queryChargeElements(conn, productList, chargeList);
+        this.checkTechIds(chargeElements);
+
         let chargeTiers = await Queries.queryChargeTiers(conn, productList, chargeList);
+        this.checkTechIds(chargeTiers);
+
+        Util.removeIdFields([
+            ...charges,
+            ...chargeElements,
+            ...chargeTiers
+        ]);
       
         for(let charge of charges){
 
@@ -322,6 +408,16 @@ export class ProductExporter {
             chargeToSave.chargeElements = chargeElementsToSave;
             chargeToSave.chargeTier = chargeTiersToSave;
             Util.writeFile('/charges/' + Util.sanitizeFileName(chargeName) + '.json', chargeToSave);
+        }
+    }
+
+    private checkTechIds(objects: Array<any>): void{
+        const objectsMissingTechId: Array<any> = Util.getObjectsMissingTechId(objects);
+        if(objectsMissingTechId.length !== 0){
+            objectsMissingTechId.forEach((object) => {
+                Util.log(Util.OBJECT_MISSING_TECH_ID_ERROR + ' Id: ' + object.Id);
+            });
+            Util.throwError(Util.OBJECT_MISSING_TECH_ID_ERROR);
         }
     }
 }

@@ -6,7 +6,29 @@ import * as fsExtra from 'fs-extra'
 
 export class Util {
 
-    private static dir;
+    public static OBJECT_MISSING_TECH_ID_ERROR: string = 'Object is missing TECH_External_Id__c field value';
+    
+    private static dir: string;
+
+    public static getObjectsMissingTechId(objectArray: Array<any>): Array<any>{
+        return objectArray 
+            ? objectArray.filter(object => (
+                !(object.enxCPQ__TECH_External_Id__c || object.enxB2B__TECH_External_Id__c || object.enxB2B__TECH_External_ID__c)
+            ))
+            : [];
+    }
+
+    public static removeIdFields(objectArray: Array<any>): void{
+        if(!objectArray){
+            return;
+        }
+        
+        objectArray.forEach(object => {
+            if(Object.keys(object).includes('Id')){
+                delete object.Id;
+            }
+        });
+    }
 
     public static setDir(dir: string){
         this.dir = dir;
