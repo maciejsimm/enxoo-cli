@@ -108,18 +108,12 @@ export class ProductExporter {
             provisioningPlanAssings = await Queries.queryProvisioningPlanAssigns(conn, productList);
             this.checkTechIds(provisioningPlanAssings);
         }
-
-        Util.removeIdFields([
-            ...productDefinitions,
-            ...options,
-            ...productAttributes,
-            ...attributeValues,
-            ...attributeDefaultValues,
-            ...attributeValueDependencies,
-            ...attributeRules,
-            ...productRelationships,
-            ...provisioningPlanAssings
-        ]);
+        let objectsToRemoveIds = [ ...productDefinitions, ...options, ...productAttributes, ...attributeValues, ...attributeDefaultValues,  ...attributeValueDependencies,
+                                   ...attributeRules,  ...productRelationships];
+        if(this.isB2B){
+            objectsToRemoveIds = [...objectsToRemoveIds, ...provisioningPlanAssings];
+        }     
+        Util.removeIdFields(objectsToRemoveIds);
        
         for(let productDefinition of productDefinitions){
            let product:any = {};
