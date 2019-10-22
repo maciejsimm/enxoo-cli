@@ -58,12 +58,22 @@ public static async queryAllProductNames(conn: Connection):Promise<String[]> {
         null,
         function (err, res) {
             if (err) reject('error querying all Product Names: ' + err);
+            if (res.records.length < 200){
                Util.log("--- all Product Names: " + res.records.length);
                resolve(res.records);
-            
+            }else{
+               resolve(["useBulkApi"]);
+            }
         });
-    })
-   }
+    }).then(async result =>{
+        if(result[0] === 'useBulkApi'){
+            return await this.bulkQueryAllProductNames(conn);
+        }else{
+            return result;
+        }
+      }
+    );
+    }
 
 public static async bulkQueryAllProductNames(conn: Connection):  Promise<String[]> {
         Util.showSpinner('---bulk exporting all Product Names');
@@ -107,13 +117,41 @@ public static async queryStdPricebookEntryIds(conn: Connection, productList: Set
                 if (err) { 
                     reject('error retrieving standard Pricebook Entry Ids: ' + err);
                     return;
+                }if (res.records.length < 200){   
+                     Util.log("--- standard Pricebook Entry Ids: " + res.records.length);
+                     resolve(res.records);
+                }else{
+                     resolve(["useBulkApi"]);
                 }
-                Util.log("--- standard Pricebook Entry Ids: " + res.records.length);
-                resolve(res.records);
             });
-        })
+        }).then(async result =>{
+            if(result[0] === 'useBulkApi'){
+                return await this.bulkQueryStdPricebookEntryIds(conn, productList);
+            }else{
+                return result;
+            }
+          }
+        );
         }
-
+        public static async bulkQueryStdPricebookEntryIds (conn: Connection, productList: Set<String>): Promise<String[]> {
+            Util.showSpinner('---bulk exporting standard PricebookEntry ids');
+            let query = "SELECT Id FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2Id != null AND Pricebook2.IsStandard = true";
+            return new Promise<String[]>((resolve: Function, reject: Function) => {
+            var records = []; 
+            conn.bulk.query(query)
+                .on('record', function(rec) { 
+                    records.push(rec);
+                })
+                .on('error', function(err) { 
+                    reject('error retrieving standard PricebookEntry ids ' + err);  
+                })
+                .on('end', function(info) { 
+                    Util.hideSpinner(' standard PricebookEntry ids export done. Retrieved: '+ records.length);
+                    Util.sanitizeResult(records);
+                    resolve(records); 
+                });
+        })
+    }
 public static async queryPricebookEntryIds(conn: Connection, productList: Set<String>): Promise<String[]> {
         Util.log('--- exporting Pricebook Entry Ids');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
@@ -124,24 +162,44 @@ public static async queryPricebookEntryIds(conn: Connection, productList: Set<St
                     reject('error retrieving Pricebook Entry Ids: ' + err);
                     return;
                 }
+                if (res.records.length < 200){
                 Util.log("--- Pricebook Entry Ids: " + res.records.length);
                 resolve(res.records);
-            });
-        })
-        }
-
-public static async queryProductIds(conn: Connection, productList: Set<String>): Promise<String[]> {
-        Util.log('--- exporting product ids');
-        return new Promise<String[]>((resolve: Function, reject: Function) => {
-        conn.query("SELECT Id, enxCPQ__TECH_External_Id__c FROM Product2 WHERE (Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + "))",
-        null,
-        function (err, res) {
-            if (err) reject('error retrieving product ids: ' + err);
-            Util.log("--- product ids: " + res.records.length);
-            resolve(res.records);
+            }else{
+                resolve(["useBulkApi"]);
+            }
         });
-    })
+    }).then(async result =>{
+        if(result[0] === 'useBulkApi'){
+            return await this.bulkQueryPricebookEntryIds(conn, productList);
+        }else{
+            return result;
+        }
+      }
+    );
     }
+
+public static async bulkQueryPricebookEntryIds (conn: Connection, productList: Set<String>): Promise<String[]> {
+         Util.showSpinner('---bulk exporting PricebookEntry ids');
+         let query = "SELECT Id FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2Id != null AND Pricebook2.IsStandard = false";
+         return new Promise<String[]>((resolve: Function, reject: Function) => {
+         var records = []; 
+         conn.bulk.query(query)
+             .on('record', function(rec) { 
+                 records.push(rec);
+             })
+             .on('error', function(err) { 
+                 reject(err); 
+             })
+             .on('end', function(info) { 
+                 Util.hideSpinner('PricebookEntry ids export done. Retrieved: '+ records.length);
+                 Util.sanitizeResult(records);
+                 resolve(records); 
+             });
+        })
+    
+    }
+
 public static async queryProductAttributeIds(conn: Connection, productList: Set<String>): Promise<String[]> {
         Util.log('--- exporting product attribute ids');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
@@ -149,11 +207,43 @@ public static async queryProductAttributeIds(conn: Connection, productList: Set<
         null,
         function (err, res) {
             if (err) reject('error retrieving product attribute ids: ' + err);
-            Util.log("--- product attribute ids: " + res.records.length);
-            resolve(res.records);
+            if (res.records.length < 200){
+                Util.log("--- product attribute ids: " + res.records.length);
+                resolve(res.records);
+            }else{
+                resolve(["useBulkApi"]);
+            }
         });
-    })
-    }
+       }).then(async result =>{
+          if(result[0] === 'useBulkApi'){
+              return await this.bulkQueryProductAttributeIds(conn, productList);
+          }else{
+              return result;
+          }
+        }
+      );
+}
+
+public static async bulkQueryProductAttributeIds (conn: Connection, productList: Set<String>): Promise<String[]> {
+    Util.showSpinner('---bulk exporting product attribute ids');
+    let query ="SELECT Id FROM enxCPQ__ProductAttribute__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ")";
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+    var records = []; 
+    conn.bulk.query(query)
+        .on('record', function(rec) { 
+            records.push(rec);
+        })
+        .on('error', function(err) { 
+            reject(err); 
+        })
+        .on('end', function(info) { 
+            Util.hideSpinner('product attribute ids export done. Retrieved: '+ records.length);
+            Util.sanitizeResult(records);
+            resolve(records); 
+        });
+   })
+}
+
 public static async queryPricebooksIds(conn: Connection): Promise<String[]> {
         Util.log('--- exporting  pricebook ids');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
@@ -161,11 +251,87 @@ public static async queryPricebooksIds(conn: Connection): Promise<String[]> {
         null,
         function (err, res) {
             if (err) reject('error retrieving pricebook ids: ' + err);
-            Util.log("--- pricebooks ids: " + res.records.length);
-            resolve(res.records);
-        });
-    })
+            if (res.records.length < 200){
+                Util.log("--- pricebooks ids: " + res.records.length);
+                resolve(res.records);
+            }else{
+                resolve(["useBulkApi"]);
+            }
+       });
+     }).then(async result =>{
+        if(result[0] === 'useBulkApi'){
+            return await this.bulkQueryPricebooksIds(conn);
+        }else{
+            return result;
+        }
+      }
+    );
 }
+
+public static async bulkQueryPricebooksIds (conn: Connection): Promise<String[]> {
+    Util.showSpinner('---bulk exporting pricebook ids');
+    let query ="SELECT Id, enxCPQ__TECH_External_Id__c, IsStandard FROM Pricebook2";
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+    var records = []; 
+    conn.bulk.query(query)
+        .on('record', function(rec) { 
+            records.push(rec);
+        })
+        .on('error', function(err) { 
+            reject(err); 
+        })
+        .on('end', function(info) { 
+            Util.hideSpinner('pricebook ids export done. Retrieved: '+ records.length);
+            Util.sanitizeResult(records);
+            resolve(records); 
+        });
+   })
+}
+
+public static async queryProductIds(conn: Connection, productList: Set<String>): Promise<String[]> {
+    Util.log('--- exporting product ids');
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+    conn.query("SELECT Id, enxCPQ__TECH_External_Id__c FROM Product2 WHERE (Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + "))",
+    null,
+    function (err, res) {
+        if (err) reject('error retrieving product ids: ' + err);
+        if (res.records.length < 200){
+            Util.log("--- product ids: " + res.records.length);
+            resolve(res.records);
+        }else{
+            resolve(["useBulkApi"]);
+        }
+    });
+  }).then(async result =>{
+      if(result[0] === 'useBulkApi'){
+          return await this.bulkQueryProductIds(conn, productList);
+      }else{
+          return result;
+      }
+    }
+  );
+}
+
+public static async bulkQueryProductIds (conn: Connection, productList: Set<String>): Promise<String[]> {
+    Util.showSpinner('---bulk exporting product ids');
+    let query = "SELECT Id, enxCPQ__TECH_External_Id__c FROM Product2 WHERE (Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + "))";
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+    var records = []; 
+    conn.bulk.query(query)
+        .on('record', function(rec) { 
+            records.push(rec);
+        })
+        .on('error', function(err) { 
+            reject('error retrieving product ids ' + err); 
+        })
+        .on('end', function(info) { 
+            Util.hideSpinner('product ids export done. Retrieved: '+ records.length);
+            Util.sanitizeResult(records);
+            resolve(records);
+        });
+})
+}
+
 public static async queryStdPricebookEntries(conn: Connection, productList: Set<String>): Promise<String[]> {
         Util.log('--- exporting standard PricebookEntry');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
@@ -534,7 +700,7 @@ public static async bulkQueryAttributeSetAttributes(conn: Connection, attributeS
 public static async queryAttributes(conn: Connection, attributeIds: Set<String>): Promise<String[]> {
         Util.log('--- exporting attributes');
         if(attributeIds.size === 0){
-            return;
+            return[];
         }
         return new Promise<String[]>((resolve: Function, reject: Function) => {
 
@@ -1035,7 +1201,7 @@ public static async bulkQueryProvisioningPlanAssigns(conn: Connection, productLi
 public static async queryCategories(conn: Connection, categoryIds: Set<String>): Promise<String[]> {
         Util.log('--- exporting categories');
         if(categoryIds.size ===0){
-            return;
+            return[];
         }
         return new Promise<String[]>((resolve: Function, reject: Function) => {
 
@@ -1084,7 +1250,7 @@ public static async bulkQueryCategories(conn: Connection, categoryIds: Set<Strin
 public static async queryAttributeValues(conn: Connection, attributeIds: Set<String>): Promise<String[]> {
         Util.log('--- exporting product attribute values');
         if(attributeIds.size === 0){
-            return;
+            return[];
         }
         return new Promise<String[]>((resolve: Function, reject: Function) => {
 
@@ -1183,11 +1349,42 @@ public static async queryProvisioningPlanAssignmentIds (conn: Connection): Promi
         null,
         function(err, res) {
             if (err) reject('error retrieving provisioning plan assigment ids: ' + err);
-
-            resolve(res.records);
+            if (res.records.length < 200){
+                Util.log("--- Provisioning Plan Assignment Ids: " + res.records.length);
+                resolve(res.records);
+            }else{
+                resolve(["useBulkApi"]);
+            }
         });
-    });
-    }
+    }).then(async result =>{
+        if(result[0] === 'useBulkApi'){
+            return await this.bulkQueryProvisioningPlanAssignmentIds(conn);
+        }else{
+            return result;
+        }
+      }
+    );
+}
+
+public static async bulkQueryProvisioningPlanAssignmentIds (conn: Connection): Promise<String[]> {
+    Util.showSpinner('---bulk exporting Provisioning Plan Assignment Ids');
+    let query ="SELECT Id FROM enxB2B__ProvisioningPlanAssignment__c";
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+    var records = []; 
+    conn.bulk.query(query)
+        .on('record', function(rec) { 
+            records.push(rec);
+        })
+        .on('error', function(err) { 
+            reject(err); 
+        })
+        .on('end', function(info) { 
+            Util.hideSpinner('Provisioning Plan Assignment Ids export done. Retrieved: '+ records.length);
+            Util.sanitizeResult(records);
+            resolve(records); 
+        });
+   })
+}
 public static async queryProvisioningTaskAssignmentIds (conn: Connection): Promise<String[]> {
         Util.log('--- exporting provisioning task assigment ids ');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
@@ -1195,11 +1392,42 @@ public static async queryProvisioningTaskAssignmentIds (conn: Connection): Promi
         null,
         function(err, res) {
             if (err) reject('error retrieving provisioning task assigment ids: ' + err);
-     
-            resolve(res.records);
+            if (res.records.length < 200){
+                Util.log("--- provisioning task assigment ids: " + res.records.length);
+               resolve(res.records);
+            }else{
+                resolve(["useBulkApi"]);
+            }
         });
-    });
-    }
+    }).then(async result =>{
+        if(result[0] === 'useBulkApi'){
+            return await this.bulkQueryProvisioningTaskAssignmentIds(conn);
+        }else{
+            return result;
+        }
+      }
+    );
+}
+
+public static async bulkQueryProvisioningTaskAssignmentIds (conn: Connection): Promise<String[]> {
+    Util.showSpinner('---bulk exporting provisioning task assigment ids');
+    let query ="SELECT Id FROM enxB2B__ProvisioningTaskAssignment__c";
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+    var records = []; 
+    conn.bulk.query(query)
+        .on('record', function(rec) { 
+            records.push(rec);
+        })
+        .on('error', function(err) { 
+            reject(err); 
+        })
+        .on('end', function(info) { 
+            Util.hideSpinner('provisioning task assigment ids export done. Retrieved: '+ records.length);
+            Util.sanitizeResult(records);
+            resolve(records); 
+        });
+   })
+}
 
 public static async queryProvisioningTaskAssignments (conn: Connection): Promise<String[]> {
         Util.log('--- exporting Provisioning task assignments');
@@ -1484,61 +1712,4 @@ public static async bulkQueryChargeElementPricebookEntryIds (conn: Connection, p
             });
     })
     }
-public static async bulkQueryProductIds (conn: Connection, productName: String): Promise<String[]> {
-        Util.showSpinner('---bulk exporting product ids');
-        let query = "SELECT Id, enxCPQ__TECH_External_Id__c FROM Product2 WHERE RecordType.Name = 'Charge Element'  AND enxCPQ__Root_Product__r.Name = '" + productName + "'";
-        return new Promise<String[]>((resolve: Function, reject: Function) => {
-        var records = []; 
-        conn.bulk.query(query)
-            .on('record', function(rec) { 
-                records.push(rec);
-            })
-            .on('error', function(err) { 
-                reject('error retrieving product ids ' + err); 
-            })
-            .on('end', function(info) { 
-                Util.hideSpinner('product ids export done. Retrieved: '+ records.length);
-                Util.sanitizeResult(records);
-                resolve(records);
-            });
-    })
-    }
-public static async bulkQueryStdPricebookEntryIds (conn: Connection): Promise<string> {
-        Util.showSpinner('---bulk exporting standard PricebookEntry ids');
-        let query = "SELECT Id FROM PricebookEntry WHERE Pricebook2Id != null AND Pricebook2.IsStandard = true AND product2.isactive = true AND Product2.RecordType.Name = 'Charge Element'"
-        return new Promise<string>((resolve: Function, reject: Function) => {
-        var records = []; 
-        conn.bulk.query(query)
-            .on('record', function(rec) { 
-                records.push(rec);
-            })
-            .on('error', function(err) { 
-                reject('error retrieving standard PricebookEntry ids ' + err);  
-            })
-            .on('end', function(info) { 
-                Util.hideSpinner(' standard PricebookEntry ids export done. Retrieved: '+ records.length);
-                Util.sanitizeResult(records);
-                resolve(records); 
-            });
-    })
 }
-public static async bulkQueryPricebookEntryIds (conn: Connection): Promise<string> {
-        Util.showSpinner('---bulk exporting PricebookEntry ids');
-        let query = "SELECT Id FROM PricebookEntry WHERE Pricebook2Id != null AND Pricebook2.IsStandard = false AND product2.isactive = true AND Product2.RecordType.Name = 'Charge Element'";
-        return new Promise<string>((resolve: Function, reject: Function) => {
-        var records = []; 
-        conn.bulk.query(query)
-            .on('record', function(rec) { 
-                records.push(rec);
-            })
-            .on('error', function(err) { 
-                reject(err); 
-            })
-            .on('end', function(info) { 
-                Util.hideSpinner('PricebookEntry ids export done. Retrieved: '+ records.length);
-                Util.sanitizeResult(records);
-                resolve(records); 
-            });
-    })
-
-}}

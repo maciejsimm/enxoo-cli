@@ -200,7 +200,7 @@ export class ProductExporter {
 
         Util.removeIdFields(newParentCategories);
 
-        if(newParentCategories){
+        if(newParentCategories.length > 0){
             this.retrieveCategoriesHelper(conn, newParentCategories);
         }
     }
@@ -211,7 +211,7 @@ export class ProductExporter {
 
         Util.removeIdFields(categories);
         
-        if(categories){
+        if(categories.length > 0){
            await this.retrieveCategoriesHelper(conn, categories);
         }
     }
@@ -219,7 +219,6 @@ export class ProductExporter {
     private async retrieveAttributes(conn: Connection) {
         let attributes = await Queries.queryAttributes(conn, this.attributeIds);
         this.checkTechIds(attributes);
-
         let attributeValues = await Queries.queryAttributeValues(conn, this.attributeIds);
         this.checkTechIds(attributeValues);
 
@@ -228,7 +227,7 @@ export class ProductExporter {
             ...attributeValues
         ]);
 
-        if(attributes){
+        if(attributes.length > 0){
             attributes.forEach(attribute => {
         
             let attributeToSave:any = {};
