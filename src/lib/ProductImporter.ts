@@ -227,7 +227,8 @@ export class ProductImporter {
     private extractAttributeDefaultValuesIds(product:any){
         let attributeDefaultValuesIds = new Set<String>();
         if(product.attributeValueDependencies){
-            product.attributeValueDependencies.forEach(atrValueDependency => {attributeDefaultValuesIds.add(atrValueDependency['enxCPQ__Master_Attribute__r']['enxCPQ__TECH_External_Id__c'])});
+            product.attributeValueDependencies.filter(atrValueDependency => atrValueDependency['enxCPQ__Master_Attribute__r'])
+                                              .forEach(atrValueDependency => {attributeDefaultValuesIds.add(atrValueDependency['enxCPQ__Master_Attribute__r']['enxCPQ__TECH_External_Id__c'])});
         }
 
         return attributeDefaultValuesIds;

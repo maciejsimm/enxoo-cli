@@ -243,11 +243,11 @@ export class Util {
             for(let prop in props){
             if(prop.includes('.')){
                 let separatedProp = prop.split('.');
+                props[separatedProp[0]] = {};
                 if(props[prop]){
-                   props[separatedProp[0]] = {};
                    props[separatedProp[0]][separatedProp[1]] = props[prop];
                 }else{
-                    props[separatedProp[0]] = null;
+                    props[separatedProp[0]][separatedProp[1]] = null;
                 }
                 delete props[prop]
             }}
