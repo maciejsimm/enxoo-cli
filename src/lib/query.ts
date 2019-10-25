@@ -1342,10 +1342,13 @@ public static async bulkQueryAttributeSets(conn: Connection, attributeSetIds: Se
         })
     }
 
-public static async queryProvisioningPlanAssignmentIds (conn: Connection): Promise<String[]> {
+public static async queryProvisioningPlanAssignmentIds (conn: Connection, sourceProductIds: Set<String>): Promise<String[]> {
         Util.log('--- exporting Provisioning Plan Assignment Ids ');
+        if(sourceProductIds.size === 0){
+            return[];
+        }
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-        conn.query("SELECT Id FROM enxB2B__ProvisioningPlanAssignment__c",
+        conn.query("SELECT Id, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c FROM enxB2B__ProvisioningPlanAssignment__c WHERE enxB2B__Product__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(sourceProductIds) + ")",
         null,
         function(err, res) {
             if (err) reject('error retrieving provisioning plan assigment ids: ' + err);
@@ -1358,7 +1361,7 @@ public static async queryProvisioningPlanAssignmentIds (conn: Connection): Promi
         });
     }).then(async result =>{
         if(result[0] === 'useBulkApi'){
-            return await this.bulkQueryProvisioningPlanAssignmentIds(conn);
+            return await this.bulkQueryProvisioningPlanAssignmentIds(conn, sourceProductIds);
         }else{
             return result;
         }
@@ -1366,9 +1369,9 @@ public static async queryProvisioningPlanAssignmentIds (conn: Connection): Promi
     );
 }
 
-public static async bulkQueryProvisioningPlanAssignmentIds (conn: Connection): Promise<String[]> {
+public static async bulkQueryProvisioningPlanAssignmentIds (conn: Connection, sourceProductIds: Set<String>): Promise<String[]> {
     Util.showSpinner('---bulk exporting Provisioning Plan Assignment Ids');
-    let query ="SELECT Id FROM enxB2B__ProvisioningPlanAssignment__c";
+    let query ="SELECT Id, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c FROM enxB2B__ProvisioningPlanAssignment__c WHERE enxB2B__Product__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(sourceProductIds) + ")";
     return new Promise<String[]>((resolve: Function, reject: Function) => {
     let records = []; 
     conn.bulk.query(query)
@@ -1385,10 +1388,13 @@ public static async bulkQueryProvisioningPlanAssignmentIds (conn: Connection): P
         });
    })
 }
-public static async queryProvisioningTaskAssignmentIds (conn: Connection): Promise<String[]> {
+public static async queryProvisioningTaskAssignmentIds (conn: Connection, sourcePrvPlanIds: Set<String>): Promise<String[]> {
         Util.log('--- exporting provisioning task assigment ids ');
+        if(sourcePrvPlanIds.size === 0){
+            return[];
+        }
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-        conn.query("SELECT Id FROM enxB2B__ProvisioningTaskAssignment__c",
+        conn.query("SELECT Id FROM enxB2B__ProvisioningTaskAssignment__c WHERE enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c IN  (" + Util.setToIdString(sourcePrvPlanIds) + ")",
         null,
         function(err, res) {
             if (err) reject('error retrieving provisioning task assigment ids: ' + err);
@@ -1401,7 +1407,7 @@ public static async queryProvisioningTaskAssignmentIds (conn: Connection): Promi
         });
     }).then(async result =>{
         if(result[0] === 'useBulkApi'){
-            return await this.bulkQueryProvisioningTaskAssignmentIds(conn);
+            return await this.bulkQueryProvisioningTaskAssignmentIds(conn, sourcePrvPlanIds);
         }else{
             return result;
         }
@@ -1409,9 +1415,9 @@ public static async queryProvisioningTaskAssignmentIds (conn: Connection): Promi
     );
 }
 
-public static async bulkQueryProvisioningTaskAssignmentIds (conn: Connection): Promise<String[]> {
+public static async bulkQueryProvisioningTaskAssignmentIds (conn: Connection, sourcePrvPlanIds: Set<String>): Promise<String[]> {
     Util.showSpinner('---bulk exporting provisioning task assigment ids');
-    let query ="SELECT Id FROM enxB2B__ProvisioningTaskAssignment__c";
+    let query ="SELECT Id FROM enxB2B__ProvisioningTaskAssignment__c WHERE enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c IN  (" + Util.setToIdString(sourcePrvPlanIds) + ")";
     return new Promise<String[]>((resolve: Function, reject: Function) => {
     let records = []; 
     conn.bulk.query(query)

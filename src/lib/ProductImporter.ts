@@ -445,9 +445,6 @@ export class ProductImporter {
         let allAttributes = await Util.readAllFiles('/attributes');
         let allAttributeSets = await Util.readAllFiles('/attributeSets');
         let allPricebooks = await Util.readAllFiles('/pricebooks');
-        if(this.isB2B){
-            await this.extractB2BObjects(conn);
-        }
         let attributeSetsRoot:any = [];
         let attributeSetAttributes:any = [];
         allAttributeSets.forEach(attributeSet => {attributeSetsRoot.push(attributeSet['root']);
@@ -480,14 +477,21 @@ export class ProductImporter {
         //attributeValues.forEach(attributeValue => {  this.attributeValues.push(...this.extractObjects(attributeValue, this.attributeIds, 'enxCPQ__Attribute__r', false))} )
         this.attributeSets.push(...this.extractProductObjects(attributeSetsRoot, this.attributeSetIds));
         this.attributeSetAttributes.push(...this.extractObjects(attributeSetAttributes, this.attributeSetIds, 'enxCPQ__Attribute_Set__r', false));
+        
+        if(this.isB2B){
+            await this.extractB2BObjects(conn);
+        }
     }
 
     private async extractB2BObjects(conn: Connection){
         //reading B2B objects from local store
         let allProvisioningPlans = await Util.readAllFiles('/provisioningPlans');
         let allProvisioningTasks = await Util.readAllFiles('/provisioningTasks');     
-        let planAssignmentsTarget = await Queries.queryProvisioningPlanAssignmentIds(conn);
-        let taskAssignmentsTarget = await Queries.queryProvisioningTaskAssignmentIds(conn);
+        let planAssignmentsTarget = await Queries.queryProvisioningPlanAssignmentIds(conn, this.sourceProductIds);
+        let provisioningPlanTechIds =  new Set<String>();
+        planAssignmentsTarget.filter(planAssignmentsTarget => planAssignmentsTarget['enxB2B__Provisioning_Plan__r'])
+                             .forEach(planAssignmentsTarget =>{ provisioningPlanTechIds.add(planAssignmentsTarget['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c']) });
+        let taskAssignmentsTarget = await Queries.queryProvisioningTaskAssignmentIds(conn, provisioningPlanTechIds);
     
         planAssignmentsTarget.forEach(planAssignmentTarget => {this.provisioningPlanAssignmentIds.push(planAssignmentTarget['Id'])});
         taskAssignmentsTarget.forEach(taskAssignmentTarget => {this.provisioningTaskAssignmentIds.push(taskAssignmentTarget['Id'])});
