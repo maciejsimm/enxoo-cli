@@ -33,6 +33,7 @@ export class ProductExporter {
     private attributeIds:Set<String>;
     private attributeSetIds:Set<String>;
     private provisioningPlanIds:Set<String>;
+    private provisioningTaskIds:Set<String>;
     private productList:Set<string>;
     private currencyIsoCodes:Set<String>;
     private isB2B: boolean;
@@ -43,6 +44,7 @@ export class ProductExporter {
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
         this.provisioningPlanIds = new Set<String>();
+        this.provisioningTaskIds = new Set<String>();
         this.currencyIsoCodes = new Set<String>();
         this.dir = dir;
         this.isB2B = isB2B;
@@ -270,10 +272,12 @@ export class ProductExporter {
     }
 
     private async retrieveProvisioningPlans(conn: Connection) {
-        let provisioningPlans = await Queries.queryProvisioningPlans(conn);
+        let provisioningPlans = await Queries.queryProvisioningPlans(conn, this.provisioningPlanIds);
         this.checkTechIds(provisioningPlans);
-
-        let prvTaskAssignments = await Queries.queryProvisioningTaskAssignments(conn)
+        let provisioningPlansList = new Set<String>();
+        provisioningPlans.forEach(provisioningPlan => {provisioningPlansList.add(provisioningPlan['enxB2B__TECH_External_Id__c'])});
+        let prvTaskAssignments = await Queries.queryProvisioningTaskAssignments(conn, provisioningPlansList);
+        prvTaskAssignments.forEach(prvTaskAssignment => this.provisioningTaskIds.add(prvTaskAssignment['enxB2B__Provisioning_Task__r']['enxB2B__TECH_External_Id__c']));
         this.checkTechIds(prvTaskAssignments);
 
         Util.removeIdFields([
@@ -296,7 +300,7 @@ export class ProductExporter {
     }
     
     private async retrieveProvisioningTasks(conn: Connection){
-        let provisioningTasks = await Queries.queryProvisioningTasks(conn);
+        let provisioningTasks = await Queries.queryProvisioningTasks(conn, this.provisioningTaskIds);
         this.checkTechIds(provisioningTasks);
 
         Util.removeIdFields(provisioningTasks);

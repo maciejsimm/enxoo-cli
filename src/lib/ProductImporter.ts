@@ -154,7 +154,7 @@ export class ProductImporter {
              await Upsert.deleteObject(conn, 'enxB2B__ProvisioningTaskAssignment__c', this.provisioningTaskAssignmentIds);
             
              await Upsert.insertObject(conn, 'enxB2B__ProvisioningPlanAssignment__c', this.provisioningPlanAssignments);
-             await Upsert.insertObject(conn, 'enxB2B__ProvisioningTaskAssignment__c', this.provisioningTaskAssignments);
+             await Upsert.upsertObject(conn, 'enxB2B__ProvisioningTaskAssignment__c', this.provisioningTaskAssignments);
           }
           await Upsert.enableTriggers(conn);
       } catch (ex) {
@@ -449,7 +449,9 @@ export class ProductImporter {
         let attributeSetAttributes:any = [];
         allAttributeSets.forEach(attributeSet => {attributeSetsRoot.push(attributeSet['root']);
                                                   if(attributeSet['values']) {attributeSet['values'].forEach(attrSetAttr => {attributeSetAttributes.push(attrSetAttr)})}});
-        
+        if(this.isB2B){
+            await this.extractB2BObjects(conn);
+        } 
         let attributesRoot:any = [];
         let attributeValues:any = [];
         allAttributes.forEach(attr => {attributesRoot.push(attr['root']);
@@ -476,11 +478,7 @@ export class ProductImporter {
         attributeValues.forEach(attributeValue => {  this.attributeValues.push(attributeValue)});
         //attributeValues.forEach(attributeValue => {  this.attributeValues.push(...this.extractObjects(attributeValue, this.attributeIds, 'enxCPQ__Attribute__r', false))} )
         this.attributeSets.push(...this.extractProductObjects(attributeSetsRoot, this.attributeSetIds));
-        this.attributeSetAttributes.push(...this.extractObjects(attributeSetAttributes, this.attributeSetIds, 'enxCPQ__Attribute_Set__r', false));
-        
-        if(this.isB2B){
-            await this.extractB2BObjects(conn);
-        }
+        this.attributeSetAttributes.push(...this.extractObjects(attributeSetAttributes, this.attributeSetIds, 'enxCPQ__Attribute_Set__r', false));       
     }
 
     private async extractB2BObjects(conn: Connection){

@@ -247,7 +247,7 @@ export class Util {
                 if(props[prop]){
                    props[separatedProp[0]][separatedProp[1]] = props[prop];
                 }else{
-                    props[separatedProp[0]][separatedProp[1]] = null;
+                    props[separatedProp[0]] = null;
                 }
                 delete props[prop]
             }}
