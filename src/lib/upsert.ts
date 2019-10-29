@@ -43,7 +43,7 @@ export class Upsert {
         if (!(arr instanceof Array)) {
             for (let prop in arr) {
                 if (prop === 'attributes') delete arr[prop];
-                if (prop.indexOf('__r')  !== -1 && arr[prop] == null) delete arr[prop];
+                if (prop.indexOf('__r') !== -1 && arr[prop] == null) delete arr[prop];
                 if (typeof(arr[prop]) === 'object') {
                     for (let innerProp in arr[prop]) {
                         if (innerProp === 'attributes') delete arr[prop][innerProp];
