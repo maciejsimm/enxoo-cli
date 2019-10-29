@@ -55,7 +55,11 @@ export class Upsert {
         for (let i = 0; i < arr.length; i++) {
             for (let prop in arr[i]) {
                 if (prop === 'attributes') delete arr[i][prop];
-                if (prop.indexOf('__r') !== -1 && arr[i][prop] == null) delete arr[i][prop];
+                if (prop.indexOf('__r') && arr[i][prop] == null) delete arr[i][prop];
+                if ((prop ==='Pricebook2' || prop ==='Product2') && arr[i][prop] == null){
+                    arr[i][prop] ={}; 
+                    arr[i][prop]['enxCPQ__TECH_External_Id__c'] = null;
+                }
                 if (typeof(arr[i][prop]) === 'object') {
                     for (let innerProp in arr[i][prop]) {
                         if (innerProp === 'attributes') delete arr[i][prop][innerProp];
@@ -181,7 +185,7 @@ export class Upsert {
         if(sObjectName ==='PricebookEntry'){
             this.fixIds(data);
         }
-        if(data.length > 199){
+        if(data.length > 80){
             await this.insertbulkObject(conn, sObjectName, data);
             return;
         }
@@ -247,10 +251,10 @@ export class Upsert {
 
     public static async upsertObject(conn: Connection, sObjectName: string, data: Object[]): Promise<string> {
         Util.sanitizeForImport(data);
-        let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c', 'enxB2B__ProvisioningTaskAssignment__c'];
+        let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c'];
         let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
-       
-        if(data.length > 199){
+        if(sObjectName === 'enxB2B__ProvisioningTaskAssignment__c'){techId = 'enxB2B__TECH_External_ID__c'};
+        if(data.length > 80 || sObjectName === 'enxCPQ__AttributeValue__c'){
             await this.upsertBulkObject(conn, sObjectName, data, techId);
             return;
         }
@@ -318,7 +322,7 @@ export class Upsert {
         if(data.length===0){
             return;
          }
-         if(data.length > 199){
+         if(data.length > 80){
             await this.deleteBulkObject(conn, sObjectName, data);
             return;
         }
