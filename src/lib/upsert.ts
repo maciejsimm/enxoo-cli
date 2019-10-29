@@ -254,7 +254,7 @@ export class Upsert {
         let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c'];
         let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
         if(sObjectName === 'enxB2B__ProvisioningTaskAssignment__c'){techId = 'enxB2B__TECH_External_ID__c'};
-        if(data.length > 80){
+        if(data.length > 80 || sObjectName === 'enxCPQ__AttributeValue__c'){
             await this.upsertBulkObject(conn, sObjectName, data, techId);
             return;
         }
