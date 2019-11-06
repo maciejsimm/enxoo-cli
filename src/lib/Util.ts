@@ -265,8 +265,9 @@ export class Util {
                         obj[newProp] = obj[prop][innerProp];
                     }
                     delete obj[prop];
-            }
-        }}
+                }
+           }
+        }
     }
 
     public static async readQueryJson(queryDir: string){
