@@ -18,6 +18,7 @@ export default class Org extends SfdxCommand {
   protected static flagsConfig = {
     products: flags.array({char: 'p', required: true, description: messages.getMessage('productsFlagDescription')}),
     b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('b2bFlagDescription')}),
+    related: flags.boolean({char: 'r', required: false, description: messages.getMessage('relatedFlagDescription')}),
     dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')})
   };
 
@@ -37,14 +38,15 @@ export default class Org extends SfdxCommand {
     let conn: Connection;
     conn = await getJsforceConnection(this.org.getConnection().getConnectionOptions());
     conn.bulk.pollInterval = 5000; // 5 sec
-    conn.bulk.pollTimeout = 300000; // 300 sec
+    conn.bulk.pollTimeout = 6000000; // 6000 sec
     const products = this.flags.products;
     const b2b = this.flags.b2b;
     const dir = this.flags.dir;
+    const related = this.flags.related;
 
     this.ux.log('*** Begin exporting ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
 
-    const exporter = new ProductExporter(products, b2b, dir);
+    const exporter = new ProductExporter(products, b2b, dir, related);
     await exporter.all(conn);
 
     this.ux.log('*** Finished ***');

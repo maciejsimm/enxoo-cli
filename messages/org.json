@@ -1,9 +1,8 @@
 {
   "commandDescription": "print a greeting and your org IDs",
   "productsFlagDescription": "comma separated list of product names, e.g.: 'GEPL,IPLC,VPN,Colocation Space'. Use '*ALL' keyword to take all products.",
-  "forceFlagDescription": "example boolean flag",
   "errorNoOrgResults": "No results found for the org '%s'.",
-  "b2bFlagDescription": "boolean determining if export B2B specific objects",
+  "b2bFlagDescription": "boolean determining if export/import B2B specific objects",
   "dirFlagDescription": "directory with product .jsons, please don't use special characters for folder names",
-  "queryDirFlagDescription" : "directory with queries.json"
+  "relatedFlagDescription": "boolean determining if export/import related products and charge references"
 }

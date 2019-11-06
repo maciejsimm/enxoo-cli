@@ -1,3 +1,2 @@
 @echo off
-
-node  --inspect "%~dp0\run" %*
+node  --inspect --max-old-space-size=8192 "%~dp0\run" %*
