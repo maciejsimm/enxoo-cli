@@ -4,57 +4,6 @@ import * as _ from 'lodash';
 export class Upsert {
     private static idMapping = {};
 
-    public static extractIds(arr : any) {
-        let targetArr = []
-        for (let i = 0; i < arr.length; i++) {
-          targetArr.push(arr[i].Id);
-        }
-        return targetArr;
-      }
-
-    public static sanitize  (arr:any, sObjectName:string)  {
-        if (!(arr instanceof Array)) {
-            for (let prop in arr) {
-                if (prop === 'attributes') delete arr[prop];
-                if (prop.indexOf('__r') !== -1 && arr[prop] == null) delete arr[prop];
-                if (typeof(arr[prop]) === 'object') {
-                    for (let innerProp in arr[prop]) {
-                        if (innerProp === 'attributes') delete arr[prop][innerProp];
-                    }
-                }
-            }
-            return;
-        }
-        for (let i = 0; i < arr.length; i++) {
-            for (let prop in arr[i]) {
-                if (prop === 'attributes') delete arr[i][prop];    
-                if ((prop ==='Pricebook2' || prop ==='Product2') && arr[i][prop] == null){
-                    arr[i][prop] ={}; 
-                    arr[i][prop]['enxCPQ__TECH_External_Id__c'] = null;
-                }
-                if (prop.indexOf('__r') && arr[i][prop] == null && (arr.length > 80 || sObjectName === 'enxCPQ__AttributeValue__c')){
-                     arr[i][prop] =""; 
-                } 
-                else if (prop.indexOf('__r') && arr[i][prop] == null) delete arr[i][prop];       
-                if (typeof(arr[i][prop]) === 'object') {
-                    for (let innerProp in arr[i][prop]) {
-                        if (innerProp === 'attributes') delete arr[i][prop][innerProp];
-                    }
-                }
-            }
-        }
-    
-        for (let prop in arr) {
-            if (prop === 'attributes') delete arr[prop];
-            if (prop.indexOf('__r') !== -1 && arr[prop] == null) delete arr[prop];
-            if (typeof(arr[prop]) === 'object') {
-                for (let innerProp in arr[prop]) {
-                    if (innerProp === 'attributes') delete arr[prop][innerProp];
-                }
-            }
-        } 
-    }
-
     public static fixIds (elemArray:any) {
  
         for (let elem of elemArray) {
@@ -155,9 +104,8 @@ export class Upsert {
         });      
     }
 
-
     public static async insertObject(conn: Connection, sObjectName: string, data: Object[]): Promise<string>{ 
-        this.sanitize(data, sObjectName);
+        Util.sanitizeForInsert(data, sObjectName);
         if(sObjectName ==='PricebookEntry'){
             this.fixIds(data);
         }
@@ -204,6 +152,7 @@ export class Upsert {
         });
 
     }
+    
     public static async insertbulkObject(conn, sObjectName, data): Promise<string>{ 
         Util.log('--- inserting bulk ' + sObjectName + ': ' + data.length + ' records');
         Util.sanitizeForBulkImport(data);
@@ -231,10 +180,8 @@ export class Upsert {
         });
     }
 
- 
-
     public static async upsertObject(conn: Connection, sObjectName: string, data: Object[]): Promise<string> {
-        Util.sanitizeForImport(data);
+        Util.sanitizeForUpsert(data);
         let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c'];
         let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
         if(sObjectName === 'enxB2B__ProvisioningTaskAssignment__c'){techId = 'enxB2B__TECH_External_ID__c'};

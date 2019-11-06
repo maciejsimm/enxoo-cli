@@ -95,14 +95,14 @@ export class Util {
         return obj;
     }
 
-    public static sanitizeForImport(obj: any) {
+    public static sanitizeForUpsert(obj: any) {
         let isArray = obj instanceof Array;
         let isString = (typeof obj == 'string');
         let isObject = (typeof obj == 'object' && !isArray && !isString);
 
         if (isArray) {
             for (let subObj of obj) {
-                this.sanitizeForImport(subObj);
+                this.sanitizeForUpsert(subObj);
             }
         }
 
@@ -118,6 +118,28 @@ export class Util {
                 if (typeof(obj[prop]) === 'object') {
                     for (let innerProp in obj[prop]) {
                         if (innerProp === 'attributes') delete obj[prop][innerProp];
+                    }
+                }
+            }
+        }
+    }
+
+    public static sanitizeForInsert (arr:any, sObjectName:string)  {
+      
+        for (let i = 0; i < arr.length; i++) {
+            for (let prop in arr[i]) {
+                if (prop === 'attributes') delete arr[i][prop];    
+                if ((prop ==='Pricebook2' || prop ==='Product2') && arr[i][prop] == null){
+                    arr[i][prop] ={}; 
+                    arr[i][prop]['enxCPQ__TECH_External_Id__c'] = null;
+                }
+                if (prop.indexOf('__r') && arr[i][prop] == null && (arr.length > 80 || sObjectName === 'enxCPQ__AttributeValue__c')){
+                     arr[i][prop] =""; 
+                } 
+                else if (prop.indexOf('__r') && arr[i][prop] == null) delete arr[i][prop];       
+                if (typeof(arr[i][prop]) === 'object') {
+                    for (let innerProp in arr[i][prop]) {
+                        if (innerProp === 'attributes') delete arr[i][prop][innerProp];
                     }
                 }
             }
@@ -238,6 +260,7 @@ export class Util {
         }
         return true;
     }
+
     public static sanitizeResult(result: any){
         for(let props of result){
             for(let prop in props){
@@ -253,6 +276,7 @@ export class Util {
             }}
         }
     }
+    
     public static sanitizeForBulkImport(objs: any){
 
         for(let obj of objs){
