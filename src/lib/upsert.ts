@@ -263,6 +263,12 @@ export class Upsert {
         let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c'];
         let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
         if(sObjectName === 'enxB2B__ProvisioningTaskAssignment__c'){techId = 'enxB2B__TECH_External_ID__c'};
+        
+        if(data.length===0){
+            Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
+            return;
+        }
+
         if((data.length > 80 || sObjectName === 'enxCPQ__AttributeValue__c') && data.length < 9001){
             await this.upsertBulkObject(conn, sObjectName, data, techId);
             return;
@@ -277,9 +283,6 @@ export class Upsert {
         }
 
         Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
-        if(data.length===0){
-            return;
-        }
 
         return new Promise<string>((resolve: Function, reject: Function) => {
             conn.sobject(sObjectName).upsert(data, techId, {}, async (err:any, rets:RecordResult[]) => {

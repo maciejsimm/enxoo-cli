@@ -527,11 +527,12 @@ export class ProductImporter {
         taskAssignmentsTarget.forEach(taskAssignmentTarget => {this.provisioningTaskAssignmentIds.push(taskAssignmentTarget['Id'])});
         let provisioningPlans = [...this.extractObjects(allProvisioningPlans, this.provisionigPlansIds)];
         provisioningPlans.forEach(provisioningPlan => {
-        this.provisioningPlans.push(provisioningPlan['root']);
-                                if(provisioningPlan['values']){
-                                     provisioningPlan['values'].forEach(value => { this.provisioningTaskAssignments.push(value)});
-                                }
-                            });
+                          this.provisioningPlans.push(provisioningPlan['root']);
+                          if(provisioningPlan['values']){
+                               provisioningPlan['values'].forEach(value => {
+                                    this.provisioningTaskAssignments.push(value)});
+                          }
+        });
         allProvisioningTasks.forEach(prvTask =>{this.provisioningTasks.push(prvTask)});
     }
 }
