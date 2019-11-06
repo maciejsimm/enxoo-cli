@@ -2,24 +2,29 @@ import { Connection } from 'jsforce';
 import { Util } from './Util';
 
 export class Queries {
-    private static productQuery;
-    private static pricebookQuery;
-    private static pbeQuery;
-    private static productAttrQuery;
-    private static attrSetAttrQuery;
-    private static attrQuery;
-    private static attrValuesQuery;
-    private static attrDefaultValuesQuery;
-    private static productRelationshipsQuery;
-    private static attrValueDependecyQuery;
-    private static attrRulesQuery;
-    private static categoryQuery;
-    private static attrSetQuery;
-    private static prvPlanAssignmentQuery;
-    private static prvTaskQuery;
-    private static prvPlanQuery;
-    private static prvTaskAssignmentQuery;
-    
+    private static productQuery: string;
+    private static pricebookQuery: string;
+    private static pbeQuery: string;
+    private static productAttrQuery: string;
+    private static attrSetAttrQuery: string;
+    private static attrQuery: string;
+    private static attrValuesQuery: string;
+    private static attrDefaultValuesQuery: string;
+    private static productRelationshipsQuery: string;
+    private static attrValueDependecyQuery: string;
+    private static attrRulesQuery: string;
+    private static categoryQuery: string;
+    private static attrSetQuery: string;
+    private static prvPlanAssignmentQuery: string;
+    private static prvTaskQuery: string;
+    private static prvPlanQuery: string;
+    private static prvTaskAssignmentQuery: string;
+    private static isRelated: boolean;
+
+    public static setIsRelated(isRelated: boolean){
+        this.isRelated = isRelated;
+    }
+
     public static async retrieveQueryJson(queryDir: string){
        let queryJson = await Util.readQueryJson(queryDir);
        this.productQuery= queryJson['productFieldNames'];
@@ -839,8 +844,12 @@ public static async bulkQueryProvisioningPlans(conn: Connection, provisioningPla
 }
 public static async  queryProductCharges(conn: Connection, productList: Set<String>): Promise<String[]> {
          Util.log('--- exporting product charges ');
+         let query = this.isRelated 
+                    ?"SELECT enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, "
+                    :"SELECT ";
+         query = query + "Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE RecordType.Name = 'Charge' AND (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Charge_Reference__c !=null)  ORDER BY enxCPQ__Sorting_Order__c";
          return new Promise<String[]>((resolve: Function, reject: Function) => {
-         conn.query("SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE RecordType.Name = 'Charge' AND (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Charge_Reference__c !=null)  ORDER BY enxCPQ__Sorting_Order__c", 
+         conn.query(query, 
          null,
          function (err, res) {
             if (err) reject('Failed to retrieve charges error: ' + err);
@@ -855,7 +864,7 @@ public static async  queryProductCharges(conn: Connection, productList: Set<Stri
         });
     }).then(async result =>{
         if(result[0] === 'useBulkApi'){
-            return await this.bulkQueryProductCharges(conn, productList);
+            return await this.bulkQueryProductCharges(conn, query);
         }else{
             return result;
         }
@@ -863,9 +872,8 @@ public static async  queryProductCharges(conn: Connection, productList: Set<Stri
     );
 }
 
-public static async  bulkQueryProductCharges(conn: Connection, productList: Set<String>): Promise<String[]> {
+public static async  bulkQueryProductCharges(conn: Connection,  query: string): Promise<String[]> {
     Util.showSpinner('--- bulk exporting product charges');
-    let query = "SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE RecordType.Name = 'Charge' AND (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Charge_Reference__c !=null)  ORDER BY enxCPQ__Sorting_Order__c";
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
@@ -876,18 +884,65 @@ public static async  bulkQueryProductCharges(conn: Connection, productList: Set<
                 reject('error retrieving product charges' + err);  
             })
             .on('end', function(info) { 
-                Util.hideSpinner('product charges export done. Retrieved: '+ records.length);
+                Util.hideSpinner('product reference charges export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
             });
     })
 }
 
+public static async queryReferenceCharges(conn: Connection, chargeList: Set<String>): Promise<String[]> {
+    Util.log('--- exporting reference charges ');
+    let query = "SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE RecordType.Name = 'Charge' AND enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(chargeList) + ") ORDER BY enxCPQ__Sorting_Order__c";
+    
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+    conn.query(query, 
+    null,
+    function (err, res) {
+       if (err) reject('Failed to retrieve reference charges: ' + err);
+       Util.log('fin reference charges');
+       if (res.records.length < 200){
+           Util.log("--- reference charges: " + res.records.length);
+           resolve(res.records);
+       }
+       else{
+           resolve(["useBulkApi"]);
+       }
+   });
+}).then(async result =>{
+   if(result[0] === 'useBulkApi'){
+       return await this.bulkQueryProductCharges(conn, query);
+   }else{
+       return result;
+   }
+}
+);
+}
+
+public static async  bulkQueryReferenceCharges(conn: Connection,  query: string): Promise<String[]> {
+Util.showSpinner('--- bulk exporting reference charges');
+return new  Promise<String[]>((resolve: Function, reject: Function) => {
+   let records = []; 
+   conn.bulk.query(query)
+       .on('record', function(rec) { 
+           records.push(rec);
+       })
+       .on('error', function(err) { 
+           reject('error retrieving reference charges' + err);  
+       })
+       .on('end', function(info) { 
+           Util.hideSpinner('reference charges export done. Retrieved: '+ records.length);
+           Util.sanitizeResult(records);
+           resolve(records); 
+       });
+})
+}
+
 public static async queryProductChargesIds(conn: Connection, productList: Set<String>): Promise<String[]> {
     Util.log('--- exporting product charges ids');
     return new Promise<String[]>((resolve: Function, reject: Function) => {
 
-    conn.query("SELECT enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c FROM Product2 WHERE RecordType.Name = 'Charge' AND enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Sorting_Order__c", 
+    conn.query("SELECT enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c FROM Product2 WHERE RecordType.Name = 'Charge' AND enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Sorting_Order__c", 
     null,
     function (err, res) {
        if (err) reject('Failed to retrieve charges ids. Error: ' + err);
@@ -1060,6 +1115,52 @@ public static async bulkQueryProductRelationships(conn: Connection, productList:
             })
             .on('end', function(info) { 
                 Util.hideSpinner('product relationships export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
+                resolve(records); 
+            });
+    })
+}
+
+public static async querySecondaryProducts(conn: Connection, productList: Set<String>): Promise<String[]> {
+    Util.log('--- exporting secondary products ');
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+
+        conn.query("SELECT enxCPQ__Secondary_Product__r.Name FROM enxCPQ__ProductRelationship__c WHERE enxCPQ__Primary_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND enxCPQ__Secondary_Product__c != null", 
+        null,
+        function (err, res) {
+            if (err) reject('Failed to retrieve secondary products . Error: ' + err);
+            if (res.records.length < 200){
+                Util.log("--- secondary products : " + res.records.length);
+                resolve(res.records);
+            }
+            else{
+                resolve(["useBulkApi"]);
+            }
+        });
+    }).then(async result =>{
+        if(result[0] === 'useBulkApi'){
+            return await this.bulkQuerySecondaryProducts(conn, productList);
+        }else{
+            return result;
+        }
+     }
+  );
+}
+
+public static async bulkQuerySecondaryProducts(conn: Connection, productList: Set<String>): Promise<String[]> {
+    Util.showSpinner('---bulk exporting secondary products ');
+    let query = "SELECT enxCPQ__Secondary_Product__r.Name FROM enxCPQ__ProductRelationship__c WHERE enxCPQ__Primary_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND enxCPQ__Secondary_Product__c != null";
+    return new  Promise<String[]>((resolve: Function, reject: Function) => {
+        let records = []; 
+        conn.bulk.query(query)
+            .on('record', function(rec) { 
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving secondary products  ' + err);  
+            })
+            .on('end', function(info) { 
+                Util.hideSpinner('secondary products  export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
             });

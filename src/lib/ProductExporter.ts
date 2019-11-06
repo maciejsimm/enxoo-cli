@@ -38,8 +38,9 @@ export class ProductExporter {
     private currencyIsoCodes:Set<String>;
     private isB2B: boolean;
     private dir: string;
+    private isRelated: boolean;
 
-    constructor(products: Set<string>, isB2B: boolean, dir: string) {
+    constructor(products: Set<string>, isB2B: boolean, dir: string, isRelated: boolean) {
         this.categoryIds = new Set<String>();
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
@@ -49,6 +50,7 @@ export class ProductExporter {
         this.dir = dir;
         this.isB2B = isB2B;
         this.productList = products;
+        this.isRelated = isRelated;
     }
 
     public async all(conn: Connection) {
@@ -59,11 +61,14 @@ export class ProductExporter {
                 this.productList.add(product['Name']);
             }
         }
+        Queries.setIsRelated(this.isRelated);
         Util.setDir(this.dir);
         await Queries.retrieveQueryJson(this.dir);
         await this.retrievePriceBooks(conn, this.productList);
         Util.createAllDirs(this.isB2B, this.dir);
-
+        if(this.isRelated){
+            await this.retrieveSecondaryProducts(conn, this.productList);
+        }
         await this.retrieveProduct(conn, this.productList);
         await this.retrieveCharges(conn, this.productList);
     
@@ -133,8 +138,14 @@ export class ProductExporter {
            options.filter(option => option['enxCPQ__Parent_Product__r'] && option['enxCPQ__Parent_Product__r'][techId]===defTechId)
                   .forEach(option=> {product.options.push(option)}); 
             
+            if(this.isRelated){
+                let chargeReferenceIds = this.retrieveReferenceChargesIds(chargesIds);
+                chargeReferenceIds.forEach(chargeId => {product.chargesIds.push(chargeId)});
+           };
+          
            chargesIds.filter(chargeId => chargeId['enxCPQ__Root_Product__r'] && chargeId['enxCPQ__Root_Product__r'][techId]===defTechId)
-                     .forEach(chargeId =>  {delete chargeId['enxCPQ__Root_Product__r']
+                     .forEach(chargeId =>  {delete chargeId['enxCPQ__Root_Product__r'];
+                                            delete chargeId['enxCPQ__Charge_Reference__r']
                                             product.chargesIds.push(chargeId)});
 
            productAttributes.filter(productAttribute => productAttribute['enxCPQ__Product__r'] && productAttribute['enxCPQ__Product__r'][techId]===defTechId)
@@ -186,6 +197,28 @@ export class ProductExporter {
             }
         }
     }
+    private retrieveReferenceChargesIds(chargesIds: Array<String>){
+        let chargeReferenceIds = chargesIds.filter(chargeId => chargeId['enxCPQ__Charge_Reference__r'])
+                                           .map(chargeId => chargeId['enxCPQ__Charge_Reference__r'])
+        return chargeReferenceIds;
+    }
+
+    private async retrieveSecondaryProducts(conn: Connection, productList: Set<string>){
+        let secondaryProductNames =  new Set<string>();
+        let secondaryProducts = await Queries.querySecondaryProducts(conn, productList);
+        secondaryProducts.forEach( secondaryProduct => {
+            secondaryProductNames.add(secondaryProduct['enxCPQ__Secondary_Product__r']['Name'])
+        });
+        if(secondaryProductNames.size > 0){
+            let sizeBeforeMerge = this.productList.size;
+            this.productList = new Set([... this.productList, ...secondaryProductNames]);
+            let sizeAfterMerge = this.productList.size;
+            if(sizeAfterMerge > sizeBeforeMerge){
+                this.retrieveSecondaryProducts(conn, secondaryProductNames);
+            }
+        }
+    }
+
     private async retrieveCategoriesHelper(conn: Connection, categories:any){
         let parentCategoriesIds =  new Set<String>();
 
@@ -366,9 +399,26 @@ export class ProductExporter {
             });
         });}
     }
+    private async retrieveReferenceCharges(conn: Connection, charges: String[]){
+        let referenceChargesIds =  new Set<string>();
+        
+        charges.filter(charge => charge['enxCPQ__Charge_Reference__r'])
+               .forEach(charge => {referenceChargesIds.add(charge['enxCPQ__Charge_Reference__r']['enxCPQ__TECH_External_Id__c']) });
+        let referenceCharges = await Queries.queryReferenceCharges(conn, referenceChargesIds);
+        
+        if(referenceChargesIds.size>0){
+            charges = [...charges, ...referenceCharges];
+        }
+        return charges;
+    }
 
     private async retrieveCharges(conn: Connection, productList: Set<string>){
         let charges = await Queries.queryProductCharges(conn, productList);
+       
+        if(this.isRelated){
+            charges = await this.retrieveReferenceCharges(conn, charges);
+        }
+
         this.checkTechIds(charges);
 
         let chargeList = new Set<String>();

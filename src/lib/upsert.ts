@@ -1,5 +1,6 @@
 import { RecordResult, Connection } from 'jsforce';
 import { Util } from './Util';
+import * as _ from 'lodash';
 export class Upsert {
     private static idMapping = {};
 
@@ -185,8 +186,16 @@ export class Upsert {
         if(sObjectName ==='PricebookEntry'){
             this.fixIds(data);
         }
-        if(data.length > 80){
+        if(data.length > 80 && data.length < 9001){
             await this.insertbulkObject(conn, sObjectName, data);
+            return;
+        }
+        if(data.length > 9000){
+            let dataBulkArrs = _.chunk(data, 9000);
+            Util.log('-----  ' + data.length + ' ' + sObjectName + ' chunked');
+            for (let dataBulkArr of dataBulkArrs) {
+                await this.insertbulkObject(conn, sObjectName, dataBulkArr);
+            }
             return;
         }
         Util.log('--- inserting ' + sObjectName + ': ' + data.length + ' records');
@@ -254,17 +263,27 @@ export class Upsert {
         let b2bNames = ['enxB2B__ProvisioningPlan__c','enxB2B__ProvisioningTask__c','enxB2B__ProvisioningPlanAssignment__c'];
         let techId = b2bNames.includes(sObjectName)  ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c';
         if(sObjectName === 'enxB2B__ProvisioningTaskAssignment__c'){techId = 'enxB2B__TECH_External_ID__c'};
-        if(data.length > 80 || sObjectName === 'enxCPQ__AttributeValue__c'){
-            await this.upsertBulkObject(conn, sObjectName, data, techId);
-            return;
-        }
         
-        Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
         if(data.length===0){
+            Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
             return;
         }
 
-    
+        if((data.length > 80 || sObjectName === 'enxCPQ__AttributeValue__c') && data.length < 9001){
+            await this.upsertBulkObject(conn, sObjectName, data, techId);
+            return;
+        }
+        if(data.length > 9000){
+            let dataBulkArrs = _.chunk(data, 9000);
+            Util.log('-----  ' + data.length + ' ' + sObjectName + ' chunked');
+            for (let dataBulkArr of dataBulkArrs) {
+                await this.upsertBulkObject(conn, sObjectName, dataBulkArr, techId);
+            }
+            return;
+        }
+
+        Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
+
         return new Promise<string>((resolve: Function, reject: Function) => {
             conn.sobject(sObjectName).upsert(data, techId, {}, async (err:any, rets:RecordResult[]) => {
                 if (err) {
@@ -322,8 +341,16 @@ export class Upsert {
         if(data.length===0){
             return;
          }
-         if(data.length > 80){
+         if(data.length > 80  && data.length < 9001){
             await this.deleteBulkObject(conn, sObjectName, data);
+            return;
+        }
+        if(data.length > 9000){
+            let dataBulkArrs = _.chunk(data, 9000);
+            Util.log('-----  ' + data.length + ' ' + sObjectName + ' chunked');
+            for (let dataBulkArr of dataBulkArrs) {
+                await this.deleteBulkObject(conn, sObjectName, dataBulkArr);
+            }
             return;
         }
          Util.log('--- deleting ' + sObjectName + ': ' + data.length + ' records');

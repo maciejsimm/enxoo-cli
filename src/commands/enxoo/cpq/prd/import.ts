@@ -18,8 +18,8 @@ export default class Org extends SfdxCommand {
   protected static flagsConfig = {
     // flag with a value (-p, --product=VALUE)
     products: flags.array({char: 'p', required: true, description: messages.getMessage('productsFlagDescription')}),
-    force: flags.boolean({char: 'f', description: messages.getMessage('forceFlagDescription')}),
     b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('b2bFlagDescription')}),
+    related: flags.boolean({char: 'r', required: false, description: messages.getMessage('relatedFlagDescription')}),
     dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')})
   };
 
@@ -40,7 +40,7 @@ export default class Org extends SfdxCommand {
     let userName = this.org.getUsername();
 
     conn.bulk.pollInterval = 5000; // 5 sec
-    conn.bulk.pollTimeout = 300000; //300 sec
+    conn.bulk.pollTimeout = 6000000; //6000 sec
     const products = this.flags.products;
     const b2b = this.flags.b2b;
     const dir = this.flags.dir;
