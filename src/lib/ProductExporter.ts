@@ -140,7 +140,7 @@ export class ProductExporter {
             
             if(this.isRelated){
                 let chargeReferenceIds = this.retrieveReferenceChargesIds(chargesIds);
-                chargeReferenceIds.forEach(chargeId =>  {product.chargesIds.push(chargeId)})
+                chargeReferenceIds.forEach(chargeId => {product.chargesIds.push(chargeId)});
            };
           
            chargesIds.filter(chargeId => chargeId['enxCPQ__Root_Product__r'] && chargeId['enxCPQ__Root_Product__r'][techId]===defTechId)
@@ -198,16 +198,17 @@ export class ProductExporter {
         }
     }
     private retrieveReferenceChargesIds(chargesIds: Array<String>){
-        let chargeReferenceIds = new Array<any>();
-        chargesIds.filter(chargeId => chargeId['enxCPQ__Charge_Reference__r'])
-                  .forEach(chargeId => {chargeReferenceIds.push(chargeId['enxCPQ__Charge_Reference__r'])});
+        let chargeReferenceIds = chargesIds.filter(chargeId => chargeId['enxCPQ__Charge_Reference__r'])
+                                           .map(chargeId => chargeId['enxCPQ__Charge_Reference__r'])
         return chargeReferenceIds;
     }
 
     private async retrieveSecondaryProducts(conn: Connection, productList: Set<string>){
         let secondaryProductNames =  new Set<string>();
         let secondaryProducts = await Queries.querySecondaryProducts(conn, productList);
-        secondaryProducts.forEach( secondaryProduct => {secondaryProductNames.add(secondaryProduct['enxCPQ__Secondary_Product__r']['Name'])});
+        secondaryProducts.forEach( secondaryProduct => {
+            secondaryProductNames.add(secondaryProduct['enxCPQ__Secondary_Product__r']['Name'])
+        });
         if(secondaryProductNames.size > 0){
             let sizeBeforeMerge = this.productList.size;
             this.productList = new Set([... this.productList, ...secondaryProductNames]);

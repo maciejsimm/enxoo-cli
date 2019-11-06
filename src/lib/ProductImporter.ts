@@ -396,16 +396,30 @@ export class ProductImporter {
             delete product['root']['Id'];
             this.productsRoot.push(product['root']);
 
-            if(product['attributeValues']) {product['attributeValues'].forEach(attributeValue=> {this.prdAttributeValues.push(attributeValue)})};
-            if(product['options']) {product['options'].forEach(productOption=> {this.productOptions.push(productOption)})};
-            if(product['productAttributes']) {product['productAttributes'].forEach(productAttribute=> {this.productAttributes.push(productAttribute)})};
-            if(product['productRelationships']) {product['productRelationships'].forEach(productRelationship=> {this.productRelationships.push(productRelationship)})};
-            if(product['attributeDefaultValues']) {product['attributeDefaultValues'].forEach(attributeDefaultValue=> {this.attributeDefaultValues.push(attributeDefaultValue)})};
-            if(product['attributeValueDependencies']) {product['attributeValueDependencies'].forEach(attributeValueDependency=> {this.attributeValueDependencies.push(attributeValueDependency)})};
-            if(product['attributeRules']) {product['attributeRules'].forEach(attributeRule=> { this.attributeRules.push(attributeRule)})};
+            if(product['attributeValues']) {
+                product['attributeValues'].forEach(attributeValue=> {this.prdAttributeValues.push(attributeValue)});
+            }
+            if(product['options']) {
+                product['options'].forEach(productOption=> {this.productOptions.push(productOption)});
+            }
+            if(product['productAttributes']) {
+                product['productAttributes'].forEach(productAttribute=> {this.productAttributes.push(productAttribute)});
+            }
+            if(product['productRelationships']) {
+                product['productRelationships'].forEach(productRelationship=> {this.productRelationships.push(productRelationship)});
+            }
+            if(product['attributeDefaultValues']) {
+                product['attributeDefaultValues'].forEach(attributeDefaultValue=> {this.attributeDefaultValues.push(attributeDefaultValue)});
+            }
+            if(product['attributeValueDependencies']) {
+                product['attributeValueDependencies'].forEach(attributeValueDependency=> {this.attributeValueDependencies.push(attributeValueDependency)});
+            }
+            if(product['attributeRules']) {
+                product['attributeRules'].forEach(attributeRule=> { this.attributeRules.push(attributeRule)});
+            }
  
-            if(this.isB2B){
-                if(product['provisioningPlanAssings']) {product['provisioningPlanAssings'].forEach(provisioningPlanAssignment=> { this.provisioningPlanAssignments.push(provisioningPlanAssignment)})};
+            if(this.isB2B && product['provisioningPlanAssings']){
+               product['provisioningPlanAssings'].forEach(provisioningPlanAssignment=> { this.provisioningPlanAssignments.push(provisioningPlanAssignment)});
             }
         }
     }
@@ -451,24 +465,38 @@ export class ProductImporter {
         let attributeSetsRoot:any = [];
         let attributeSetAttributes:any = [];
         allAttributeSets.forEach(attributeSet => {attributeSetsRoot.push(attributeSet['root']);
-                                                  if(attributeSet['values']) {attributeSet['values'].forEach(attrSetAttr => {attributeSetAttributes.push(attrSetAttr)})}});
+                        if(attributeSet['values']) {
+                            attributeSet['values'].forEach(attrSetAttr => {attributeSetAttributes.push(attrSetAttr)});
+                          }});
         if(this.isB2B){
             await this.extractB2BObjects(conn);
         } 
         let attributesRoot:any = [];
         let attributeValues:any = [];
         allAttributes.forEach(attr => {attributesRoot.push(attr['root']);
-                                       if(attr['values']){attr['values'].forEach(attrValue => {attributeValues.push(attrValue)})}});
+                      if(attr['values']){
+                          attr['values'].forEach(attrValue => {attributeValues.push(attrValue)});
+                       }
+                   });
        
         allPricebooks.forEach(pricebook=>{this.sourcePricebooksIds = [...this.sourcePricebooksIds,...this.extractPricebookData(pricebook)],
                                           this.deleteJsonFields(pricebook, 'Id',  this.pricebooks, 'IsStandard')});
 
         let productCharges = [...this.extractProductObjects(allCharges, this.chargesIds)];
     
-        productCharges.forEach(charge=>{if(charge['root']['enxCPQ__Charge_Reference__r']){ this.charges.push(charge['root'])}
-                                        else{this.chargesWithoutReference.push(charge['root'])};
-                                        if(charge['chargeElements']){charge['chargeElements'].forEach(chargeElement =>{this.chargeElements.push(chargeElement)})};
-                                        if(charge['chargeTier']){charge['chargeTier'].forEach(chargeTier =>{this.chargeTiers.push(chargeTier)})}});
+        productCharges.forEach(charge=>{
+                      if(charge['root']['enxCPQ__Charge_Reference__r']){ 
+                          this.charges.push(charge['root']);
+                      }else{
+                          this.chargesWithoutReference.push(charge['root']);
+                      }
+                      if(charge['chargeElements']){
+                          charge['chargeElements'].forEach(chargeElement =>{this.chargeElements.push(chargeElement)});
+                      }
+                      if(charge['chargeTier']){
+                          charge['chargeTier'].forEach(chargeTier =>{this.chargeTiers.push(chargeTier)});
+                      }
+               });
 
         this.chargeElements.forEach(chargeElement => {this.sourceProductIds.add(chargeElement['enxCPQ__TECH_External_Id__c'])});
         this.chargeTiers.forEach(chargeTier =>{this.sourceProductIds.add(chargeTier['enxCPQ__TECH_External_Id__c'])});
@@ -500,7 +528,10 @@ export class ProductImporter {
         let provisioningPlans = [...this.extractObjects(allProvisioningPlans, this.provisionigPlansIds)];
         provisioningPlans.forEach(provisioningPlan => {
         this.provisioningPlans.push(provisioningPlan['root']);
-                                if(provisioningPlan['values']){ provisioningPlan['values'].forEach(value => { this.provisioningTaskAssignments.push(value)})}});
+                                if(provisioningPlan['values']){
+                                     provisioningPlan['values'].forEach(value => { this.provisioningTaskAssignments.push(value)});
+                                }
+                            });
         allProvisioningTasks.forEach(prvTask =>{this.provisioningTasks.push(prvTask)});
     }
 }
