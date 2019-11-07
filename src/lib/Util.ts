@@ -3,6 +3,8 @@
 import { core, UX } from "@salesforce/command";
 import * as fs from 'fs';
 import * as fsExtra from 'fs-extra'
+import { Connection } from 'jsforce';
+import * as _ from 'lodash';
 
 export class Util {
 
@@ -59,7 +61,7 @@ export class Util {
             })
     }
 
-    public static setToIdString(aSet: Set<String>):String {
+    public static setToIdString(aSet: Set<any>):String {
         let result = '';
         if (aSet.size === 0 || aSet === null || aSet === undefined) return "''";
         for (let elem of aSet) {
@@ -305,6 +307,73 @@ export class Util {
             resolve(JSON.parse(content));
         });
     });
+}
 
-    }
+    public static async createQueryPromiseArray(params: any): Promise<String[]>{
+        Util.log('---Bulk exporting ' + params.sobjectName +' in promise Array- this might take a while');
+        let firstPromises:Array<Promise<String[]>> = new Array<Promise<String[]>>();
+        let firstListArray = Array.from(params.firstList.values());
+        let firstListChunkes = _.chunk(firstListArray, 90);
+
+        let secondListArray;
+        let secondListChunkes
+        if(params.secondList){
+            secondListArray = Array.from(params.secondList.values());
+            secondListChunkes = _.chunk(secondListArray, 90);
+        }
+        
+       for (const fList of firstListChunkes) {
+             let fSet = new Set(fList);
+             let finalQuery = params.queryPart1 +  Util.setToIdString(fSet) + params.queryPart2
+            
+             firstPromises.push(this.createBulkQuery(params.connection, finalQuery, params.sobjectName));
+         }
+
+        return new  Promise<String[]>(async(resolve: Function, reject: Function) => {
+            await Promise.all(firstPromises).then(async firstResults =>{
+                let records = [];
+                for(let firstResult of firstResults){
+                    records= [...records,...firstResult];
+                } 
+                if(!params.secondList){
+                    Util.log('exported ' +Array.from(new Set(records)).length +' records of ' +params.sobjectName)
+                    resolve (Array.from(new Set(records)));
+                }else{
+                    let secondPromises:Array<Promise<String[]>> = new Array<Promise<String[]>>();
+                    for (const sList of secondListChunkes) {
+                        let sSet = new Set(sList);
+                        let finalQuery = params.queryPart3 +  Util.setToIdString(sSet) + params.queryPart2;
+                       
+                        secondPromises.push(this.createBulkQuery(params.connection, finalQuery, params.sobjectName));
+                    }
+                    await Promise.all(secondPromises).then(async secondResults =>{
+                        for(let secondResult of secondResults){
+                            records= [...records,...secondResult];
+                        } 
+                        Util.log('exported ' +Array.from(new Set(records)).length +' records of ' +params.sobjectName)
+                        resolve (Array.from(new Set(records)));
+                 });
+              }
+        });
+       });
+     }
+
+    public static async createBulkQuery(conn:Connection, query:string, sobjectName: string): Promise<String[]>{
+        return new  Promise<String[]>((resolve: Function, reject: Function) => {
+        let records = []; 
+       
+        conn.bulk.query(query)
+            .on('record', function(rec) { 
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving '+sobjectName +' ' + err);  
+            })
+            .on('end', function(info) { 
+                Util.hideSpinner(sobjectName +' export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
+                resolve(records); 
+            });
+        })
+    }  
 }
