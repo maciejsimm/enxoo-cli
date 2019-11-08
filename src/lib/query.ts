@@ -598,6 +598,7 @@ public static async bulkQueryPricebookEntries(conn: Connection, productList: Set
     }
 
 public static async queryProduct(conn: Connection, productList: Set<String>): Promise<String[]> {
+    Util.log('--- exporting product');
 
     if(productList.size >30){
         let paramsObject={
@@ -611,7 +612,6 @@ public static async queryProduct(conn: Connection, productList: Set<String>): Pr
 
        
     }
-        Util.log('--- exporting product aaaaaaaaaa');
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             conn.query("SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE Name IN (" + Util.setToIdString(productList) + ")", 
             null,
