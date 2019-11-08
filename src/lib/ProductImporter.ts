@@ -349,18 +349,6 @@ export class ProductImporter {
         return result;
     }
     
-    private async readProduct(prodname:String) {
-        let content;
-        return new Promise<string>((resolve: Function, reject: Function) => {
-            fs.readFile('./'+this.dir +'/products/' + prodname, function read(err, data) {
-                if (err) {
-                    reject(err);
-                }
-                content = data.toString('utf8');
-                resolve(JSON.parse(content));
-            });
-        });
-    }
     
     private async extractProduct(conn: Connection) {
         let productFileNameList= new Set<String>();
@@ -376,9 +364,12 @@ export class ProductImporter {
             let prdNames = await Util.matchFileNames(productName);
             productFileNameList = new Set([...productFileNameList, ...prdNames]);
         }
+
+        let relatedProductsNames = await Util.retrieveRelatedProducts(productFileNameList)
+        productFileNameList = new Set([...productFileNameList, ...relatedProductsNames]);
         // Collect all Ids' of products that will be inserted
         for (let prodname of productFileNameList) {
-            const prod = await this.readProduct(prodname);
+            const prod = await Util.readProduct(prodname);
             this.categoryIds = new Set([...this.categoryIds, ...this.extractCategoryIds(prod)]);
             this.attributeDefaultValuesIds = new Set([...this.attributeDefaultValuesIds, ...this.extractAttributeDefaultValuesIds(prod)]);
             this.attributeIds = new Set([...this.attributeIds, ...this.extractAttributeIds(prod)]);

@@ -196,7 +196,7 @@ export class Util {
     public static async matchFileNames(productName: string){
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             fs.readdir('./' + this.dir +'/products/' , async (err, filenames) => {
-                let fileNamesToResolve = filenames.filter(fileName => fileName.startsWith(productName));
+                let fileNamesToResolve = filenames.filter(fileName => fileName.startsWith(this.sanitizeFileName(productName)));
                 if(!fileNamesToResolve[0] || err){
                     reject('Failed to find Product:'+ productName + err);
                 }
@@ -372,5 +372,44 @@ export class Util {
                 resolve(records); 
             });
         })
+    }
+    public static async readProduct(prodname:String) {
+        let content;
+        return new Promise<string>((resolve: Function, reject: Function) => {
+            fs.readFile('./'+this.dir +'/products/' + prodname, function read(err, data) {
+                if (err) {
+                    reject(err);
+                }
+                content = data.toString('utf8');
+                resolve(JSON.parse(content));
+            });
+        });
+    }
+
+    public static async  retrieveRelatedProducts(productFileNameList: Set<String>){
+        let secondaryProductsTechIds=[];
+        for (let prodname of productFileNameList) {
+            const prod = await this.readProduct(prodname);
+            if(prod['productRelationships']) {
+                secondaryProductsTechIds = prod['productRelationships'].map(productRelationship => productRelationship['enxCPQ__Secondary_Product__r']['enxCPQ__TECH_External_Id__c']);
+            }
+        }
+        let allProducts = await this.readAllFiles('/products');
+        let secondaryProductsNames = new Set<string>();
+
+        for(let secondaryProductsTechId of secondaryProductsTechIds){
+
+            allProducts.filter(product => product['root']['enxCPQ__TECH_External_Id__c']===secondaryProductsTechId)
+                       .forEach(product => secondaryProductsNames.add(product['root']['Name']));
+        }
+        let secondaryProductsFileNames = new Set<String>();
+        
+        for (let productName of secondaryProductsNames){
+            let prdNames = await Util.matchFileNames(productName);
+            secondaryProductsFileNames = new Set([...secondaryProductsFileNames, ...prdNames]);
+        }
+
+        return secondaryProductsFileNames;
+
     }  
 }
