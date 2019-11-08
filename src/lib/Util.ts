@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as fsExtra from 'fs-extra'
 import { Connection } from 'jsforce';
 import * as _ from 'lodash';
-
+import {Query} from  '../entity/queryEntity';
 export class Util {
 
     public static OBJECT_MISSING_TECH_ID_ERROR: string = 'Object is missing TECH_External_Id__c field value';
@@ -309,25 +309,23 @@ export class Util {
     });
 }
 
-    public static async createQueryPromiseArray(params: any): Promise<String[]>{
-        Util.log('---Bulk exporting ' + params.sobjectName +' in promise Array- this might take a while');
+    public static async createQueryPromiseArray(query: Query, connection: Connection, secondaryQuery?: Query): Promise<String[]>{
+        Util.log('---Bulk exporting ' + query.sobjectName +' in promise Array- this might take a while');
         let firstPromises:Array<Promise<String[]>> = new Array<Promise<String[]>>();
-        let firstListArray = Array.from(params.firstList.values());
+        let firstListArray = Array.from(query.objectsList.values());
         let firstListChunkes = _.chunk(firstListArray, 90);
 
         let secondListArray;
         let secondListChunkes
-        if(params.secondList){
-            secondListArray = Array.from(params.secondList.values());
+        if(secondaryQuery){
+            secondListArray = Array.from(secondaryQuery.objectsList.values());
             secondListChunkes = _.chunk(secondListArray, 90);
         }
-        
-       for (const fList of firstListChunkes) {
-             let fSet = new Set(fList);
-             let finalQuery = params.queryPart1 +  Util.setToIdString(fSet) + params.queryPart2
-            
-             firstPromises.push(this.createBulkQuery(params.connection, finalQuery, params.sobjectName));
-         }
+       firstPromises = firstListChunkes.map(fList =>{
+            let fSet = new Set(fList);
+            let finalQuery = query.queryBegining +  Util.setToIdString(fSet) + query.queryConditions;
+            return this.createBulkQuery(connection, finalQuery, query.sobjectName);
+       });
 
         return new  Promise<String[]>(async(resolve: Function, reject: Function) => {
             await Promise.all(firstPromises).then(async firstResults =>{
@@ -335,22 +333,21 @@ export class Util {
                 for(let firstResult of firstResults){
                     records= [...records,...firstResult];
                 } 
-                if(!params.secondList){
-                    Util.log('exported ' +Array.from(new Set(records)).length +' records of ' +params.sobjectName)
+                if(!secondaryQuery){
+                    Util.log('exported ' +Array.from(new Set(records)).length +' records of ' +query.sobjectName)
                     resolve (Array.from(new Set(records)));
                 }else{
                     let secondPromises:Array<Promise<String[]>> = new Array<Promise<String[]>>();
-                    for (const sList of secondListChunkes) {
+                    secondPromises = secondListChunkes.map(sList =>{
                         let sSet = new Set(sList);
-                        let finalQuery = params.queryPart3 +  Util.setToIdString(sSet) + params.queryPart2;
-                       
-                        secondPromises.push(this.createBulkQuery(params.connection, finalQuery, params.sobjectName));
-                    }
+                        let finalQuery = query.queryBegining +  Util.setToIdString(sSet) + query.queryConditions;
+                        return this.createBulkQuery(connection, finalQuery, secondaryQuery.sobjectName)
+                   });
                     await Promise.all(secondPromises).then(async secondResults =>{
                         for(let secondResult of secondResults){
                             records= [...records,...secondResult];
                         } 
-                        Util.log('exported ' +Array.from(new Set(records)).length +' records of ' +params.sobjectName)
+                        Util.log('exported ' +Array.from(new Set(records)).length +' records of ' +secondaryQuery.sobjectName)
                         resolve (Array.from(new Set(records)));
                  });
               }
