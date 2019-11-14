@@ -42,10 +42,7 @@ export default class Org extends SfdxCommand {
 
     conn.bulk.pollInterval = 5000; // 5 sec
     conn.bulk.pollTimeout = 6000000; //6000 sec
-    const products = this.flags.products;
-    const b2b = this.flags.b2b;
-    const dir = this.flags.dir;
-    const currencies = this.flags.currencies;
+    const [products, b2b, dir, currencies] = [this.flags.products, this.flags.b2b, this.flags.dir, this.flags.currencies]
 
     this.ux.log('*** Begin Importing ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
 

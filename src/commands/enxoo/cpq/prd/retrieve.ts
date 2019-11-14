@@ -40,11 +40,8 @@ export default class Org extends SfdxCommand {
     conn = await getJsforceConnection(this.org.getConnection().getConnectionOptions());
     conn.bulk.pollInterval = 5000; // 5 sec
     conn.bulk.pollTimeout = 6000000; // 6000 sec
-    const products = this.flags.products;
-    const b2b = this.flags.b2b;
-    const dir = this.flags.dir;
-    const related = this.flags.related;
-    const currencies = this.flags.currencies;
+    const [products, b2b, dir, related, currencies] = [this.flags.products, this.flags.b2b, this.flags.dir,
+                                                      this.flags.related, this.flags.currencies];
 
     this.ux.log('*** Begin exporting ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
 
