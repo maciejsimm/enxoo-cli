@@ -50,17 +50,17 @@ export class ProductImporter {
     private chargeTiers:Array<Object>;
     private provisionigPlansIds:Set<String>;
     private attributeDefaultValuesIds:Set<String>;
-    private currenciesList:Set<String>;
+    private currencies:Set<String>;
     private isB2B: boolean;
     private dir: string;
     private userName: string;
 
-    constructor(products: Set<string>, isB2B: boolean, dir: string, userName: string, currenciesList: Set<String>){
+    constructor(products: Set<string>, isB2B: boolean, dir: string, userName: string, currencies: Set<String>){
         this.userName = userName;
         this.dir = dir;
         this.productList = products;
         this.isB2B = isB2B;
-        this.currenciesList = new Set<String>(currenciesList);
+        this.currencies = new Set<String>(currencies);
         this.attributeDefaultValuesIds = new Set<String>();
         this.chargesIds = new Set<String>();
         this.productOptions = new Array<Object>();
@@ -424,8 +424,8 @@ export class ProductImporter {
    
        for(let dirName of dirNames){
            if(dirName=== 'Standard Price Book' ){continue;}                        // <- to jest hardkod!!!
-           let pbes = this.currenciesList
-           ? await Util.readAllFiles('/pricebooks/' + dirName, this.currenciesList)
+           let pbes = this.currencies.size > 0
+           ? await Util.readAllFiles('/pricebooks/' + dirName, this.currencies)
            : await Util.readAllFiles('/pricebooks/' + dirName);
            allPbes.push(pbes);
        }
@@ -441,8 +441,8 @@ export class ProductImporter {
                this.pbes.push(...this.extractObjects(pbe['chargeElementPricebookEntries'], this.sourceProductIds, 'Product2'));
            }
        }    
-       let stdPbes = this.currenciesList 
-       ? await Util.readAllFiles('/pricebooks/Standard Price Book', this.currenciesList)
+       let stdPbes = this.currencies.size > 0 
+       ? await Util.readAllFiles('/pricebooks/Standard Price Book', this.currencies)
        : await Util.readAllFiles('/pricebooks/Standard Price Book');
        stdPbes.forEach(allstdpbe => {!this.isB2B ? Util.removeB2BFields(allstdpbe['stdEntries']) : null,
                                      this.stdPbes.push(...this.extractObjects(allstdpbe['stdEntries'], this.sourceProductIds, 'Product2'))});

@@ -20,14 +20,14 @@ export class Queries {
     private static prvPlanQuery: string;
     private static prvTaskAssignmentQuery: string;
     private static isRelated: boolean;
-    private static currenciesList:Set<String>;
+    private static currencies:Set<String>;
 
     public static setIsRelated(isRelated: boolean){
         this.isRelated = isRelated;
     }
 
-    public static setCurrenciesList(currenciesList: Set<String>){
-        this.currenciesList = currenciesList;
+    public static setCurrencies(currencies: Set<String>){
+        this.currencies = currencies;
     }
 
     public static async retrieveQueryJson(queryDir: string){
@@ -400,41 +400,33 @@ public static async bulkQueryProductIds (conn: Connection, productList: Set<Stri
 public static async queryStdPricebookEntries(conn: Connection, productList: Set<String>): Promise<String[]> {
         Util.log('--- exporting standard PricebookEntry');
         if(productList.size >90){
-            let paramsObject1: Query;
-            let paramsObject2: Query;
-            if(!this.currenciesList){
-                  paramsObject1 ={     
-                    "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.Name IN (",
-                    "queryConditions": ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element'",
-                    "objectsList": productList,
-                    "sobjectName": "standard PricebookEntry",
-                }
-                paramsObject2 ={     
-                    "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (",
-                    "queryConditions": ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element'",
-                    "objectsList": productList,
-                    "sobjectName": "standard PricebookEntry"
-                }
-            }else{
-                paramsObject1 ={     
-                    "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.Name IN (",
-                    "queryConditions": ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element' AND CurrencyIsoCode IN (" + Util.setToIdString(this.currenciesList) + ") ",
-                    "objectsList": productList,
-                    "sobjectName": "standard PricebookEntry"
-                }
-                paramsObject2 ={     
-                    "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (",
-                    "queryConditions": ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element' AND CurrencyIsoCode IN (" + Util.setToIdString(this.currenciesList) + ") ",
-                    "objectsList": productList,
-                    "sobjectName": "standard PricebookEntry"
-                }
+
+            let paramsObject1: Query ={     
+              "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.Name IN (",
+              "queryConditions": ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element'",
+              "objectsList": productList,
+              "sobjectName": "standard PricebookEntry",
+          }
+            let paramsObject2: Query ={     
+              "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (",
+              "queryConditions": ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element'",
+              "objectsList": productList,
+              "sobjectName": "standard PricebookEntry"
+          }
+            if(this.currencies){
+                paramsObject1['queryConditions'] =  paramsObject1['queryConditions'] + " AND CurrencyIsoCode IN (" + Util.setToIdString(this.currencies) + ") ";
+                paramsObject2['queryConditions'] =  paramsObject2['queryConditions'] + " AND CurrencyIsoCode IN (" + Util.setToIdString(this.currencies) + ") "
             }
             return await Util.createQueryPromiseArray(paramsObject1, conn, paramsObject2);
         }
 
-        let query = this.currenciesList
-        ? "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id, " + this.pbeQuery + " FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element' AND CurrencyIsoCode IN (" + Util.setToIdString(this.currenciesList) + ")  "
-        : "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id, " + this.pbeQuery + " FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element'"
+        let query = "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id, " + this.pbeQuery + 
+        " FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) +
+         ")) AND Pricebook2.IsStandard = true AND Product2.RecordType.Name != 'Charge Element'";
+        
+         if(this.currencies){
+            query = query + " AND CurrencyIsoCode IN (" + Util.setToIdString(this.currencies) + ")";
+        }
 
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query(query, 
@@ -584,41 +576,34 @@ public static async bulkQueryPricebooks(conn: Connection): Promise<String[]> {
 public static async queryPricebookEntries(conn: Connection, productList: Set<String>): Promise<String[]> {
         Util.log('--- exporting PricebookEntry');
         if(productList.size >90){
-            let paramsObject1: Query;
-            let paramsObject2: Query;
-            if(!this.currenciesList){
-                paramsObject1={     
-                    "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.Name IN (",
-                    "queryConditions": ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element'",
-                    "objectsList": productList,
-                    "sobjectName": "standard PricebookEntry"
-                }
-                paramsObject2={     
-                    "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (",
-                    "queryConditions": ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element'",
-                    "objectsList": productList,
-                    "sobjectName": "standard PricebookEntry"
-                } 
+           
+            let paramsObject1: Query={     
+                "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.Name IN (",
+                "queryConditions": ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element'",
+                "objectsList": productList,
+                "sobjectName": "standard PricebookEntry"
             }
-            else{
-                paramsObject1={     
-                    "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.Name IN (",
-                    "queryConditions": ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element' AND CurrencyIsoCode IN (" + Util.setToIdString(this.currenciesList) + ") ",
-                    "objectsList": productList,
-                    "sobjectName": "standard PricebookEntry"
-                }
-                paramsObject2={     
-                    "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (",
-                    "queryConditions": ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element' AND CurrencyIsoCode IN (" + Util.setToIdString(this.currenciesList) + ") ",
-                    "objectsList": productList,
-                    "sobjectName": "standard PricebookEntry"
-                } 
-            }
+            let paramsObject2: Query={     
+                "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (",
+                "queryConditions": ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element'",
+                "objectsList": productList,
+                "sobjectName": "standard PricebookEntry"
+            } 
+            if(this.currencies){
+                paramsObject1['queryConditions'] =  paramsObject1['queryConditions'] + " AND CurrencyIsoCode IN (" + Util.setToIdString(this.currencies) + ") ";
+                paramsObject2['queryConditions'] =  paramsObject2['queryConditions'] + " AND CurrencyIsoCode IN (" + Util.setToIdString(this.currencies) + ") "
+            }   
             return await Util.createQueryPromiseArray(paramsObject1, conn, paramsObject2);
         }
-        let query = this.currenciesList
-        ? "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id, " + this.pbeQuery + " FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element' AND CurrencyIsoCode IN (" + Util.setToIdString(this.currenciesList) + ")  "
-        : "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id, " + this.pbeQuery + " FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ")) AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element'"
+
+        let query = "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id, " + this.pbeQuery + 
+        " FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + 
+        ")) AND Pricebook2.IsStandard = false AND Product2.RecordType.Name != 'Charge Element'";
+        
+        if(this.currencies){
+            query= query + " AND CurrencyIsoCode IN (" + Util.setToIdString(this.currencies) + ")";
+        }
+        
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query(query, 
         null,
@@ -1995,30 +1980,27 @@ public static async queryPriceRuleActions (conn: Connection): Promise<String[]> 
 public static async queryChargeElementStdPricebookEntries (conn: Connection, productList: Set<String>): Promise<String[]> {
         Util.log('--- exporting Charge Elements standard PricebookEntry ');
         if(productList.size >90){
-            let paramsObject: Query;
-            if(!this.currenciesList){
-                paramsObject={     
-                    "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery +" FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (",
-                    "queryConditions": ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element'",
-                    "objectsList": productList,
-                    "sobjectName": "Charge Elements standard PricebookEntry"
-                }
-                return await Util.createQueryPromiseArray(paramsObject, conn);
-            }else{
-               paramsObject={     
-                    "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery +" FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (",
-                    "queryConditions": ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element' AND CurrencyIsoCode IN (" + Util.setToIdString(this.currenciesList) + ") ",
-                    "objectsList": productList,
-                    "sobjectName": "Charge Elements standard PricebookEntry"
-                }
-                return await Util.createQueryPromiseArray(paramsObject, conn);
+ 
+            let paramsObject: Query={     
+                "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery +" FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (",
+                "queryConditions": ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element'",
+                "objectsList": productList,
+                "sobjectName": "Charge Elements standard PricebookEntry"
             }
+            if(this.currencies){
+                paramsObject['queryConditions'] =  paramsObject['queryConditions'] + " AND CurrencyIsoCode IN (" + Util.setToIdString(this.currencies) + ") "
+            }
+            return await Util.createQueryPromiseArray(paramsObject, conn);
         }
 
-        let query = this.currenciesList
-        ? "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element' AND CurrencyIsoCode IN (" + Util.setToIdString(this.currenciesList) + ") "
-        : "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element'";
-
+        let query = "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery +
+         " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + 
+        ") AND Pricebook2.IsStandard = true AND Product2.RecordType.Name = 'Charge Element'";
+       
+        if(this.currencies){
+            query= query+ " AND CurrencyIsoCode IN (" + Util.setToIdString(this.currencies) + ") ";
+        }
+     
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query(query, 
         null,
@@ -2065,28 +2047,24 @@ public static async queryChargeElementPricebookEntries (conn: Connection, produc
         Util.log('--- exporting Charge Elements  PricebookEntry ');
         
         if(productList.size >90){
-            let paramsObject: Query;
-            if(!this.currenciesList){
-                paramsObject={     
-                    "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (",
-                    "queryConditions": ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name = 'Charge Element'",
-                    "objectsList": productList,
-                    "sobjectName": "Charge Elements  PricebookEntry"
-                }
-            }else{
-                paramsObject={     
-                    "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (",
-                    "queryConditions": ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name = 'Charge Element' AND CurrencyIsoCode IN (" + Util.setToIdString(this.currenciesList) + ") ",
-                    "objectsList": productList,
-                    "sobjectName": "Charge Elements  PricebookEntry"
-                }
+
+           let paramsObject: Query={     
+                "queryBegining": "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (",
+                "queryConditions": ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name = 'Charge Element'",
+                "objectsList": productList,
+                "sobjectName": "Charge Elements  PricebookEntry"
+            }
+            if(this.currencies){
+                paramsObject['queryConditions'] =  paramsObject['queryConditions'] + " AND CurrencyIsoCode IN (" + Util.setToIdString(this.currencies) + ") "
             }
             return await Util.createQueryPromiseArray(paramsObject, conn);
         }
-        let query = this.currenciesList
-        ? "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name = 'Charge Element' AND CurrencyIsoCode IN (" + Util.setToIdString(this.currenciesList) + ") "
-        : "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name = 'Charge Element'";
-
+        let query = "SELECT Pricebook2.enxCPQ__TECH_External_Id__c, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, Pricebook2Id, Product2Id," + this.pbeQuery + 
+        " FROM PricebookEntry WHERE Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) +
+         ") AND Pricebook2.IsStandard = false AND Product2.RecordType.Name = 'Charge Element'";
+        if(this.currencies){
+            query=query + " AND CurrencyIsoCode IN (" + Util.setToIdString(this.currencies) + ") "
+        }
 
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query(query, 
