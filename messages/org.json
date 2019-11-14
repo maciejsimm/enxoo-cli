@@ -4,5 +4,6 @@
   "errorNoOrgResults": "No results found for the org '%s'.",
   "b2bFlagDescription": "boolean determining if export/import B2B specific objects",
   "dirFlagDescription": "directory with product .jsons, please don't use special characters for folder names",
-  "relatedFlagDescription": "boolean determining if export/import related products and charge references"
+  "relatedFlagDescription": "boolean determining if export/import related products and charge references",
+  "currenciesFlagDescription": "comma separated list of currencies ISO codes for which we want to export/import PricebookEntries"
 }

@@ -20,7 +20,8 @@ export default class Org extends SfdxCommand {
     products: flags.array({char: 'p', required: true, description: messages.getMessage('productsFlagDescription')}),
     b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('b2bFlagDescription')}),
     related: flags.boolean({char: 'r', required: false, description: messages.getMessage('relatedFlagDescription')}),
-    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')})
+    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')}),
+    currencies: flags.array({char: 'c', required: false, description: messages.getMessage('currenciesFlagDescription')})
   };
 
   // Comment this out if your command does not require an org username
@@ -44,10 +45,11 @@ export default class Org extends SfdxCommand {
     const products = this.flags.products;
     const b2b = this.flags.b2b;
     const dir = this.flags.dir;
+    const currencies = this.flags.currencies;
 
     this.ux.log('*** Begin Importing ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
 
-    const importer = new ProductImporter(products, b2b, dir, userName);
+    const importer = new ProductImporter(products, b2b, dir, userName, currencies);
     await importer.all(conn);
 
     this.ux.log('*** Finished ***');

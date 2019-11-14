@@ -161,7 +161,7 @@ export class Util {
         });
     }
 
-    public static async readAllFiles(directoryName: String) {
+    public static async readAllFiles(directoryName: String, currenciesList?: Set<String>) {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             let allFilePromiseArray = new Array<any>();
             fs.readdir('./' + this.dir + directoryName + '/', async (err, filenames) => {
@@ -169,8 +169,17 @@ export class Util {
                     throw err;
                 }
                    filenames.filter(fileName => fileName.includes('.json')).forEach(async fileName => {
-                    const fileReadPromise = this.readFile(directoryName, fileName);
-                    allFilePromiseArray.push(fileReadPromise);
+                   let fileReadPromise;
+                    if(currenciesList){
+                        if(currenciesList.has(fileName.replace('.json',''))){
+                            fileReadPromise = this.readFile(directoryName, fileName);
+                            allFilePromiseArray.push(fileReadPromise);
+                        }
+                    }else{
+                        fileReadPromise = this.readFile(directoryName, fileName);
+                        allFilePromiseArray.push(fileReadPromise);
+                    }
+                    
                 });
                 await Promise.all(allFilePromiseArray).then((allFileContents) => {
                     resolve(allFileContents);

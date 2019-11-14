@@ -35,12 +35,13 @@ export class ProductExporter {
     private provisioningPlanIds:Set<String>;
     private provisioningTaskIds:Set<String>;
     private productList:Set<string>;
+    private currenciesList:Set<String>;
     private currencyIsoCodes:Set<String>;
     private isB2B: boolean;
     private dir: string;
     private isRelated: boolean;
 
-    constructor(products: Set<string>, isB2B: boolean, dir: string, isRelated: boolean) {
+    constructor(products: Set<string>, isB2B: boolean, dir: string, isRelated: boolean, currenciesList: Set<String>) {
         this.categoryIds = new Set<String>();
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
@@ -50,6 +51,7 @@ export class ProductExporter {
         this.dir = dir;
         this.isB2B = isB2B;
         this.productList = products;
+        this.currenciesList = currenciesList;
         this.isRelated = isRelated;
     }
 
@@ -62,6 +64,9 @@ export class ProductExporter {
             }
         }
         Queries.setIsRelated(this.isRelated);
+        if(this.currenciesList){
+            Queries.setCurrenciesList(this.currenciesList);
+        }
         Util.setDir(this.dir);
         await Queries.retrieveQueryJson(this.dir);
         await this.retrievePriceBooks(conn, this.productList);
@@ -347,7 +352,9 @@ export class ProductExporter {
         let priceBooks = await Queries.queryPricebooks(conn);
         this.checkTechIds(priceBooks.filter(pricebook => !pricebook['IsStandard']));
 
-        let currencies = await Queries.queryPricebookEntryCurrencies(conn, productList);
+        let currencies = this.currenciesList
+        ? this.currenciesList
+        : await Queries.queryPricebookEntryCurrencies(conn, productList);
         let priceBookEntries = await Queries.queryPricebookEntries(conn, productList);
         let stdPriceBookEntries = await Queries.queryStdPricebookEntries(conn, productList);
         let chargeElementPricebookEntries = await Queries.queryChargeElementPricebookEntries(conn, productList);
@@ -362,8 +369,12 @@ export class ProductExporter {
             Util.createDir('./' + this.dir +'/priceBooks/' + Util.sanitizeFileName(priceBook['Name']));
             Util.writeFile('/priceBooks/' + Util.sanitizeFileName(priceBook['Name']) + '.json', priceBook)
             
-            currencies.forEach(currency =>{this.currencyIsoCodes.add(currency['CurrencyIsoCode'])});
-            
+            if(!this.currenciesList){
+                currencies.forEach(currency =>{this.currencyIsoCodes.add(currency['CurrencyIsoCode'])});
+            }else{
+                this.currencyIsoCodes = new Set(currencies);
+            }
+
             this.currencyIsoCodes.forEach(currency=>{
 
                 let currencyToSave:any = {};
