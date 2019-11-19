@@ -50,15 +50,17 @@ export class ProductImporter {
     private chargeTiers:Array<Object>;
     private provisionigPlansIds:Set<String>;
     private attributeDefaultValuesIds:Set<String>;
+    private currencies:Set<String>;
     private isB2B: boolean;
     private dir: string;
     private userName: string;
 
-    constructor(products: Set<string>, isB2B: boolean, dir: string, userName: string){
+    constructor(products: Set<string>, isB2B: boolean, dir: string, userName: string, currencies: Set<String>){
         this.userName = userName;
         this.dir = dir;
         this.productList = products;
         this.isB2B = isB2B;
+        this.currencies = new Set<String>(currencies);
         this.attributeDefaultValuesIds = new Set<String>();
         this.chargesIds = new Set<String>();
         this.productOptions = new Array<Object>();
@@ -422,7 +424,9 @@ export class ProductImporter {
    
        for(let dirName of dirNames){
            if(dirName=== 'Standard Price Book' ){continue;}                        // <- to jest hardkod!!!
-           let pbes = await Util.readAllFiles('/pricebooks/' + dirName);
+           let pbes = this.currencies.size > 0
+           ? await Util.readAllFiles('/pricebooks/' + dirName, this.currencies)
+           : await Util.readAllFiles('/pricebooks/' + dirName);
            allPbes.push(pbes);
        }
        Util.showSpinner('---extracting PricebookEntry ids');
@@ -437,13 +441,15 @@ export class ProductImporter {
                this.pbes.push(...this.extractObjects(pbe['chargeElementPricebookEntries'], this.sourceProductIds, 'Product2'));
            }
        }    
-       let stdPbes = await Util.readAllFiles('/pricebooks/Standard Price Book');
+       let stdPbes = this.currencies.size > 0 
+       ? await Util.readAllFiles('/pricebooks/Standard Price Book', this.currencies)
+       : await Util.readAllFiles('/pricebooks/Standard Price Book');
        stdPbes.forEach(allstdpbe => {!this.isB2B ? Util.removeB2BFields(allstdpbe['stdEntries']) : null,
                                      this.stdPbes.push(...this.extractObjects(allstdpbe['stdEntries'], this.sourceProductIds, 'Product2'))});
 
        stdPbes.forEach(allstdpbe => {!this.isB2B ? Util.removeB2BFields(allstdpbe['chargeElementStdPricebookEntries']) : null,
                                      this.stdPbes.push(...this.extractObjects(allstdpbe['chargeElementStdPricebookEntries'], this.sourceProductIds, 'Product2'))});
-        Util.hideSpinner('---extraction of PricebookEntry ids done');
+       Util.hideSpinner('---extraction of PricebookEntry ids done');
     }
 
     private async extractData(conn: Connection) {

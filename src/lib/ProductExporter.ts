@@ -35,12 +35,13 @@ export class ProductExporter {
     private provisioningPlanIds:Set<String>;
     private provisioningTaskIds:Set<String>;
     private productList:Set<string>;
+    private currencies:Set<String>;
     private currencyIsoCodes:Set<String>;
     private isB2B: boolean;
     private dir: string;
     private isRelated: boolean;
 
-    constructor(products: Set<string>, isB2B: boolean, dir: string, isRelated: boolean) {
+    constructor(products: Set<string>, isB2B: boolean, dir: string, isRelated: boolean, currencies: Set<String>) {
         this.categoryIds = new Set<String>();
         this.attributeIds = new Set<String>();
         this.attributeSetIds = new Set<String>();
@@ -50,6 +51,7 @@ export class ProductExporter {
         this.dir = dir;
         this.isB2B = isB2B;
         this.productList = products;
+        this.currencies = currencies;
         this.isRelated = isRelated;
     }
 
@@ -62,6 +64,9 @@ export class ProductExporter {
             }
         }
         Queries.setIsRelated(this.isRelated);
+        if(this.currencies){
+            Queries.setCurrencies(this.currencies);
+        }
         Util.setDir(this.dir);
         await Queries.retrieveQueryJson(this.dir);
         await this.retrievePriceBooks(conn, this.productList);
@@ -347,7 +352,7 @@ export class ProductExporter {
         let priceBooks = await Queries.queryPricebooks(conn);
         this.checkTechIds(priceBooks.filter(pricebook => !pricebook['IsStandard']));
 
-        let currencies = await Queries.queryPricebookEntryCurrencies(conn, productList);
+        await this.getCurrencyIsoCodes(conn, productList);
         let priceBookEntries = await Queries.queryPricebookEntries(conn, productList);
         let stdPriceBookEntries = await Queries.queryStdPricebookEntries(conn, productList);
         let chargeElementPricebookEntries = await Queries.queryChargeElementPricebookEntries(conn, productList);
@@ -361,9 +366,7 @@ export class ProductExporter {
             const priceBookTechExtId = priceBook['enxCPQ__TECH_External_Id__c'];
             Util.createDir('./' + this.dir +'/priceBooks/' + Util.sanitizeFileName(priceBook['Name']));
             Util.writeFile('/priceBooks/' + Util.sanitizeFileName(priceBook['Name']) + '.json', priceBook)
-            
-            currencies.forEach(currency =>{this.currencyIsoCodes.add(currency['CurrencyIsoCode'])});
-            
+
             this.currencyIsoCodes.forEach(currency=>{
 
                 let currencyToSave:any = {};
@@ -465,6 +468,18 @@ export class ProductExporter {
                 Util.log(Util.OBJECT_MISSING_TECH_ID_ERROR + ' Id: ' + object.Id);
             });
             Util.throwError(Util.OBJECT_MISSING_TECH_ID_ERROR);
+        }
+    }
+
+    private async getCurrencyIsoCodes(conn: Connection, productList: Set<String>){
+        let currencies = this.currencies
+        ? this.currencies
+        : await Queries.queryPricebookEntryCurrencies(conn, productList);
+
+        if(!this.currencies){
+            currencies.forEach(currency =>{this.currencyIsoCodes.add(currency['CurrencyIsoCode'])});
+        }else{
+            this.currencyIsoCodes = new Set(currencies);
         }
     }
 }

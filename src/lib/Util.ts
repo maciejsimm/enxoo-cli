@@ -161,24 +161,29 @@ export class Util {
         });
     }
 
-    public static async readAllFiles(directoryName: String) {
+    public static async readAllFiles(directoryName: String, currencies?: Set<String>) {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             let allFilePromiseArray = new Array<any>();
             fs.readdir('./' + this.dir + directoryName + '/', async (err, filenames) => {
                 if (err) {
                     throw err;
                 }
-                   filenames.filter(fileName => fileName.includes('.json')).forEach(async fileName => {
-                    const fileReadPromise = this.readFile(directoryName, fileName);
-                    allFilePromiseArray.push(fileReadPromise);
-                });
+                if(currencies){
+                    allFilePromiseArray= filenames.filter(fileName => fileName.includes('.json'))
+                                                  .filter(fileName => currencies.has(fileName.replace('.json','')))
+                                                  .map(async fileName =>  this.readFile(directoryName, fileName));
+                     
+                }else{
+                    allFilePromiseArray= filenames.filter(fileName => fileName.includes('.json'))
+                                                  .map(async fileName =>  this.readFile(directoryName, fileName));
+                }
                 await Promise.all(allFilePromiseArray).then((allFileContents) => {
                     resolve(allFileContents);
                 })
-                
-            });            
-        });
+            })
+        });            
     }
+    
 
     public static async readDirNames(directoryName: String){
         return new Promise<String[]>((resolve: Function, reject: Function) => {
