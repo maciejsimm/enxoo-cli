@@ -229,7 +229,7 @@ export class Util {
 
     public static createAllDirs(isB2B: boolean, dir: string){
         const dirs = ['/products', '/categories', '/attributes', 
-                     '/attributeSets', '/priceBooks', '/charges' ];
+                     '/attributeSets', '/priceBooks', '/charges', '/bundleElements'];
         const dirsToCreate = dirs.map(singleDir => './' + dir + singleDir);
         if(isB2B){
             dirsToCreate.push('./'+dir+'/provisioningPlans', './'+dir+'/provisioningTasks');

@@ -71,6 +71,7 @@ export class ProductExporter {
         }
         await this.retrieveProduct(conn, this.productList);
         await this.retrieveCharges(conn, this.productList);
+        await this.retrieveBundleElements(conn, this.productList);
     
         if(this.isB2B){
            await this.retrieveProvisioningPlans(conn);
@@ -91,6 +92,7 @@ export class ProductExporter {
         this.checkTechIds(options);
 
         let chargesIds = await Queries.queryProductChargesIds(conn, productList);
+        let bundleElementsIds = await Queries.queryBundleElementsIds(conn, productList);
         
         let productAttributes = await Queries.queryProductAttributes(conn, productList);
         this.checkTechIds(productAttributes);
@@ -147,6 +149,12 @@ export class ProductExporter {
                      .forEach(chargeId =>  {delete chargeId['enxCPQ__Root_Product__r'];
                                             delete chargeId['enxCPQ__Charge_Reference__r']
                                             product.chargesIds.push(chargeId)});
+
+            product.bundleElementsIds = bundleElementsIds
+                .filter(bundleElementId => (
+                    bundleElementId['enxCPQ__Bundle__r'] && bundleElementId['enxCPQ__Bundle__r'][techId] === defTechId
+                ))
+                .map(bundleElementId => ({[techId]: bundleElementId[techId]}));
 
            productAttributes.filter(productAttribute => productAttribute['enxCPQ__Product__r'] && productAttribute['enxCPQ__Product__r'][techId]===defTechId)
                             .forEach(productAttribute => {product.productAttributes.push(productAttribute)});
@@ -456,6 +464,67 @@ export class ProductExporter {
             chargeToSave.chargeTier = chargeTiersToSave;
             Util.writeFile('/charges/' + Util.sanitizeFileName(chargeName) + '.json', chargeToSave);
         }
+    }
+
+    private async retrieveBundleElements(connection: Connection, productList: Set<string>){
+        let bundleElements = await Queries.queryBundleElements(connection, productList);
+       
+        this.checkTechIds(bundleElements);
+
+        let bundleElementOptions = await Queries.queryBundleElementOptions(
+            connection, 
+            new Set(bundleElements.map(bundleElement => bundleElement['enxCPQ__TECH_External_Id__c']))
+        );
+
+        //let chargeList = new Set<String>();
+        //charges.forEach(charge => {chargeList.add(charge['Name'])});
+
+        /*let chargeElements = await Queries.queryChargeElements(conn, productList, chargeList);
+        this.checkTechIds(chargeElements);
+
+        let chargeTiers = await Queries.queryChargeTiers(conn, productList, chargeList);
+        this.checkTechIds(chargeTiers);
+        */
+        
+        //check if it is necessary
+        Util.removeIdFields([
+            ...bundleElements,
+            ...bundleElementOptions
+        ]);
+
+        for(let bundleElement of bundleElements){
+            const bundleElementOptionsToSave = bundleElementOptions.filter(option => (
+                option['enxCPQ__Bundle_Element__r'] && option['enxCPQ__Bundle_Element__r']['enxCPQ__TECH_External_Id__c'] === bundleElement['enxCPQ__TECH_External_Id__c']
+            ));
+            const elementToSave = {
+                root: bundleElement,
+                bundleElementOptions: bundleElementOptionsToSave
+            }
+
+            const filePath = '/bundleElements/' + Util.sanitizeFileName(bundleElement['Name']) + '_' + bundleElement['enxCPQ__TECH_External_Id__c'] + '.json';
+            Util.writeFile(filePath, elementToSave);
+        }
+      
+        /*for(let charge of charges){
+
+            let chargeName = charge['Name'];
+            let chargeToSave: any = {};
+            let chargeElementsToSave: any = [];
+            let chargeTiersToSave: any = [];
+            chargeToSave.root= charge;
+            
+            chargeElements.filter(chargeElement => chargeElement['enxCPQ__Charge_Parent__r'] 
+                                                   && chargeElement['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
+                          .forEach(chargeElementToSave=>{ chargeElementsToSave.push(chargeElementToSave)});
+
+            chargeTiers.filter(chargeTier => chargeTier['enxCPQ__Charge_Parent__r']
+                                             && chargeTier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
+                       .forEach(chargeTierToSave=>{ chargeTiersToSave.push(chargeTierToSave)});              
+
+            chargeToSave.chargeElements = chargeElementsToSave;
+            chargeToSave.chargeTier = chargeTiersToSave;
+            Util.writeFile('/charges/' + Util.sanitizeFileName(chargeName) + '.json', chargeToSave);
+        }*/
     }
 
     private checkTechIds(objects: Array<any>): void{
