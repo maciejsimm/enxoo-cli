@@ -138,7 +138,7 @@ export class Util {
                 if (prop.indexOf('__r') && arr[i][prop] == null && (arr.length > 80 || sObjectName === 'enxCPQ__AttributeValue__c')){
                      arr[i][prop] =""; 
                 } 
-                else if (prop.indexOf('__r') && arr[i][prop] == null) delete arr[i][prop];       
+                else if (prop.indexOf('__r') && arr[i][prop] == null && prop!== 'enxCPQ__TECH_External_Id__c') delete arr[i][prop];       
                 if (typeof(arr[i][prop]) === 'object') {
                     for (let innerProp in arr[i][prop]) {
                         if (innerProp === 'attributes') delete arr[i][prop][innerProp];
@@ -279,7 +279,7 @@ export class Util {
                 }else{
                     props[separatedProp[0]] = null;
                 }
-                delete props[prop]
+                delete props[prop];
             }}
         }
     }
@@ -417,4 +417,10 @@ export class Util {
         return secondaryProductsFileNames;
 
     }  
+
+    public static extractIdsOfPbeToUpdate(pricebookEntriesTarget: Array<any>){
+        let idsOfPbeToUpdate = pricebookEntriesTarget.map(pbe => pbe.Product2.enxCPQ__TECH_External_Id__c)
+        let result = new Set<String>([...idsOfPbeToUpdate])
+        return result;
+     }
 }
