@@ -69,7 +69,7 @@ export class ProductExporter {
         }
         Util.setDir(this.dir);
         await Queries.retrieveQueryJson(this.dir);
-        if(this.isRelated){
+        if(this.isRelated && this.productList[0] !== '*ALL'){
             await this.retrieveSecondaryProducts(conn, this.productList);
         }
         await this.retrievePriceBooks(conn, this.productList);

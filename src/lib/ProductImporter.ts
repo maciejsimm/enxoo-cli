@@ -376,8 +376,10 @@ export class ProductImporter {
             productFileNameList = new Set([...productFileNameList, ...prdNames]);
         }
 
-        let relatedProductsNames = await Util.retrieveRelatedProducts(productFileNameList)
-        productFileNameList = new Set([...productFileNameList, ...relatedProductsNames]);
+        let relatedProductsNames = await Util.retrieveRelatedProductsNames(productFileNameList);
+        let relatedProductsFileNames = await Util.retrieveRelatedProductsFileNames(productFileNameList);
+        this.productList = new Set([...this.productList, ...relatedProductsNames])
+        productFileNameList = new Set([...productFileNameList, ...relatedProductsFileNames]);
         // Collect all Ids' of products that will be inserted
         for (let prodname of productFileNameList) {
             const prod = await Util.readProduct(prodname);
