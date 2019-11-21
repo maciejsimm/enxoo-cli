@@ -48,6 +48,9 @@ export class ProductImporter {
     private chargesIds:Set<String>;
     private chargeElements:Array<Object>;
     private chargeTiers:Array<Object>;
+    private bundleElementsIds: Set<String>;
+    private bundleElements: Array<Object>;
+    private bundleElementOptions: Array<Object>;
     private provisionigPlansIds:Set<String>;
     private attributeDefaultValuesIds:Set<String>;
     private isB2B: boolean;
@@ -66,6 +69,9 @@ export class ProductImporter {
         this.chargesWithoutReference = new Array<Object>();
         this.chargeElements = new Array<Object>();
         this.chargeTiers = new Array<Object>();
+        this.bundleElementsIds = new Set<String>();
+        this.bundleElements = new Array<Object>();
+        this.bundleElementOptions = new Array<Object>();
         this.products = new Array<Object>();
         this.sourcePricebooksIds = new Array<Object>();
         this.sourceProductIds = new Set<String>();
@@ -127,6 +133,9 @@ export class ProductImporter {
           await Upsert.upsertObject(conn, 'Product2', this.charges);
           await Upsert.upsertObject(conn, 'Product2', this.chargeElements);
           await Upsert.upsertObject(conn, 'Product2', this.chargeTiers);
+          await Upsert.upsertObject(conn, 'enxCPQ__BundleElement__c', this.bundleElements);
+          await Upsert.upsertObject(conn, 'enxCPQ__BundleElementOption__c', this.bundleElementOptions);
+
           this.targetProductIds = await this.retrieveTargerProductIds(conn);
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeSetAttribute__c', this.attributeSetAttributes);
           await Upsert.deleteObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributesIds);
@@ -248,13 +257,13 @@ export class ProductImporter {
 
         return sourceProductIds;
     }
-    private extractChargesIds(product:any){
-        let chargesIds = new Set<String>();
-        if(product.chargesIds){
-            product.chargesIds.forEach(chargesId => {chargesIds.add(chargesId['enxCPQ__TECH_External_Id__c'])});
-        }
 
-        return chargesIds;
+    private extractChargesIds(product:any): Set<String>{
+        return new Set(product.chargesIds.map(chargeId => chargeId['enxCPQ__TECH_External_Id__c']));
+    }
+
+    private extractBundleElementsIds(product:any): Set<String>{
+        return new Set(product.bundleElementsIds.map(elementIdObject => elementIdObject['enxCPQ__TECH_External_Id__c']));
     }
 
     private extractCategoryIds(product:any){
@@ -291,6 +300,8 @@ export class ProductImporter {
            arrayToPush.push(cloneObject);
         }
     }
+    
+    //MAYBE REFACTOR THIS METHOD???
     
     private extractProductObjects(objectsArray:any, objectIds:Set<String>) {
         let result:Array<any> = new Array<any>();
@@ -370,12 +381,14 @@ export class ProductImporter {
         // Collect all Ids' of products that will be inserted
         for (let prodname of productFileNameList) {
             const prod = await Util.readProduct(prodname);
+            debugger;
             this.categoryIds = new Set([...this.categoryIds, ...this.extractCategoryIds(prod)]);
             this.attributeDefaultValuesIds = new Set([...this.attributeDefaultValuesIds, ...this.extractAttributeDefaultValuesIds(prod)]);
             this.attributeIds = new Set([...this.attributeIds, ...this.extractAttributeIds(prod)]);
             this.attributeSetIds = new Set([...this.attributeSetIds, ...this.extractAttributeSetIds(prod)]);
             this.sourceProductIds = new Set([...this.sourceProductIds, ...this.extractSourceProductIds(prod)]);
             this.chargesIds = new Set([...this.chargesIds, ...this.extractChargesIds(prod)]);
+            this.bundleElementsIds = new Set([...this.bundleElementsIds, ...this.extractBundleElementsIds(prod)]);
             if(this.isB2B){
                 this.provisionigPlansIds = new Set([...this.provisionigPlansIds, ...this.extractProvisionigPlansIds(prod)]);
             }
@@ -453,6 +466,8 @@ export class ProductImporter {
         let allAttributes = await Util.readAllFiles('/attributes');
         let allAttributeSets = await Util.readAllFiles('/attributeSets');
         let allPricebooks = await Util.readAllFiles('/pricebooks');
+        const allBundleElements = await Util.readAllFiles('/bundleElements');
+
         let attributeSetsRoot:any = [];
         let attributeSetAttributes:any = [];
         allAttributeSets.forEach(attributeSet => {attributeSetsRoot.push(attributeSet['root']);
@@ -491,8 +506,13 @@ export class ProductImporter {
 
         this.chargeElements.forEach(chargeElement => {this.sourceProductIds.add(chargeElement['enxCPQ__TECH_External_Id__c'])});
         this.chargeTiers.forEach(chargeTier =>{this.sourceProductIds.add(chargeTier['enxCPQ__TECH_External_Id__c'])});
+        
+        const bundleElementsForImport = [...this.extractProductObjects(allBundleElements, this.bundleElementsIds)];
+        this.bundleElements = bundleElementsForImport.map(element => element['root']);
+        this.bundleElementOptions = bundleElementsForImport.map(element => element['bundleElementOptions']);
+        
         this.categories.push(...this.extractProductObjects(allCategories, this.categoryIds));
-
+        
 
         this.allCategoriesChild = [...this.categories];
         this.extractParentCategories(this.categories, allCategories);

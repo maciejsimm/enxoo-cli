@@ -67,7 +67,10 @@ export class ProductExporter {
         await this.retrievePriceBooks(conn, this.productList);
         Util.createAllDirs(this.isB2B, this.dir);
         if(this.isRelated){
-            await this.retrieveSecondaryProducts(conn, this.productList);
+            //await this.retrieveSecondaryProducts(conn, this.productList);
+            await this.handleRetrievingRelatedAndBundleOptionProducts(conn, this.productList);
+        } else{
+            await this.retrieveBundleElementOptionsProducts(conn, this.productList);
         }
         await this.retrieveProduct(conn, this.productList);
         await this.retrieveCharges(conn, this.productList);
@@ -225,6 +228,31 @@ export class ProductExporter {
                 this.retrieveSecondaryProducts(conn, secondaryProductNames);
             }
         }
+    }
+
+    private async handleRetrievingRelatedAndBundleOptionProducts(connection: Connection, productNames: Set<string>){
+        const productNamesBeforeRetrieve: Set<string> = new Set([...this.productList]);
+        
+        this.retrieveSecondaryProducts(connection, productNames);
+        this.retrieveBundleElementOptionsProducts(connection, new Set([
+            ...Util.getSetsDifference(this.productList, productNamesBeforeRetrieve),
+            ...productNames
+        ]));
+        
+        const newProductNames = Util.getSetsDifference(this.productList, productNamesBeforeRetrieve);
+
+        if(newProductNames.size !== 0){
+            this.handleRetrievingRelatedAndBundleOptionProducts(connection, newProductNames);
+        }
+    }
+
+    private async retrieveBundleElementOptionsProducts(connection: Connection, bundleNames: Set<string>){
+        const optionsObjectsWithProductNames = await Queries.queryBundleElementOptionsProductNames(connection, bundleNames);
+        const productNames = new Set(optionsObjectsWithProductNames.map(optionWithProductName => (
+            optionWithProductName['enxCPQ__Product__r.Name']
+        )));
+
+        this.productList = new Set([... this.productList, ...productNames]);
     }
 
     private async retrieveCategoriesHelper(conn: Connection, categories:any){

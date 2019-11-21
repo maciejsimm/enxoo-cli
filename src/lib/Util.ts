@@ -411,5 +411,11 @@ export class Util {
 
         return secondaryProductsFileNames;
 
-    }  
+    }
+
+    public static getSetsDifference(set1: Set<any>, set2: Set<any>): Set<any>{
+        return new Set([...set1].filter(element => (
+           !set2.has(element) 
+        )));
+    }
 }
