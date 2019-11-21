@@ -255,7 +255,9 @@ export class ProductExporter {
     private async retrieveBundleElementOptionsProducts(connection: Connection, bundleNames: Set<string>){
         const optionsObjectsWithProductNames = await Queries.queryBundleElementOptionsProductNames(connection, bundleNames);
         const productNames = new Set(optionsObjectsWithProductNames.map(optionWithProductName => (
-            optionWithProductName['enxCPQ__Product__r.Name']
+            optionWithProductName['enxCPQ__Product__r']['enxCPQ__Root_Product__r']
+                ? optionWithProductName['enxCPQ__Product__r']['enxCPQ__Root_Product__r']['Name']
+                : optionWithProductName['enxCPQ__Product__r']['Name']
         )));
 
         this.productList = new Set([... this.productList, ...productNames]);

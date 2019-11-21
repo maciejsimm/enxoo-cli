@@ -144,6 +144,7 @@ export class ProductImporter {
           await Upsert.upsertObject(conn, 'Product2', this.chargeElements);
           await Upsert.upsertObject(conn, 'Product2', this.chargeTiers);
           await Upsert.upsertObject(conn, 'enxCPQ__BundleElement__c', this.bundleElements);
+          debugger;
           await Upsert.upsertObject(conn, 'enxCPQ__BundleElementOption__c', this.bundleElementOptions);
 
           this.targetProductIds = await this.retrieveTargerProductIds(conn);
@@ -401,7 +402,6 @@ export class ProductImporter {
         // Collect all Ids' of products that will be inserted
         for (let prodname of productFileNameList) {
             const prod = await Util.readProduct(prodname);
-            debugger;
             this.categoryIds = new Set([...this.categoryIds, ...this.extractCategoryIds(prod)]);
             this.attributeDefaultValuesIds = new Set([...this.attributeDefaultValuesIds, ...this.extractAttributeDefaultValuesIds(prod)]);
             this.attributeIds = new Set([...this.attributeIds, ...this.extractAttributeIds(prod)]);

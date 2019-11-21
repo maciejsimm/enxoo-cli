@@ -1496,7 +1496,7 @@ public static async queryBundleElementOptionsProductNames(conn: Connection, bund
 
     if(bundlesNames.size > 90){
         let paramsObject: Query = {
-            "queryBegining": "SELECT enxCPQ__Product__r.Name FROM enxCPQ__BundleElementOption__c WHERE enxCPQ__Bundle_Element__r.enxCPQ__Bundle__r.Name IN (",
+            "queryBegining": "SELECT enxCPQ__Product__r.Name, enxCPQ__Product__r.enxCPQ__Root_Product__r.Name FROM enxCPQ__BundleElementOption__c WHERE enxCPQ__Bundle_Element__r.enxCPQ__Bundle__r.Name IN (",
             "queryConditions": ")",
             "objectsList": bundlesNames,
             "sobjectName": queriedObjectsLabel
@@ -1504,7 +1504,7 @@ public static async queryBundleElementOptionsProductNames(conn: Connection, bund
         return await Util.createQueryPromiseArray(paramsObject, conn);
     }
 
-    const query: string = "SELECT enxCPQ__Product__r.Name FROM enxCPQ__BundleElementOption__c WHERE enxCPQ__Bundle_Element__r.enxCPQ__Bundle__r.Name IN (" + Util.setToIdString(bundlesNames) + ")";
+    const query: string = "SELECT enxCPQ__Product__r.Name, enxCPQ__Product__r.enxCPQ__Root_Product__r.Name FROM enxCPQ__BundleElementOption__c WHERE enxCPQ__Bundle_Element__r.enxCPQ__Bundle__r.Name IN (" + Util.setToIdString(bundlesNames) + ")";
 
     return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query(
