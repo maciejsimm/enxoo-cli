@@ -1,16 +1,11 @@
 // Class responsible for Importing product data into an org
-
-import * as fs from 'fs';
 import { Util } from './Util';
 import { Connection } from 'jsforce';
 import { Queries } from './query';
 import { Upsert } from './upsert';
-import * as _ from 'lodash';
-
+import { cloneDeep } from 'lodash';
 export class ProductImporter {
     private categoryIds:Set<String>;
-    private stdPricebookEntryIds:Array<string>;
-    private pricebookEntryIds:Array<string>;
     private attributeIds:Set<String>;
     private attributeSetIds:Set<String>;
     private productAttributesIds:Array<string>;
@@ -29,8 +24,6 @@ export class ProductImporter {
     private allCategoriesChild:Array<Object>;
     private productAttributes:Array<Object>;
     private pricebooks:Array<Object>;
-    private stdPbes:Array<Object>;
-    private pbes:Array<Object>;
     private productRelationships:Array<Object>;
     private attributeDefaultValues:Array<Object>;
     private attributeValueDependencies:Array<Object>;
@@ -54,12 +47,28 @@ export class ProductImporter {
     private isB2B: boolean;
     private dir: string;
     private userName: string;
+    private stdPbesToDeleteIds: Array<string>;
+    private stdPbesToDeactivate:Array<Object>;
+    private stdPbesToUpdate:Array<Object>;
+    private stdPbesToInsert:Array<Object>;
+    private pbesToDeleteIds: Array<string>;
+    private pbesToDeactivate:Array<Object>;
+    private pbesToUpdate:Array<Object>;
+    private pbesToInsert:Array<Object>;
 
     constructor(products: Set<string>, isB2B: boolean, dir: string, userName: string, currencies: Set<String>){
         this.userName = userName;
         this.dir = dir;
         this.productList = products;
         this.isB2B = isB2B;
+        this.stdPbesToDeleteIds = new Array<string>();
+        this.stdPbesToDeactivate= new Array<Object>();
+        this.stdPbesToUpdate= new Array<Object>();
+        this.stdPbesToInsert= new Array<Object>();
+        this.pbesToDeleteIds= new Array<string>();
+        this.pbesToDeactivate= new Array<Object>();
+        this.pbesToUpdate= new Array<Object>();
+        this.pbesToInsert= new Array<Object>();
         this.currencies = new Set<String>(currencies);
         this.attributeDefaultValuesIds = new Set<String>();
         this.chargesIds = new Set<String>();
@@ -93,10 +102,6 @@ export class ProductImporter {
         this.attributeValueDependencies = new Array<Object>();
         this.attributeDefaultValues = new Array<Object>();
         this.productRelationships = new Array<Object>();
-        this.stdPbes = new Array<Object>();
-        this.pbes = new Array<Object>();
-        this.stdPricebookEntryIds = new Array<string>();
-        this.pricebookEntryIds= new Array<string>();
         this.categoryIds = new Set<String>();
         this.productAttributesIds = new Array<string>(); 
         this.attributeIds = new Set<String>();
@@ -107,15 +112,18 @@ export class ProductImporter {
     public async all(conn:Connection) { 
       conn.setMaxListeners(100);      
       Util.setDir(this.dir);
-      
+      if(this.currencies.size > 0){
+         Queries.setCurrencies(this.currencies);
+      }
       if(this.productList[0] === '*ALL'){
           this.productList = await Util.retrieveAllFileName();
       }
       await Upsert.enableTriggers(conn);
       await Upsert.disableTriggers(conn, this.userName);  
+      await Queries.retrieveQueryJson(this.dir);
       await this.extractProduct(conn);
       await this.extractData(conn);
-      await this.extractPricebooks();
+      await this.extractPricebooks(conn);
      
       //Perform an upsert of data
       try {
@@ -141,11 +149,17 @@ export class ProductImporter {
           Upsert.mapPricebooks(this.sourcePricebooksIds,  this.targetPricebooksIds);
           Upsert.mapProducts(this.sourceProductIds, this.targetProductIds);
          
-          await Upsert.deleteObject(conn, 'PricebookEntry', this.pricebookEntryIds);
-          await Upsert.deleteObject(conn, 'PricebookEntry', this.stdPricebookEntryIds);
-         
-          await Upsert.insertObject(conn, 'PricebookEntry', this.stdPbes);
-          await Upsert.insertObject(conn, 'PricebookEntry', this.pbes);
+          await Upsert.deleteObject(conn, 'PricebookEntry', this.pbesToDeleteIds);
+          await Upsert.deleteObject(conn, 'PricebookEntry', this.stdPbesToDeleteIds);
+
+          await Upsert.updateObject(conn, 'PricebookEntry', this.pbesToDeactivate);
+          await Upsert.updateObject(conn, 'PricebookEntry', this.stdPbesToDeactivate);
+
+          await Upsert.updateObject(conn, 'PricebookEntry', this.stdPbesToUpdate);
+          await Upsert.insertObject(conn, 'PricebookEntry', this.stdPbesToInsert);
+
+          await Upsert.updateObject(conn, 'PricebookEntry', this.pbesToUpdate);
+          await Upsert.insertObject(conn, 'PricebookEntry', this.pbesToInsert);
           
           await Upsert.upsertObject(conn, 'enxCPQ__ProductRelationship__c', this.productRelationships);
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeDefaultValue__c', this.attributeDefaultValues);
@@ -350,25 +364,29 @@ export class ProductImporter {
         }
         return result;
     }
-    
+
+    private async addRelatedProducts(productFileNameList: Set<String>) {
+        let relatedProductsNames = await Util.retrieveRelatedProductsNames(productFileNameList);
+        this.productList = new Set([...this.productList, ...relatedProductsNames]);
+        
+        let relatedProductsFileNames = await Util.retrieveRelatedProductsFileNames(productFileNameList);
+        return new Set([...productFileNameList, ...relatedProductsFileNames]);
+    }
     
     private async extractProduct(conn: Connection) {
         let productFileNameList= new Set<String>();
         // We need to query ID's of records in target org in order to delete or match ID's
-        let prdAttrsTarget = await Queries.queryProductAttributeIds(conn, this.productList);                 // for delete                           
-        let allStdPricebookEntriesTarget = await Queries.queryStdPricebookEntryIds(conn, this.productList);  // for delete
-        let allPricebookEntriesTarget = await Queries.queryPricebookEntryIds(conn, this.productList);        // for delete
+        let prdAttrsTarget = await Queries.queryProductAttributeIds(conn, this.productList);                 // for delete                                
         prdAttrsTarget.forEach(prdAttr => {this.productAttributesIds.push(prdAttr['Id'])});
-        allStdPricebookEntriesTarget.forEach(stdPbeTarget => {this.stdPricebookEntryIds.push(stdPbeTarget['Id'])});
-        allPricebookEntriesTarget.forEach(pbeTarget => {this.pricebookEntryIds.push(pbeTarget['Id'])});
 
         for (let productName of this.productList){
             let prdNames = await Util.matchFileNames(productName);
             productFileNameList = new Set([...productFileNameList, ...prdNames]);
         }
 
-        let relatedProductsNames = await Util.retrieveRelatedProducts(productFileNameList)
-        productFileNameList = new Set([...productFileNameList, ...relatedProductsNames]);
+        if(this.productList[0] !== '*ALL'){
+            productFileNameList = await this.addRelatedProducts(productFileNameList);
+        }
         // Collect all Ids' of products that will be inserted
         for (let prodname of productFileNameList) {
             const prod = await Util.readProduct(prodname);
@@ -417,7 +435,7 @@ export class ProductImporter {
         }
     }
 
-    private async extractPricebooks() {
+    private async extractPricebooks(conn: Connection) {
        // reading data for every pricebook
        let dirNames = await Util.readDirNames('/pricebooks');
        let allPbes = [];
@@ -430,6 +448,7 @@ export class ProductImporter {
            allPbes.push(pbes);
        }
        Util.showSpinner('---extracting PricebookEntry ids');
+       let sanitizedPbes =[]; 
        for(let pbes of allPbes){
            for(let pbe of pbes){
                if(!this.isB2B){
@@ -437,19 +456,53 @@ export class ProductImporter {
                   
                   Util.removeB2BFields(pbe['chargeElementPricebookEntries']);
                }
-               this.pbes.push(...this.extractObjects(pbe['entries'], this.sourceProductIds, 'Product2'));
-               this.pbes.push(...this.extractObjects(pbe['chargeElementPricebookEntries'], this.sourceProductIds, 'Product2'));
+               sanitizedPbes = [...sanitizedPbes, ...this.extractObjects(pbe['entries'], this.sourceProductIds, 'Product2')];
+               sanitizedPbes= [...sanitizedPbes, ...this.extractObjects(pbe['chargeElementPricebookEntries'], this.sourceProductIds, 'Product2')];
            }
        }    
        let stdPbes = this.currencies.size > 0 
        ? await Util.readAllFiles('/pricebooks/Standard Price Book', this.currencies)
        : await Util.readAllFiles('/pricebooks/Standard Price Book');
+       let sanitizedStdPbes = [];
        stdPbes.forEach(allstdpbe => {!this.isB2B ? Util.removeB2BFields(allstdpbe['stdEntries']) : null,
-                                     this.stdPbes.push(...this.extractObjects(allstdpbe['stdEntries'], this.sourceProductIds, 'Product2'))});
+                                     sanitizedStdPbes = [...sanitizedStdPbes, ...this.extractObjects(allstdpbe['stdEntries'], this.sourceProductIds, 'Product2')]});
 
        stdPbes.forEach(allstdpbe => {!this.isB2B ? Util.removeB2BFields(allstdpbe['chargeElementStdPricebookEntries']) : null,
-                                     this.stdPbes.push(...this.extractObjects(allstdpbe['chargeElementStdPricebookEntries'], this.sourceProductIds, 'Product2'))});
-       Util.hideSpinner('---extraction of PricebookEntry ids done');
+                                     sanitizedStdPbes = [...sanitizedStdPbes, ...this.extractObjects(allstdpbe['chargeElementStdPricebookEntries'], this.sourceProductIds, 'Product2')]});
+       
+        
+        let pbesResults = await this.retrievePbesToUpdate(conn, sanitizedPbes, false);
+        let idsOfProductToUpdate = Util.extractIdsOfPbeToUpdate(pbesResults.allPricebookEntriesTarget);
+        let targetChargesIds = await Queries.queryTargetChargesIds(conn, idsOfProductToUpdate);
+        let targetProductIds = await Queries.queryTargetProductIds(conn, idsOfProductToUpdate);
+
+        this.pbesToUpdate = pbesResults.pbesToUpdate;
+        this.pbesToInsert = this.retrievePbesToInsert(sanitizedPbes);
+        this.pbesToDeleteIds = this.retrievePbesToDeleteIds(pbesResults.allPricebookEntriesTarget, targetChargesIds);
+        this.pbesToDeactivate = this.retrievePbesToDeactivate(pbesResults.allPricebookEntriesTarget, targetProductIds);
+
+
+        let stdPbesResults = await this.retrievePbesToUpdate(conn, sanitizedStdPbes, true);
+        let idsOfStdProductToUpdate = Util.extractIdsOfPbeToUpdate(stdPbesResults.allPricebookEntriesTarget);
+        let targetChargesIdsStd = await Queries.queryTargetChargesIds(conn, idsOfStdProductToUpdate);
+        let targetProductIdsStd = await Queries.queryTargetProductIds(conn, idsOfStdProductToUpdate);
+
+        this.stdPbesToUpdate = stdPbesResults.pbesToUpdate;
+        this.stdPbesToInsert =  this.retrievePbesToInsert(sanitizedStdPbes);
+        this.stdPbesToDeleteIds = this.retrievePbesToDeleteIds(stdPbesResults.allPricebookEntriesTarget, targetChargesIdsStd);
+        this.stdPbesToDeactivate = this.retrievePbesToDeactivate(stdPbesResults.allPricebookEntriesTarget, targetProductIdsStd);
+        this.stdPbesToUpdate.forEach(pbe=>{
+            delete pbe['Pricebook2'];
+            delete pbe['Product2'];
+            delete pbe['CurrencyIsoCode'];
+        });
+        this.pbesToUpdate.forEach(pbe=>{
+            delete pbe['Pricebook2'];
+            delete pbe['Product2'];
+            delete pbe['CurrencyIsoCode'];
+        });
+
+        Util.hideSpinner('---extraction of PricebookEntry ids done');
     }
 
     private async extractData(conn: Connection) {
@@ -531,5 +584,81 @@ export class ProductImporter {
                           }
         });
         allProvisioningTasks.forEach(prvTask =>{this.provisioningTasks.push(prvTask)});
+    }
+
+    private async retrievePbesToUpdate(conn: Connection, pbes:Array<String>, isStandard: boolean){
+        let allPricebookEntriesTarget= isStandard
+         ? await Queries.queryTargetStdPricebookEntry(conn, this.productList) 
+         : await Queries.queryTargetPricebookEntry(conn, this.productList);       
+        let pbesToUpdate = new Array<Object>();
+        
+        for(let pbe of pbes){
+            for(let pbeEntryTarget of allPricebookEntriesTarget){
+                if(this.isPbeMatch(pbe, pbeEntryTarget, isStandard)){
+                    pbesToUpdate.push(pbe);
+                    break;
+                }
+            }
+        }
+         let clonedPbesToUpdate = cloneDeep(pbesToUpdate);
+         clonedPbesToUpdate.forEach(pbe=>{
+                delete pbe['toUpdate'];
+         })
+        return {
+            allPricebookEntriesTarget: allPricebookEntriesTarget,
+            pbesToUpdate: clonedPbesToUpdate
+        }
+    }
+
+    private isPbeMatch(pbe: Object, pbeEntryTarget:Object, isStandard: boolean){
+        let productMatch = pbe['Product2']['enxCPQ__TECH_External_Id__c'] === pbeEntryTarget['Product2']['enxCPQ__TECH_External_Id__c'];
+        let pricebookMatch = isStandard
+        ? true
+        : pbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === pbeEntryTarget['Pricebook2']['enxCPQ__TECH_External_Id__c'];
+        let currencyMatch = pbe['CurrencyIsoCode'] === pbeEntryTarget['CurrencyIsoCode'];
+
+        if(productMatch && pricebookMatch && currencyMatch){
+            pbe['Id'] = pbeEntryTarget['Id'];
+            delete pbe['Product2Id'];
+            delete pbe['Pricebook2Id'];
+            pbe['toUpdate'] = true;
+            return true;
+        }
+        return false;
+    }
+
+    private retrievePbesToInsert(pbes:Array<Object>){
+        return pbes.filter(pbe => !pbe['toUpdate']);
+    }
+
+    private retrievePbesToDeleteIds(allPricebookEntriesTarget:Array<Object>, targetChargesIds:Array<String>){
+        let pbesToDeleteIds = new Array<string>();
+       
+        for(let pbe of allPricebookEntriesTarget){
+            for(let id of targetChargesIds){
+                if(pbe['Product2']['enxCPQ__TECH_External_Id__c']===id && !pbe['toUpdate'] ){
+                    pbesToDeleteIds.push(pbe['Id']);
+                }
+            }
+        }
+                                                                               
+        return pbesToDeleteIds;
+    }
+
+    private retrievePbesToDeactivate(allPricebookEntriesTarget:Array<Object>, targetProductIds:Array<String>){
+        let pbesToDeactivate = new Array<Object>();
+
+        for(let pbe of allPricebookEntriesTarget){
+            for(let id of targetProductIds){
+                if(pbe['Product2']['enxCPQ__TECH_External_Id__c']===id && !pbe['toUpdate']){
+                    delete pbe['Product2Id'];
+                    delete pbe['Pricebook2Id'];
+                    delete pbe['CurrencyIsoCode'];
+                    pbe['IsActive']=false;
+                    pbesToDeactivate.push(pbe);
+                }
+            }
+        }
+        return pbesToDeactivate;
     }
 }

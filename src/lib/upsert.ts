@@ -135,8 +135,8 @@ export class Upsert {
                 }
                 
                 let successCount = rets
-                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
-                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+                                .map((elem:RecordResult):number =>elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
 
                 await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
                 rets.forEach(async (ret, i) => {
@@ -165,8 +165,8 @@ export class Upsert {
                 }
                 
                 let successCount = rets
-                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
-                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+                                .map((elem:RecordResult):number =>elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
 
                 await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
                 rets.forEach(async (ret, i) => {
@@ -215,8 +215,8 @@ export class Upsert {
                 }
                 
                 let successCount = rets
-                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
-                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+                                .map((elem:RecordResult):number =>elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
 
                 await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
                 rets.forEach(async (ret, i) => {
@@ -244,8 +244,83 @@ export class Upsert {
                 }
                 
                 let successCount = rets
-                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
-                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+                                .map((elem:RecordResult):number =>elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
+
+                await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
+                rets.forEach(async (ret, i) => {
+                    if (ret.success === false) {
+                        await Util.log('----- ['+ i +'] errors: ' + ret.errors);
+                    } 
+                })
+
+                resolve('OK');
+            });
+        });
+    }
+
+    public static async updateObject(conn: Connection, sObjectName: string, data: Object[]): Promise<string> {
+        Util.sanitizeForInsert(data, sObjectName);
+        
+        if(data.length===0){
+            Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
+            return;
+        }
+
+        if((data.length > 80 || sObjectName === 'enxCPQ__AttributeValue__c') && data.length < 9001){
+            await this.updateBulkObject(conn, sObjectName, data);
+            return;
+        }
+        if(data.length > 9000){
+            let dataBulkArrs = _.chunk(data, 9000);
+            Util.log('-----  ' + data.length + ' ' + sObjectName + ' chunked');
+            for (let dataBulkArr of dataBulkArrs) {
+                await this.updateBulkObject(conn, sObjectName, dataBulkArr);
+            }
+            return;
+        }
+        Util.log('--- updating ' + sObjectName + ': ' + data.length + ' records');
+
+        return new Promise<string>((resolve: Function, reject: Function) => {
+            conn.sobject(sObjectName).update(data, {}, async (err:any, rets:RecordResult[]) => {
+                if (err) {
+                    Util.log(err);
+                    reject('error creating ' + sObjectName + ': ' + err);
+                    return;
+                }
+                
+                let successCount = rets
+                                .map((elem:RecordResult):number =>elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
+
+                await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
+                rets.forEach(async (ret, i) => {
+                    if (ret.success === false) {
+                        ret.errors.forEach(async err=> {
+                            await Util.log('----- ['+ i +'] errors: ' + err['message']);
+                        })
+                    }
+                })
+
+                resolve('OK');
+            });
+        });
+    }
+
+    public static async updateBulkObject(conn, sObjectName, data): Promise<string>{ 
+        Util.log('--- updating bulk ' + sObjectName + ': ' + data.length + ' records');
+        Util.sanitizeForBulkImport(data);
+         return new Promise((resolve, reject) => {
+            conn.bulk.load(sObjectName, "update", data, async (err:any, rets:RecordResult[]) => {
+                if (err) {
+                    Util.log(err);
+                    reject('error updating ' + sObjectName + ': ' + err);
+                    return;
+                }
+                
+                let successCount = rets
+                                .map((elem:RecordResult):number =>elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
 
                 await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
                 rets.forEach(async (ret, i) => {
@@ -277,22 +352,29 @@ export class Upsert {
         }
          Util.log('--- deleting ' + sObjectName + ': ' + data.length + ' records');
          return new Promise<string>((resolve: Function, reject: Function) => {
-             conn.sobject(sObjectName).del(data, function(err: any, rets: RecordResult[]) {
-                 if (err) {
-                     reject('error deleting ' + sObjectName + ' ' + err);
-                     return;
-                 }
-                 let errorsCount = 0;
-                 for (let i = 0; i < rets.length; i++) {
-                     if (!rets[i].success) {
-                         Util.log('----- !!! - success: ' + rets[i].success);
-                         errorsCount++;
-                     }
-                 }
-             Util.log('--- deleted ' + sObjectName + ' '+ rets.length + ', errors: ' + errorsCount);
-             resolve();
-             });
-         });
+             conn.sobject(sObjectName).del(data, async (err:any, rets:RecordResult[]) => {
+                if (err) {
+                    Util.log(err);
+                    reject('error creating ' + sObjectName + ': ' + err);
+                    return;
+                }
+                
+                let successCount = rets
+                                .map((elem:RecordResult):number => elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
+
+                await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
+                rets.forEach(async (ret, i) => {
+                    if (ret.success === false) {
+                        ret.errors.forEach(async err=> {
+                            await Util.log('----- ['+ i +'] errors: ' + err['message']);
+                        })
+                    }
+                })
+
+                resolve('OK');
+            });
+        });
     }
 
     public static async deleteBulkObject(connection: Connection, sObjectName: string, objectsIds: string[]): Promise<string> {
