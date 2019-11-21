@@ -66,7 +66,7 @@ public static async queryAllProductNames(conn: Connection):Promise<String[]> {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Name FROM Product2 WHERE RecordType.Name = 'Product' OR RecordType.Name = 'Bundle'", 
         null,
-        function (err, res) {
+        (err, res) => {
             if (err) reject('error querying all Product Names: ' + err);
             if (res.records.length < 200){
                Util.log("--- all Product Names: " + res.records.length);
@@ -91,13 +91,13 @@ public static async bulkQueryAllProductNames(conn: Connection):  Promise<String[
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving all Product Names ' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('all Product Names export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -110,7 +110,7 @@ public static async queryRecordTypes(conn: Connection): Promise<String[]> {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Id, Name FROM RecordType WHERE SObjectType='Product2'", 
         null,
-        function (err, res) {
+        (err, res) => {
             if (err) reject('error retrieving record types: ' + err);
             Util.log("--- record types: " + res.records.length);
             resolve(res.records);
@@ -132,11 +132,12 @@ public static async queryRecordTypes(conn: Connection): Promise<String[]> {
             return await Util.createQueryPromiseArray(paramsObject1, conn);
         }
     
-        let query = "SELECT enxCPQ__TECH_External_Id__c FROM Product2 WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(techIds) + ") AND RecordType.Name IN ('Product', 'Bundle', 'Option','Resource')";
-            return new Promise<String[]>((resolve: Function, reject: Function) => {
+        let query = "SELECT enxCPQ__TECH_External_Id__c FROM Product2 WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(techIds) + 
+        ") AND RecordType.Name IN ('Product', 'Bundle', 'Option','Resource')";
+        return new Promise<String[]>((resolve: Function, reject: Function) => {
             conn.query(query, 
                 null,
-                function (err, res) {
+                 (err, res) => {
                     if (err) { 
                         reject('error retrieving target productIds: ' + err);
                         return;
@@ -162,13 +163,13 @@ public static async queryRecordTypes(conn: Connection): Promise<String[]> {
                 return new Promise<String[]>((resolve: Function, reject: Function) => {
                 let records = []; 
                 conn.bulk.query(query)
-                    .on('record', function(rec) { 
+                    .on('record', (rec) => { 
                         records.push(rec);
                     })
-                    .on('error', function(err) { 
+                    .on('error', (err) => { 
                         reject('error retrieving target productIds' + err);  
                     })
-                    .on('end', function(info) { 
+                    .on('end', (info) => { 
                         Util.hideSpinner(' target productIds export done. Retrieved: '+ records.length);
                         Util.sanitizeResult(records);
                         resolve(records); 
@@ -191,11 +192,12 @@ public static async queryRecordTypes(conn: Connection): Promise<String[]> {
             return await Util.createQueryPromiseArray(paramsObject1, conn);
         }
     
-        let query = "SELECT enxCPQ__TECH_External_Id__c FROM Product2 WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(techIds) + ") AND RecordType.Name IN ('Charge Element', 'Charge', 'Charge Tier')";
+        let query = "SELECT enxCPQ__TECH_External_Id__c FROM Product2 WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(techIds) +
+         ") AND RecordType.Name IN ('Charge Element', 'Charge', 'Charge Tier')";
             return new Promise<String[]>((resolve: Function, reject: Function) => {
             conn.query(query, 
                 null,
-                function (err, res) {
+                (err, res) => {
                     if (err) { 
                         reject('error retrieving target ChargesIds: ' + err);
                         return;
@@ -221,13 +223,13 @@ public static async queryRecordTypes(conn: Connection): Promise<String[]> {
                 return new Promise<String[]>((resolve: Function, reject: Function) => {
                 let records = []; 
                 conn.bulk.query(query)
-                    .on('record', function(rec) { 
+                    .on('record', (rec) => { 
                         records.push(rec);
                     })
-                    .on('error', function(err) { 
+                    .on('error', (err) => { 
                         reject('error retrieving target ChargesIds' + err);  
                     })
-                    .on('end', function(info) { 
+                    .on('end', (info) => { 
                         Util.hideSpinner(' target standard PricebookEntry export done. Retrieved: '+ records.length);
                         Util.sanitizeResult(records);
                         resolve(records); 
@@ -269,7 +271,7 @@ public static async queryTargetStdPricebookEntry(conn: Connection, productList: 
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query(query, 
             null,
-            function (err, res) {
+            (err, res) => {
                 if (err) { 
                     reject('error retrieving target standard PricebookEntry: ' + err);
                     return;
@@ -295,13 +297,13 @@ public static async queryTargetStdPricebookEntry(conn: Connection, productList: 
             return new Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving target standard PricebookEntry' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner(' target standard PricebookEntry export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -343,7 +345,7 @@ public static async queryTargetPricebookEntry(conn: Connection, productList: Set
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             conn.query(query,
             null,
-            function (err, res) {
+            (err, res) => {
                 if (err) { 
                     reject('error retrieving target PricebookEntry: ' + err);
                     return;
@@ -371,13 +373,13 @@ public static async bulkQueryTargetPricebookEntry (conn: Connection, query: stri
          return new Promise<String[]>((resolve: Function, reject: Function) => {
          let records = []; 
          conn.bulk.query(query)
-             .on('record', function(rec) { 
+             .on('record', (rec) => { 
                  records.push(rec);
              })
-             .on('error', function(err) { 
+             .on('error', (err) => { 
                  reject(err); 
              })
-             .on('end', function(info) { 
+             .on('end', (info) => { 
                  Util.hideSpinner('target PricebookEntry export done. Retrieved: '+ records.length);
                  Util.sanitizeResult(records);
                  resolve(records); 
@@ -400,7 +402,7 @@ public static async queryProductAttributeIds(conn: Connection, productList: Set<
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Id FROM enxCPQ__ProductAttribute__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ")", 
         null,
-        function (err, res) {
+        (err, res) => {
             if (err) reject('error retrieving product attribute ids: ' + err);
             if (res.records.length < 200){
                 Util.log("--- product attribute ids: " + res.records.length);
@@ -425,13 +427,13 @@ public static async bulkQueryProductAttributeIds (conn: Connection, productList:
     return new Promise<String[]>((resolve: Function, reject: Function) => {
     let records = []; 
     conn.bulk.query(query)
-        .on('record', function(rec) { 
+        .on('record', (rec) => { 
             records.push(rec);
         })
-        .on('error', function(err) { 
+        .on('error', (err) => { 
             reject(err); 
         })
-        .on('end', function(info) { 
+        .on('end', (info) => { 
             Util.hideSpinner('product attribute ids export done. Retrieved: '+ records.length);
             Util.sanitizeResult(records);
             resolve(records); 
@@ -444,7 +446,7 @@ public static async queryPricebooksIds(conn: Connection): Promise<String[]> {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Id, enxCPQ__TECH_External_Id__c, IsStandard FROM Pricebook2", 
         null,
-        function (err, res) {
+        (err, res) => {
             if (err) reject('error retrieving pricebook ids: ' + err);
             if (res.records.length < 200){
                 Util.log("--- pricebooks ids: " + res.records.length);
@@ -469,13 +471,13 @@ public static async bulkQueryPricebooksIds (conn: Connection): Promise<String[]>
     return new Promise<String[]>((resolve: Function, reject: Function) => {
     let records = []; 
     conn.bulk.query(query)
-        .on('record', function(rec) { 
+        .on('record', (rec) => { 
             records.push(rec);
         })
-        .on('error', function(err) { 
+        .on('error', (err) => { 
             reject(err); 
         })
-        .on('end', function(info) { 
+        .on('end', (info) => { 
             Util.hideSpinner('pricebook ids export done. Retrieved: '+ records.length);
             Util.sanitizeResult(records);
             resolve(records); 
@@ -501,9 +503,10 @@ public static async queryProductIds(conn: Connection, productList: Set<String>):
         return await Util.createQueryPromiseArray(paramsObject1, conn, paramsObject2);
     }
     return new Promise<String[]>((resolve: Function, reject: Function) => {
-    conn.query("SELECT Id, enxCPQ__TECH_External_Id__c FROM Product2 WHERE (Name IN (" + Util.setToIdString(productList) + ") OR enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + "))",
+    conn.query("SELECT Id, enxCPQ__TECH_External_Id__c FROM Product2 WHERE (Name IN (" + Util.setToIdString(productList) + 
+    ") OR enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + "))",
     null,
-    function (err, res) {
+    (err, res) => {
         if (err) reject('error retrieving product ids: ' + err);
         if (res.records.length < 200){
             Util.log("--- product ids: " + res.records.length);
@@ -528,13 +531,13 @@ public static async bulkQueryProductIds (conn: Connection, productList: Set<Stri
     return new Promise<String[]>((resolve: Function, reject: Function) => {
     let records = []; 
     conn.bulk.query(query)
-        .on('record', function(rec) { 
+        .on('record', (rec) => { 
             records.push(rec);
         })
-        .on('error', function(err) { 
+        .on('error', (err) => { 
             reject('error retrieving product ids ' + err); 
         })
-        .on('end', function(info) { 
+        .on('end', (info) => { 
             Util.hideSpinner('product ids export done. Retrieved: '+ records.length);
             Util.sanitizeResult(records);
             resolve(records);
@@ -576,7 +579,7 @@ public static async queryStdPricebookEntries(conn: Connection, productList: Set<
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query(query, 
         null,
-        function (err, res) {
+        (err, res) => {
             if (err) reject('error retrieving standard pricebook entries: ' + err);
             if (res.records.length < 200){
                 Util.log("--- standard pricebook entries: " + res.records.length);
@@ -601,13 +604,13 @@ public static async bulkQueryStdPricebookEntries(conn: Connection, query: string
    return new  Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving standard PricebookEntry' + err);  
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('standard PricebookEntry export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -635,7 +638,7 @@ public static async queryPricebookEntryCurrencies(conn: Connection, productList:
     return new Promise<String[]>((resolve: Function, reject: Function) => {
     conn.query("SELECT Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + "))", 
     null,
-    function (err, res) {
+    (err, res) => {
         if (err) reject('error retrieving pricebook entry currencies: ' + err);
         if(res.records.length < 200){
            Util.log("--- pricebook entry currencies: " + res.records.length);
@@ -656,17 +659,18 @@ public static async queryPricebookEntryCurrencies(conn: Connection, productList:
 
 public static async bulkQueryPricebookEntryCurrencies(conn: Connection, productList: Set<String>): Promise<String[]> {
     Util.showSpinner('---bulk exporting pricebook entry currencies');
-    let query = "SELECT Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + "))";
+    let query = "SELECT Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode FROM PricebookEntry WHERE (Product2.Name IN (" + Util.setToIdString(productList) + 
+    ") OR Product2.enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + "))";
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving pricebook entry currencies' + err);  
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('pricebook entry currencies export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -679,7 +683,7 @@ public static async queryPricebooks(conn: Connection): Promise<String[]> {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Id, IsStandard, "+ this.pricebookQuery+" FROM Pricebook2 WHERE IsActive = true OR IsStandard = true", 
         null,
-        function (err, res) {
+        (err, res) => {
             if (err) reject('error retrieving pricebooks: ' + err);
             if(res.records.length < 200){
                Util.log("--- pricebooks: " + res.records.length);
@@ -704,13 +708,13 @@ public static async bulkQueryPricebooks(conn: Connection): Promise<String[]> {
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving pricebooks ' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('pricebooks export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -752,7 +756,7 @@ public static async queryPricebookEntries(conn: Connection, productList: Set<Str
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query(query, 
         null,
-        function (err, res) {
+        (err, res) => {
             if (err) reject('error retrieving pricebook entries: ' + err);
             if (res.records.length < 200){
                 Util.log("--- pricebook entries: " + res.records.length);
@@ -776,13 +780,13 @@ public static async bulkQueryPricebookEntries(conn: Connection, query: string): 
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving PricebookEntry' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('PricebookEntry export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -801,13 +805,11 @@ public static async queryProduct(conn: Connection, productList: Set<String>): Pr
             "sobjectName": "product"
         }
         return await Util.createQueryPromiseArray(paramsObject, conn);
-
-       
     }
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             conn.query("SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE Name IN (" + Util.setToIdString(productList) + ")", 
             null,
-            function (err, res) {
+            (err, res) => {
                 if (err) {reject('Failed to retrieve product: ' + productList + '. Error: ' + err)};
                 if(res.records.length === 0) {reject('Failed to retrieve products. Check if every product exist on source env')};
                 if (res.records.length < 200){
@@ -835,13 +837,13 @@ public static async bulkQueryProduct(conn: Connection, productList: Set<String>)
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving product' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('product export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -865,7 +867,7 @@ public static async queryProductAttributes(conn: Connection, productList: Set<St
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             conn.query("SELECT Id, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Value_Attribute__r.enxCPQ__TECH_External_Id__c,  enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, " + this.productAttrQuery + " FROM enxCPQ__ProductAttribute__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Order__c", 
             null,
-            function (err, res) {
+            (err, res) => {
                 if (err) reject('Failed to retrieve product attributes:  Error: ' + err);
                 if (res.records.length < 200){
                     Util.log("--- product attributes: " + res.records.length);
@@ -891,13 +893,13 @@ public static async bulkQueryProductAttributes(conn: Connection, productList: Se
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving product attributes' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('product attributes export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -919,7 +921,7 @@ public static async queryProductOptions(conn: Connection, productList: Set<Strin
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             conn.query("SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+ " FROM Product2 WHERE RecordType.Name = 'Option' AND enxCPQ__Parent_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Sorting_Order__c", 
             null,
-            function (err, res) {
+            (err, res) => {
                 if (err) reject('Failed to retrieve options. Error: ' + err);
                 if (res.records.length < 200){
                     Util.log("--- options: " + res.records.length);
@@ -945,13 +947,13 @@ public static async bulkQueryProductOptions(conn: Connection, productList: Set<S
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving options' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('product options export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -978,7 +980,7 @@ public static async queryAttributeSetAttributes(conn: Connection, attributeSetId
                 " FROM enxCPQ__AttributeSetAttribute__c WHERE enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeSetIds) + ") ORDER BY enxCPQ__Order__c", 
 
             null,
-            function (err, res) {
+            (err, res) => {
                 if (err) reject('Failed to retrieve attribute set attributes. Error: ' + err);
                 if (res.records.length < 200){
                     Util.log("--- attribute set attributes: " + res.records.length);
@@ -1006,13 +1008,13 @@ public static async bulkQueryAttributeSetAttributes(conn: Connection, attributeS
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving attribute set attributes' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('attributes set attributes export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -1038,7 +1040,7 @@ public static async queryAttributes(conn: Connection, attributeIds: Set<String>)
 
             conn.query("SELECT Id, "+ this.attrQuery +" FROM enxCPQ__Attribute__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ", 
             null,
-            function (err, res) {
+            (err, res) => {
                 if (err) reject('Failed to retrieve attributes. Error: ' + err);
                 if (res.records.length < 200){
                     Util.log("--- attributes: " + res.records.length);
@@ -1064,13 +1066,13 @@ public static async bulkQueryAttributes(conn: Connection, attributeIds: Set<Stri
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving attributes' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('attributes export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -1093,7 +1095,7 @@ public static async queryProvisioningTasks(conn: Connection, provisioningTaskIds
             return await Util.createQueryPromiseArray(paramsObject, conn);
         }
     return new Promise<String[]>((resolve: Function, reject: Function) => {
-        conn.query("SELECT Id, "+ this.prvTaskQuery+" FROM enxB2B__ProvisioningTask__c WHERE enxB2B__TECH_External_Id__c IN  (" + Util.setToIdString(provisioningTaskIds) + ")",null, function(err, res) {
+        conn.query("SELECT Id, "+ this.prvTaskQuery+" FROM enxB2B__ProvisioningTask__c WHERE enxB2B__TECH_External_Id__c IN  (" + Util.setToIdString(provisioningTaskIds) + ")",null, (err, res) => {
             if (err) reject('error retrieving provisioning tasks: ' + err);
             if(res.records.length<200){
                 Util.log('---provisioning tasks: ' + res.records.length);
@@ -1119,13 +1121,13 @@ public static async bulkQueryProvisioningTasks(conn: Connection, provisioningTas
     return new Promise<string[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) {  
+            .on('record', (rec) => {  
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving provisioning tasks ' + err);  
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('provisioning tasks export done. Retrieved: ' + records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -1148,7 +1150,7 @@ public static async queryProvisioningPlans(conn: Connection, provisioningPlanIds
             return await Util.createQueryPromiseArray(paramsObject, conn);
         }
         return new Promise<String[]>((resolve: Function, reject: Function) => {
-        conn.query("SELECT Id, "+ this.prvPlanQuery+" FROM enxB2B__ProvisioningPlan__c WHERE enxB2B__TECH_External_Id__c IN (" + Util.setToIdString(provisioningPlanIds) + ")", null, function(err, res) {
+        conn.query("SELECT Id, "+ this.prvPlanQuery+" FROM enxB2B__ProvisioningPlan__c WHERE enxB2B__TECH_External_Id__c IN (" + Util.setToIdString(provisioningPlanIds) + ")", null, (err, res) => {
             if (err) reject('error retrieving provisioning plans: ' + err);
             if (res.records.length < 200){
                 Util.log("--- provisioning plans: " + res.records.length);
@@ -1174,13 +1176,13 @@ public static async bulkQueryProvisioningPlans(conn: Connection, provisioningPla
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving provisioning plans' + err);  
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('provisioning plans export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -1209,7 +1211,7 @@ public static async  queryProductCharges(conn: Connection, productList: Set<Stri
          return new Promise<String[]>((resolve: Function, reject: Function) => {
          conn.query(query, 
          null,
-         function (err, res) {
+         (err, res) => {
             if (err) reject('Failed to retrieve charges error: ' + err);
             Util.log('fin charges');
             if (res.records.length < 200){
@@ -1235,13 +1237,13 @@ public static async  bulkQueryProductCharges(conn: Connection,  query: string): 
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving product charges' + err);  
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('product reference charges export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -1266,7 +1268,7 @@ public static async queryReferenceCharges(conn: Connection, chargeList: Set<Stri
     return new Promise<String[]>((resolve: Function, reject: Function) => {
     conn.query(query, 
     null,
-    function (err, res) {
+    (err, res) => {
        if (err) reject('Failed to retrieve reference charges: ' + err);
        Util.log('fin reference charges');
        if (res.records.length < 200){
@@ -1292,13 +1294,13 @@ Util.showSpinner('--- bulk exporting reference charges');
 return new  Promise<String[]>((resolve: Function, reject: Function) => {
    let records = []; 
    conn.bulk.query(query)
-       .on('record', function(rec) { 
+       .on('record', (rec) => { 
            records.push(rec);
        })
-       .on('error', function(err) { 
+       .on('error', (err) => { 
            reject('error retrieving reference charges' + err);  
        })
-       .on('end', function(info) { 
+       .on('end', (info) => { 
            Util.hideSpinner('reference charges export done. Retrieved: '+ records.length);
            Util.sanitizeResult(records);
            resolve(records); 
@@ -1321,7 +1323,7 @@ public static async queryProductChargesIds(conn: Connection, productList: Set<St
 
     conn.query("SELECT enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c FROM Product2 WHERE RecordType.Name = 'Charge' AND enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Sorting_Order__c", 
     null,
-    function (err, res) {
+    (err, res) => {
        if (err) reject('Failed to retrieve charges ids. Error: ' + err);
        if (res.records.length < 200){
         Util.log("--- product charges ids: " + res.records.length);
@@ -1346,13 +1348,13 @@ public static async bulkQueryProductChargesIds(conn: Connection, productList: Se
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving product charges ids' + err);  
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('product charges ids export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -1375,7 +1377,7 @@ public static async queryProductAttributeValues(conn: Connection, productList: S
 
            conn.query("SELECT Id, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery +" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = false AND enxCPQ__Exclusive_for_Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Order__c", 
            null,
-           function (err, res) {
+           (err, res) => {
             if (err) reject('Failed to retrieve product attribute values. Error: ' + err);
             if (res.records.length < 200){
                 Util.log("--- product attribute values: " + res.records.length);
@@ -1401,13 +1403,13 @@ public static async bulkQueryProductAttributeValues(conn: Connection, productLis
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving product attribute values' + err);  
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('product attribute values export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -1430,7 +1432,7 @@ public static async queryAttributeDefaultValues(conn: Connection, productList: S
 
         conn.query("SELECT Id, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, "+ this.attrDefaultValuesQuery +" FROM enxCPQ__AttributeDefaultValue__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__TECH_External_Id__c", 
         null,
-        function (err, res) {
+        (err, res) => {
             if (err) reject('Failed to retrieve attribute default values. Error: ' + err);
             if (res.records.length < 200){
                 Util.log("--- attribute default values: " + res.records.length);
@@ -1456,13 +1458,13 @@ public static async bulkQueryAttributeDefaultValues(conn: Connection, productLis
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving attribute default values' + err);  
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('attribute default values export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -1485,7 +1487,7 @@ public static async queryProductRelationships(conn: Connection, productList: Set
 
         conn.query("SELECT Id, enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Secondary_Product__r.enxCPQ__TECH_External_Id__c, "+ this.productRelationshipsQuery+" FROM enxCPQ__ProductRelationship__c WHERE enxCPQ__Primary_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND enxCPQ__Secondary_Product__c != null", 
         null,
-        function (err, res) {
+        (err, res) => {
             if (err) reject('Failed to retrieve product relationships. Error: ' + err);
             if (res.records.length < 200){
                 Util.log("--- product relationships: " + res.records.length);
@@ -1511,13 +1513,13 @@ public static async bulkQueryProductRelationships(conn: Connection, productList:
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving product relationships ' + err);  
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('product relationships export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -1542,7 +1544,7 @@ public static async querySecondaryProducts(conn: Connection, productList: Set<St
 
         conn.query("SELECT enxCPQ__Secondary_Product__r.Name FROM enxCPQ__ProductRelationship__c WHERE enxCPQ__Primary_Product__r.Name IN (" + Util.setToIdString(productList) + ") AND enxCPQ__Secondary_Product__c != null", 
         null,
-        function (err, res) {
+        (err, res) => {
             if (err) reject('Failed to retrieve secondary products . Error: ' + err);
             if (res.records.length < 200){
                 Util.log("--- secondary products : " + res.records.length);
@@ -1568,13 +1570,13 @@ public static async bulkQuerySecondaryProducts(conn: Connection, productList: Se
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving secondary products  ' + err);  
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('secondary products  export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -1597,7 +1599,7 @@ public static async queryAttributeValueDependencies(conn: Connection, productLis
 
         conn.query("SELECT Id, enxCPQ__Dependent_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Dependent_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c,  enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Product__r.enxCPQ__TECH_External_Id__c, "+ this.attrValueDependecyQuery +" FROM enxCPQ__AttributeValueDependency__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__TECH_External_Id__c", 
         null,
-        function (err, res) {
+        (err, res) => {
             if (err) reject('Failed to retrieve attribute value dependency. Error: ' + err);
             if (res.records.length < 200){
                 Util.log("--- attribute value dependency: " + res.records.length);
@@ -1623,13 +1625,13 @@ public static async bulkQueryAttributeValueDependencies(conn: Connection, produc
     return new  Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving attribute value dependency ' + err);  
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('attribute value dependency export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -1651,7 +1653,7 @@ public static async queryAttributeRules(conn: Connection, productList: Set<Strin
 
             conn.query("SELECT Id, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.Name, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, "+ this.attrRulesQuery +" FROM enxCPQ__AttributeRule__c WHERE enxCPQ__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxCPQ__Order__c", 
             null,
-            function (err, res) {
+            (err, res) => {
                 if (err) reject('Failed to retrieve attribute rules. Error: ' + err);
                 if (res.records.length < 200){
                     Util.log("--- attribute rules: " + res.records.length);
@@ -1677,13 +1679,13 @@ public static async bulkQueryAttributeRules(conn: Connection, productList: Set<S
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving attribute rules' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('attribute rules export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -1706,7 +1708,7 @@ public static async queryProvisioningPlanAssigns(conn: Connection, productList: 
 
             conn.query("SELECT Id, enxB2B__Product__r.enxCPQ__TECH_External_Id__c, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, "+ this.prvPlanAssignmentQuery +" FROM enxB2B__ProvisioningPlanAssignment__c WHERE enxB2B__Product__r.Name IN (" + Util.setToIdString(productList) + ") ORDER BY enxB2B__Order__c", 
             null,
-            function (err, res) {
+            (err, res) => {
                 if (err) reject('Failed to retrieve provisioning plan assignments Error: ' + err);
                 if (res.records.length < 200){
                     Util.log("--- provisioning plan assignments: " + res.records.length);
@@ -1732,13 +1734,13 @@ public static async bulkQueryProvisioningPlanAssigns(conn: Connection, productLi
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving provisioning plan assignments' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('provisioning plan assignments export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -1764,7 +1766,7 @@ public static async queryCategories(conn: Connection, categoryIds: Set<String>):
 
             conn.query("SELECT Id, enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c, " + this.categoryQuery +" FROM enxCPQ__Category__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(categoryIds) + ") ", 
             null,
-            function (err, res) {
+            (err, res) => {
                 if (err) reject('Failed to retrieve categories. Error: ' + err);
                 if (res.records.length < 200){
                     Util.log("--- categories: " + res.records.length);
@@ -1790,13 +1792,13 @@ public static async bulkQueryCategories(conn: Connection, categoryIds: Set<Strin
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving categories' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('categories export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -1822,7 +1824,7 @@ public static async queryAttributeValues(conn: Connection, attributeIds: Set<Str
 
             conn.query("SELECT Id, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery+" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c", 
             null,
-            function (err, res) {
+            (err, res) => {
                 if (err) reject('Failed to retrieve product attribute values: ' + attributeIds + '. Error: ' + err);
                 if (res.records.length < 200){
                     Util.log("--- product attribute values: " + res.records.length);
@@ -1847,13 +1849,13 @@ public static async bulkQueryAttributeValues(conn: Connection, attributeIds: Set
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving product attribute values' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('product attribute values export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -1876,7 +1878,7 @@ public static async queryAttributeSets(conn: Connection, attributeSetIds: Set<St
             
             conn.query("SELECT Id, "+ this.attrSetQuery+" FROM enxCPQ__AttributeSet__c WHERE enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeSetIds) + ") ", 
             null,
-            function (err, res) {
+            (err, res) => {
                 if (err) reject('Failed to retrieve attribute sets. Error: ' + err);
                 if (res.records.length < 200){
                     Util.log("--- attributes sets: " + res.records.length);
@@ -1903,13 +1905,13 @@ public static async bulkQueryAttributeSets(conn: Connection, attributeSetIds: Se
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving attributes sets' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('attributes sets export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -1934,7 +1936,7 @@ public static async queryProvisioningPlanAssignmentIds (conn: Connection, source
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Id, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c FROM enxB2B__ProvisioningPlanAssignment__c WHERE enxB2B__Product__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(sourceProductIds) + ")",
         null,
-        function(err, res) {
+        (err, res) => {
             if (err) reject('error retrieving provisioning plan assigment ids: ' + err);
             if (res.records.length < 200){
                 Util.log("--- Provisioning Plan Assignment Ids: " + res.records.length);
@@ -1959,13 +1961,13 @@ public static async bulkQueryProvisioningPlanAssignmentIds (conn: Connection, so
     return new Promise<String[]>((resolve: Function, reject: Function) => {
     let records = []; 
     conn.bulk.query(query)
-        .on('record', function(rec) { 
+        .on('record', (rec) => { 
             records.push(rec);
         })
-        .on('error', function(err) { 
+        .on('error', (err) => { 
             reject(err); 
         })
-        .on('end', function(info) { 
+        .on('end', (info) => { 
             Util.hideSpinner('Provisioning Plan Assignment Ids export done. Retrieved: '+ records.length);
             Util.sanitizeResult(records);
             resolve(records); 
@@ -1989,7 +1991,7 @@ public static async queryProvisioningTaskAssignmentIds (conn: Connection, prvPla
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Id FROM enxB2B__ProvisioningTaskAssignment__c WHERE enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c IN  (" + Util.setToIdString(prvPlanIds) + ")",
         null,
-        function(err, res) {
+        (err, res) => {
             if (err) reject('error retrieving provisioning task assigment ids: ' + err);
             if (res.records.length < 200){
                 Util.log("--- provisioning task assigment ids: " + res.records.length);
@@ -2017,13 +2019,13 @@ public static async bulkQueryProvisioningTaskAssignmentIds (conn: Connection, pr
     return new Promise<String[]>((resolve: Function, reject: Function) => {
     let records = []; 
     conn.bulk.query(query)
-        .on('record', function(rec) { 
+        .on('record', (rec) => { 
             records.push(rec);
         })
-        .on('error', function(err) { 
+        .on('error', (err) => { 
             reject(err); 
         })
-        .on('end', function(info) { 
+        .on('end', (info) => { 
             Util.hideSpinner('provisioning task assigment ids export done. Retrieved: '+ records.length);
             Util.sanitizeResult(records);
             resolve(records); 
@@ -2045,7 +2047,7 @@ public static async queryProvisioningTaskAssignments (conn: Connection, prvPlanI
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Id, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__Provisioning_Task__r.enxB2B__TECH_External_Id__c, "+ this.prvTaskAssignmentQuery +" FROM enxB2B__ProvisioningTaskAssignment__c  WHERE enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c IN  (" + Util.setToIdString(prvPlanIds) + ")",
         null,
-        function(err, res) {
+        (err, res) => {
             if (err) reject('error retrieving provisioning task assignments: ' + err);
             if (res.records.length < 200){
                 Util.log("--- provisioning task assignments: " + res.records.length);
@@ -2071,13 +2073,13 @@ public static async bulkQueryProvisioningTaskAssignments (conn: Connection, prvP
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
-                .on('record', function(rec) { 
+                .on('record', (rec) => { 
                     records.push(rec);
                 })
-                .on('error', function(err) { 
+                .on('error', (err) => { 
                     reject('error retrieving provisioning task assignments' + err);  
                 })
-                .on('end', function(info) { 
+                .on('end', (info) => { 
                     Util.hideSpinner('Provisioning task assignments export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
@@ -2090,7 +2092,7 @@ public static async queryPriceRules (conn: Connection): Promise<String[]> {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Name, RecordType.Name, enxCPQ__Account__r.enxCPQ__TECH_External_Id__c, enxCPQ__Active__c, enxCPQ__Conditions_Logic__c, enxCPQ__Order__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c, enxCPQ__Tier_Field__c FROM enxCPQ__PriceRule__c", 
         null,
-        function(err, res) {
+        (err, res) => {
             if (err) reject('error retrieving price rules: ' + err);
 
             resolve(res.records);
@@ -2102,7 +2104,7 @@ public static async queryPriceRuleConditions (conn: Connection): Promise<String[
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Name, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Field_Name__c, enxCPQ__Operator__c, enxCPQ__Order__c, enxCPQ__Price_Rule__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c, enxCPQ__Value__c FROM enxCPQ__PriceRuleCondition__c", 
         null,
-        function(err, res) {
+        (err, res) => {
             if (err) reject('error retrieving price rule conditions: ' + err);
             
             resolve(res.records);
@@ -2115,7 +2117,7 @@ public static async queryPriceRuleActions (conn: Connection): Promise<String[]> 
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query("SELECT Name, enxCPQ__Action_Type__c, enxCPQ__Charge__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Field_Name__c, enxCPQ__Order__c, enxCPQ__Price_Rule__r.enxCPQ__TECH_External_Id__c, enxCPQ__Target_Field_Name__c, enxCPQ__Target_Value__c, enxCPQ__TECH_External_Id__c, enxCPQ__Tier_Value_From__c, enxCPQ__Tier_Value_To__c FROM enxCPQ__PriceRuleAction__c", 
         null,
-        function(err, res) {
+        (err, res) => {
             if (err) reject('error retrieving price rule actions: ' + err);
             
             resolve(res.records);
@@ -2149,7 +2151,7 @@ public static async queryChargeElementStdPricebookEntries (conn: Connection, pro
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query(query, 
         null,
-        function(err, res) {
+        (err, res) => {
             if (err) reject('error retrieving Charge Elements standard PricebookEntry: ' + err);
             if (res.records.length < 200){
                 Util.log("--- Charge Elements standard PricebookEntry: " + res.records.length);
@@ -2174,13 +2176,13 @@ public static async bulkQueryChargeElementStdPricebookEntries (conn: Connection,
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving charge element standard pricebook entries ' + err); 
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('charge element standard pricebook entries export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -2214,7 +2216,7 @@ public static async queryChargeElementPricebookEntries (conn: Connection, produc
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query(query, 
         null,
-        function(err, res) {
+        (err, res) => {
             if (err) reject('error retrieving Charge Element Pricebook Entries: ' + err);
             if (res.records.length < 200){
                 Util.log("--- Charge Elements PricebookEntry: " + res.records.length);
@@ -2239,13 +2241,13 @@ public static async bulkQueryChargeElementPricebookEntries (conn: Connection, qu
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving charge element pricebook entries ' + err); 
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('Charge Element Pricebook Entries export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records);           
@@ -2273,7 +2275,7 @@ public static async queryChargeElements (conn: Connection, productList: Set<Stri
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             conn.query("SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Element'",
             null,
-            function(err, res) {
+            (err, res) => {
                 if (err) reject('error retrieving charge elements: ' + err);
                 Util.hideSpinner('charge elements export done')
                 if (res.records.length < 200){
@@ -2299,13 +2301,13 @@ public static async bulkQueryChargeElements (conn: Connection, productList: Set<
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving charge elements: ' + err); 
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('charge elements export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -2333,7 +2335,7 @@ public static async queryChargeTiers (conn: Connection,  productList: Set<String
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             conn.query("SELECT Id, enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.Name, "+this.productQuery+" FROM Product2 WHERE (enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(productList) + ") or enxCPQ__Root_Product__r.Name IN (" + Util.setToIdString(chargeList) + ")) AND RecordType.Name = 'Charge Tier'",
             null,
-            function(err, res) {
+            (err, res) => {
                 if (err) reject('error retrieving charge Tiers: ' + err);
                 if (res.records.length < 200){
                     Util.log("--- charge Tiers: " + res.records.length);
@@ -2359,13 +2361,13 @@ public static async bulkQueryChargeTiers (conn: Connection,  productList: Set<St
         return new Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving charge Tiers: ' + err); 
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('charge Tiers export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 
@@ -2380,13 +2382,13 @@ public static async bulkQueryChargeElementPricebookEntryIds (conn: Connection, p
         return new Promise<string>((resolve: Function, reject: Function) => {
         let records = []; 
         conn.bulk.query(query)
-            .on('record', function(rec) { 
+            .on('record', (rec) => { 
                 records.push(rec);
             })
-            .on('error', function(err) { 
+            .on('error', (err) => { 
                 reject('error retrieving charge element pricebook entries ids' + err); 
             })
-            .on('end', function(info) { 
+            .on('end', (info) => { 
                 Util.hideSpinner('charge element pricebook entries ids export done. Retrieved: '+ records.length);
                 Util.sanitizeResult(records);
                 resolve(records); 

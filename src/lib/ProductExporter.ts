@@ -69,11 +69,11 @@ export class ProductExporter {
         }
         Util.setDir(this.dir);
         await Queries.retrieveQueryJson(this.dir);
-        await this.retrievePriceBooks(conn, this.productList);
-        Util.createAllDirs(this.isB2B, this.dir);
         if(this.isRelated){
             await this.retrieveSecondaryProducts(conn, this.productList);
         }
+        await this.retrievePriceBooks(conn, this.productList);
+        Util.createAllDirs(this.isB2B, this.dir);
         await this.retrieveProduct(conn, this.productList);
         await this.retrieveCharges(conn, this.productList);
     

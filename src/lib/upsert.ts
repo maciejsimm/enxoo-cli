@@ -135,8 +135,8 @@ export class Upsert {
                 }
                 
                 let successCount = rets
-                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
-                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+                                .map((elem:RecordResult):number =>elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
 
                 await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
                 rets.forEach(async (ret, i) => {
@@ -165,8 +165,8 @@ export class Upsert {
                 }
                 
                 let successCount = rets
-                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
-                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+                                .map((elem:RecordResult):number =>elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
 
                 await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
                 rets.forEach(async (ret, i) => {
@@ -215,8 +215,8 @@ export class Upsert {
                 }
                 
                 let successCount = rets
-                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
-                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+                                .map((elem:RecordResult):number =>elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
 
                 await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
                 rets.forEach(async (ret, i) => {
@@ -244,8 +244,8 @@ export class Upsert {
                 }
                 
                 let successCount = rets
-                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
-                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+                                .map((elem:RecordResult):number =>elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
 
                 await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
                 rets.forEach(async (ret, i) => {
@@ -290,8 +290,8 @@ export class Upsert {
                 }
                 
                 let successCount = rets
-                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
-                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+                                .map((elem:RecordResult):number =>elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
 
                 await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
                 rets.forEach(async (ret, i) => {
@@ -319,8 +319,8 @@ export class Upsert {
                 }
                 
                 let successCount = rets
-                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
-                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+                                .map((elem:RecordResult):number =>elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
 
                 await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
                 rets.forEach(async (ret, i) => {
@@ -360,8 +360,8 @@ export class Upsert {
                 }
                 
                 let successCount = rets
-                                .map((elem:RecordResult):number => { return (elem.success ? 1 : 0) })
-                                .reduce((prevVal:number, nextVal:number) => { return (prevVal + nextVal) });
+                                .map((elem:RecordResult):number => elem.success ? 1 : 0)
+                                .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
 
                 await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
                 rets.forEach(async (ret, i) => {

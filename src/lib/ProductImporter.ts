@@ -365,7 +365,6 @@ export class ProductImporter {
         return result;
     }
     
-    
     private async extractProduct(conn: Connection) {
         let productFileNameList= new Set<String>();
         // We need to query ID's of records in target org in order to delete or match ID's
@@ -586,16 +585,7 @@ export class ProductImporter {
         
         for(let pbe of pbes){
             for(let pbeEntryTarget of allPricebookEntriesTarget){
-                let productMatch = pbe['Product2']['enxCPQ__TECH_External_Id__c'] === pbeEntryTarget['Product2']['enxCPQ__TECH_External_Id__c'];
-                let pricebookMatch = isStandard
-                ? true
-                : pbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === pbeEntryTarget['Pricebook2']['enxCPQ__TECH_External_Id__c'];
-                let currencyMatch = pbe['CurrencyIsoCode'] === pbeEntryTarget['CurrencyIsoCode'];
-                if(productMatch && pricebookMatch && currencyMatch){
-                    pbe['Id'] = pbeEntryTarget['Id'];
-                    delete pbe['Product2Id'];
-                    delete pbe['Pricebook2Id'];
-                    pbe['toUpdate'] = true;
+                if(this.isPbeMatch(pbe, pbeEntryTarget, isStandard)){
                     pbesToUpdate.push(pbe);
                     break;
                 }
@@ -611,18 +601,30 @@ export class ProductImporter {
         }
     }
 
+    private isPbeMatch(pbe: Object, pbeEntryTarget:Object, isStandard: boolean){
+        let productMatch = pbe['Product2']['enxCPQ__TECH_External_Id__c'] === pbeEntryTarget['Product2']['enxCPQ__TECH_External_Id__c'];
+        let pricebookMatch = isStandard
+        ? true
+        : pbe['Pricebook2']['enxCPQ__TECH_External_Id__c'] === pbeEntryTarget['Pricebook2']['enxCPQ__TECH_External_Id__c'];
+        let currencyMatch = pbe['CurrencyIsoCode'] === pbeEntryTarget['CurrencyIsoCode'];
+
+        if(productMatch && pricebookMatch && currencyMatch){
+            pbe['Id'] = pbeEntryTarget['Id'];
+            delete pbe['Product2Id'];
+            delete pbe['Pricebook2Id'];
+            pbe['toUpdate'] = true;
+            return true;
+        }
+        return false;
+    }
+
     private retrievePbesToInsert(pbes:Array<Object>){
-        let pbesToInsert = new Array<Object>();
-
-        pbesToInsert = pbes.filter(pbe => !pbe['toUpdate']);
-
-        return pbesToInsert;
+        return pbes.filter(pbe => !pbe['toUpdate']);
     }
 
     private retrievePbesToDeleteIds(allPricebookEntriesTarget:Array<Object>, targetChargesIds:Array<String>){
         let pbesToDeleteIds = new Array<string>();
        
-
         for(let pbe of allPricebookEntriesTarget){
             for(let id of targetChargesIds){
                 if(pbe['Product2']['enxCPQ__TECH_External_Id__c']===id && !pbe['toUpdate'] ){
