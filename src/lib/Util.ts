@@ -391,7 +391,7 @@ export class Util {
         });
     }
 
-    public static async  retrieveRelatedProducts(productFileNameList: Set<String>){
+    public static async  retrieveRelatedProductsNames(productFileNameList: Set<String>){
         let secondaryProductsTechIds=[];
         for (let prodname of productFileNameList) {
             const prod = await this.readProduct(prodname);
@@ -407,16 +407,20 @@ export class Util {
             allProducts.filter(product => product['root']['enxCPQ__TECH_External_Id__c']===secondaryProductsTechId)
                        .forEach(product => secondaryProductsNames.add(product['root']['Name']));
         }
+        
+        return secondaryProductsNames;
+    }
+
+    public static async  retrieveRelatedProductsFileNames(productFileNameList: Set<String>){
+        let secondaryProductsNames = await this.retrieveRelatedProductsNames(productFileNameList);
         let secondaryProductsFileNames = new Set<String>();
         
         for (let productName of secondaryProductsNames){
             let prdNames = await Util.matchFileNames(productName);
             secondaryProductsFileNames = new Set([...secondaryProductsFileNames, ...prdNames]);
         }
-
         return secondaryProductsFileNames;
-
-    }  
+    }
 
     public static extractIdsOfPbeToUpdate(pricebookEntriesTarget: Array<any>){
         let idsOfPbeToUpdate = pricebookEntriesTarget.map(pbe => pbe.Product2.enxCPQ__TECH_External_Id__c)

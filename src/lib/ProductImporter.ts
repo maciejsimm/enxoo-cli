@@ -364,6 +364,14 @@ export class ProductImporter {
         }
         return result;
     }
+
+    private async addRelatedProducts(productFileNameList: Set<String>) {
+        let relatedProductsNames = await Util.retrieveRelatedProductsNames(productFileNameList);
+        this.productList = new Set([...this.productList, ...relatedProductsNames]);
+        
+        let relatedProductsFileNames = await Util.retrieveRelatedProductsFileNames(productFileNameList);
+        return new Set([...productFileNameList, ...relatedProductsFileNames]);
+    }
     
     private async extractProduct(conn: Connection) {
         let productFileNameList= new Set<String>();
@@ -376,8 +384,9 @@ export class ProductImporter {
             productFileNameList = new Set([...productFileNameList, ...prdNames]);
         }
 
-        let relatedProductsNames = await Util.retrieveRelatedProducts(productFileNameList)
-        productFileNameList = new Set([...productFileNameList, ...relatedProductsNames]);
+        if(this.productList[0] !== '*ALL'){
+            productFileNameList = await this.addRelatedProducts(productFileNameList);
+        }
         // Collect all Ids' of products that will be inserted
         for (let prodname of productFileNameList) {
             const prod = await Util.readProduct(prodname);
