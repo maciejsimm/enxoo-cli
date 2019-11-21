@@ -138,7 +138,7 @@ export class Util {
                 if (prop.indexOf('__r') && arr[i][prop] == null && (arr.length > 80 || sObjectName === 'enxCPQ__AttributeValue__c')){
                      arr[i][prop] =""; 
                 } 
-                else if (prop.indexOf('__r') && arr[i][prop] == null) delete arr[i][prop];       
+                else if (prop.indexOf('__r') && arr[i][prop] == null && prop!== 'enxCPQ__TECH_External_Id__c') delete arr[i][prop];       
                 if (typeof(arr[i][prop]) === 'object') {
                     for (let innerProp in arr[i][prop]) {
                         if (innerProp === 'attributes') delete arr[i][prop][innerProp];
@@ -161,24 +161,29 @@ export class Util {
         });
     }
 
-    public static async readAllFiles(directoryName: String) {
+    public static async readAllFiles(directoryName: String, currencies?: Set<String>) {
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             let allFilePromiseArray = new Array<any>();
             fs.readdir('./' + this.dir + directoryName + '/', async (err, filenames) => {
                 if (err) {
                     throw err;
                 }
-                   filenames.filter(fileName => fileName.includes('.json')).forEach(async fileName => {
-                    const fileReadPromise = this.readFile(directoryName, fileName);
-                    allFilePromiseArray.push(fileReadPromise);
-                });
+                if(currencies){
+                    allFilePromiseArray= filenames.filter(fileName => fileName.includes('.json'))
+                                                  .filter(fileName => currencies.has(fileName.replace('.json','')))
+                                                  .map(async fileName =>  this.readFile(directoryName, fileName));
+                     
+                }else{
+                    allFilePromiseArray= filenames.filter(fileName => fileName.includes('.json'))
+                                                  .map(async fileName =>  this.readFile(directoryName, fileName));
+                }
                 await Promise.all(allFilePromiseArray).then((allFileContents) => {
                     resolve(allFileContents);
                 })
-                
-            });            
-        });
+            })
+        });            
     }
+    
 
     public static async readDirNames(directoryName: String){
         return new Promise<String[]>((resolve: Function, reject: Function) => {
@@ -274,7 +279,7 @@ export class Util {
                 }else{
                     props[separatedProp[0]] = null;
                 }
-                delete props[prop]
+                delete props[prop];
             }}
         }
     }
@@ -386,7 +391,7 @@ export class Util {
         });
     }
 
-    public static async  retrieveRelatedProducts(productFileNameList: Set<String>){
+    public static async  retrieveRelatedProductsNames(productFileNameList: Set<String>){
         let secondaryProductsTechIds=[];
         for (let prodname of productFileNameList) {
             const prod = await this.readProduct(prodname);
@@ -402,15 +407,25 @@ export class Util {
             allProducts.filter(product => product['root']['enxCPQ__TECH_External_Id__c']===secondaryProductsTechId)
                        .forEach(product => secondaryProductsNames.add(product['root']['Name']));
         }
+        
+        return secondaryProductsNames;
+    }
+
+    public static async  retrieveRelatedProductsFileNames(productFileNameList: Set<String>){
+        let secondaryProductsNames = await this.retrieveRelatedProductsNames(productFileNameList);
         let secondaryProductsFileNames = new Set<String>();
         
         for (let productName of secondaryProductsNames){
             let prdNames = await Util.matchFileNames(productName);
             secondaryProductsFileNames = new Set([...secondaryProductsFileNames, ...prdNames]);
         }
-
         return secondaryProductsFileNames;
-
+    }
+    
+    public static extractIdsOfPbeToUpdate(pricebookEntriesTarget: Array<any>){
+        let idsOfPbeToUpdate = pricebookEntriesTarget.map(pbe => pbe.Product2.enxCPQ__TECH_External_Id__c)
+        let result = new Set<String>([...idsOfPbeToUpdate])
+        return result;
     }
 
     public static getSetsDifference(set1: Set<any>, set2: Set<any>): Set<any>{
