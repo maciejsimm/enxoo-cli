@@ -1497,7 +1497,7 @@ public static async queryBundleElementOptions(conn: Connection, bundleElementsTe
 }
 
 public static async queryBundleElementOptionsProductNames(conn: Connection, bundlesNames: Set<String>): Promise<String[]> {
-    const queriedObjectsLabel: string = 'bundle element options product names';
+    const queriedObjectsLabel: string = 'bundle element options with product names';
     Util.log('--- exporting ' + queriedObjectsLabel);
 
     if(bundlesNames.size > 90){
