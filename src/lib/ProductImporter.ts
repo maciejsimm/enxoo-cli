@@ -317,8 +317,6 @@ export class ProductImporter {
         }
     }
     
-    //MAYBE REFACTOR THIS METHOD???
-    
     private extractProductObjects(objectsArray:any, objectIds:Set<String>) {
         let result:Array<any> = new Array<any>();
         let objectIdsArr = Array.from(objectIds.values());
