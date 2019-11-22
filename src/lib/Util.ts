@@ -462,7 +462,7 @@ export class Util {
         return result;
     }
 
-    public static getSetsDifference(set1: Set<any>, set2: Set<any>): Set<any>{
+    public static getSetsDifference(set1: Set<string>, set2: Set<string>): Set<string>{
         return new Set([...set1].filter(element => (
            !set2.has(element) 
         )));
