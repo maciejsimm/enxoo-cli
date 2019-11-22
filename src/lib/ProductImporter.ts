@@ -144,7 +144,6 @@ export class ProductImporter {
           await Upsert.upsertObject(conn, 'Product2', this.chargeElements);
           await Upsert.upsertObject(conn, 'Product2', this.chargeTiers);
           await Upsert.upsertObject(conn, 'enxCPQ__BundleElement__c', this.bundleElements);
-          debugger;
           await Upsert.upsertObject(conn, 'enxCPQ__BundleElementOption__c', this.bundleElementOptions);
 
           this.targetProductIds = await this.retrieveTargerProductIds(conn);
@@ -377,12 +376,25 @@ export class ProductImporter {
         return result;
     }
 
-    private async addRelatedProducts(productFileNameList: Set<String>) {
+    private async addRelatedProductsNames(productFileNameList: Set<String>) {
         let relatedProductsNames = await Util.retrieveRelatedProductsNames(productFileNameList);
         this.productList = new Set([...this.productList, ...relatedProductsNames]);
         
         let relatedProductsFileNames = await Util.retrieveRelatedProductsFileNames(productFileNameList);
         return new Set([...productFileNameList, ...relatedProductsFileNames]);
+    }
+
+    private async addBundleElementOptionsProductNames(productFileNames: Set<String>){
+        const bundleElementOptionsProductNames = await Util.retrieveBundleElementOptionProductsNames(productFileNames);
+        this.productList = new Set([...this.productList, ...bundleElementOptionsProductNames]);
+        
+        let newProductFileNames = new Set<String>();
+        for (let productName of bundleElementOptionsProductNames){
+            const fileNames = await Util.matchFileNames(productName);
+            newProductFileNames = new Set([...newProductFileNames, ...fileNames]);
+        }
+
+        return new Set([...productFileNames, ...newProductFileNames]);
     }
     
     private async extractProduct(conn: Connection) {
@@ -397,8 +409,10 @@ export class ProductImporter {
         }
 
         if(this.productList[0] !== '*ALL'){
-            productFileNameList = await this.addRelatedProducts(productFileNameList);
+            productFileNameList = await this.addRelatedProductsNames(productFileNameList);
+            productFileNameList = await this.addBundleElementOptionsProductNames(productFileNameList);
         }
+
         // Collect all Ids' of products that will be inserted
         for (let prodname of productFileNameList) {
             const prod = await Util.readProduct(prodname);
@@ -568,7 +582,10 @@ export class ProductImporter {
         
         const bundleElementsForImport = [...this.extractProductObjects(allBundleElements, this.bundleElementsIds)];
         this.bundleElements = bundleElementsForImport.map(element => element['root']);
-        this.bundleElementOptions = bundleElementsForImport.map(element => element['bundleElementOptions']);
+        this.bundleElementOptions = bundleElementsForImport.map(element => [...element['bundleElementOptions']]);
+        this.bundleElementOptions = bundleElementsForImport.reduce((resultArray, bundleElement) => [
+            ...resultArray, ...bundleElement['bundleElementOptions']
+        ], []);
         
         this.categories.push(...this.extractProductObjects(allCategories, this.categoryIds));
         
