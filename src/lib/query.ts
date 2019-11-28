@@ -3,6 +3,8 @@ import { Util } from './Util';
 import {Query} from  '../entity/queryEntity';
 export class Queries {
     private static productQuery: string;
+    private static bundleElementQuery: string;
+    private static bundleElementOptionQuery: string;
     private static pricebookQuery: string;
     private static pbeQuery: string;
     private static productAttrQuery: string;
@@ -33,6 +35,8 @@ export class Queries {
     public static async retrieveQueryJson(queryDir: string){
        let queryJson = await Util.readQueryJson(queryDir);
        this.productQuery= queryJson['productFieldNames'];
+       this.bundleElementQuery = queryJson['bundleElementFieldNames'];
+       this.bundleElementOptionQuery = queryJson['bundleElementOptionFieldNames'];
        this.pricebookQuery= queryJson['pricebookFieldNames'];
        this.pbeQuery = queryJson['pbeFieldNames'];
        this.productAttrQuery= queryJson['productAttrFieldNames'];
@@ -1360,6 +1364,199 @@ public static async bulkQueryProductChargesIds(conn: Connection, productList: Se
                 resolve(records); 
             });
     })
+}
+
+public static async queryBundleElementsIds(conn: Connection, bundleList: Set<String>): Promise<String[]> {
+    const queriedObjectsLabel: string = 'bundle elements ids';
+    Util.log('--- exporting ' + queriedObjectsLabel);
+
+    if(bundleList.size > 90){
+        let paramsObject: Query = {
+            "queryBegining": "SELECT enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c " 
+                + "FROM enxCPQ__BundleElement__c WHERE enxCPQ__Bundle__r.Name IN (",
+            "queryConditions": ")",
+            "objectsList": bundleList,
+            "sobjectName": queriedObjectsLabel
+        }
+        return await Util.createQueryPromiseArray(paramsObject, conn);
+    }
+
+    const query: string = "SELECT enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c FROM enxCPQ__BundleElement__c " 
+        + "WHERE enxCPQ__Bundle__r.Name IN (" + Util.setToIdString(bundleList) + ")";
+
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+        conn.query(
+            query, 
+            null,
+            function (err, res) {
+                if (err){
+                    reject('Failed to retrieve ' + queriedObjectsLabel + '. Error: ' + err);
+                } 
+                if (res.records.length < 200){
+                    Util.log("--- " + queriedObjectsLabel + ": " + res.records.length);
+                    resolve(res.records);
+                } else{
+                    resolve(["useBulkApi"]);
+                }
+            }
+        );
+    }).then(async result => {
+        if(result[0] === 'useBulkApi'){
+            return await this.bulkQuery(conn, query, queriedObjectsLabel);
+        } else{
+            return result;
+        }
+    });
+}
+
+public static async queryBundleElements(conn: Connection, bundleList: Set<String>): Promise<String[]> {
+    const queriedObjectsLabel: string = 'bundle elements';
+    Util.log('--- exporting ' + queriedObjectsLabel);
+
+    if(bundleList.size > 90){
+        let paramsObject: Query = {
+            "queryBegining": "SELECT enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c, " + this.bundleElementQuery 
+                + " FROM enxCPQ__BundleElement__c WHERE enxCPQ__Bundle__r.Name IN (",
+            "queryConditions": ")",
+            "objectsList": bundleList,
+            "sobjectName": queriedObjectsLabel
+        }
+        return await Util.createQueryPromiseArray(paramsObject, conn);
+    }
+
+    const query: string = "SELECT enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c, " + this.bundleElementQuery 
+        + " FROM enxCPQ__BundleElement__c WHERE enxCPQ__Bundle__r.Name IN (" + Util.setToIdString(bundleList) + ")";
+
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+        conn.query(
+            query, 
+            null,
+            function (err, res) {
+                if (err){
+                    reject('Failed to retrieve ' + queriedObjectsLabel + '. Error: ' + err);
+                } 
+                if (res.records.length < 200){
+                    Util.log("--- " + queriedObjectsLabel + ": " + res.records.length);
+                    resolve(res.records);
+                } else{
+                    resolve(["useBulkApi"]);
+                }
+            }
+        );
+    }).then(async result => {
+        if(result[0] === 'useBulkApi'){
+            return await this.bulkQuery(conn, query, queriedObjectsLabel);
+        } else{
+            return result;
+        }
+    });
+}
+
+public static async queryBundleElementOptions(conn: Connection, bundleElementsTechIds: Set<String>): Promise<String[]> {
+    const queriedObjectsLabel: string = 'bundle element options';
+    Util.log('--- exporting ' + queriedObjectsLabel);
+
+    if(bundleElementsTechIds.size > 90){
+        let paramsObject: Query = {
+            "queryBegining": "SELECT enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, " 
+                + this.bundleElementOptionQuery + " FROM enxCPQ__BundleElementOption__c WHERE enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c IN (",
+            "queryConditions": ")",
+            "objectsList": bundleElementsTechIds,
+            "sobjectName": queriedObjectsLabel
+        }
+        return await Util.createQueryPromiseArray(paramsObject, conn);
+    }
+
+    const query: string = "SELECT enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, "
+        + this.bundleElementOptionQuery + " FROM enxCPQ__BundleElementOption__c WHERE enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c IN (" 
+        + Util.setToIdString(bundleElementsTechIds) + ")";
+
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+        conn.query(
+            query, 
+            null,
+            function (err, res) {
+                if (err){
+                    reject('Failed to retrieve ' + queriedObjectsLabel + '. Error: ' + err);
+                } 
+                if (res.records.length < 200){
+                    Util.log("--- " + queriedObjectsLabel + ": " + res.records.length);
+                    resolve(res.records);
+                } else{
+                    resolve(["useBulkApi"]);
+                }
+            }
+        );
+    }).then(async result => {
+        if(result[0] === 'useBulkApi'){
+            return await this.bulkQuery(conn, query, queriedObjectsLabel);
+        } else{
+            return result;
+        }
+    });
+}
+
+public static async queryBundleElementOptionsProductNames(conn: Connection, bundlesNames: Set<String>): Promise<String[]> {
+    const queriedObjectsLabel: string = 'bundle element options with product names';
+    Util.log('--- exporting ' + queriedObjectsLabel);
+
+    if(bundlesNames.size > 90){
+        let paramsObject: Query = {
+            "queryBegining": "SELECT enxCPQ__Product__r.Name, enxCPQ__Product__r.enxCPQ__Root_Product__r.Name FROM enxCPQ__BundleElementOption__c "
+                +"WHERE enxCPQ__Bundle_Element__r.enxCPQ__Bundle__r.Name IN (",
+            "queryConditions": ")",
+            "objectsList": bundlesNames,
+            "sobjectName": queriedObjectsLabel
+        }
+        return await Util.createQueryPromiseArray(paramsObject, conn);
+    }
+
+    const query: string = "SELECT enxCPQ__Product__r.Name, enxCPQ__Product__r.enxCPQ__Root_Product__r.Name FROM enxCPQ__BundleElementOption__c " 
+        + "WHERE enxCPQ__Bundle_Element__r.enxCPQ__Bundle__r.Name IN (" + Util.setToIdString(bundlesNames) + ")";
+
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+        conn.query(
+            query, 
+            null,
+            function (err, res) {
+                if (err){
+                    reject('Failed to retrieve ' + queriedObjectsLabel + '. Error: ' + err);
+                } 
+                if (res.records.length < 200){
+                    Util.log("--- " + queriedObjectsLabel + ": " + res.records.length);
+                    resolve(res.records);
+                } else{
+                    resolve(["useBulkApi"]);
+                }
+            }
+        );
+    }).then(async result => {
+        if(result[0] === 'useBulkApi'){
+            return await this.bulkQuery(conn, query, queriedObjectsLabel);
+        } else{
+            return result;
+        }
+    });
+}
+
+public static async bulkQuery(connection: Connection, query: string, queriedObjectsLabel: string){
+    Util.showSpinner('---bulk exporting ' + queriedObjectsLabel);
+
+    return new  Promise<String[]>((resolve: Function, reject: Function) => {
+        let records = []; 
+        connection.bulk.query(query)
+            .on('record', function(rec) { 
+                records.push(rec);
+            })
+            .on('error', function(err) { 
+                reject('error retrieving ' + queriedObjectsLabel + ' ' + err);  
+            })
+            .on('end', function(info) { 
+                Util.hideSpinner(queriedObjectsLabel + ' export done. Retrieved: '+ records.length);
+                Util.sanitizeResult(records);
+                resolve(records); 
+            });
+    });
 }
 
 public static async queryProductAttributeValues(conn: Connection, productList: Set<String>): Promise<String[]> {

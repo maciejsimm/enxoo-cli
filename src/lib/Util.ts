@@ -234,7 +234,7 @@ export class Util {
 
     public static createAllDirs(isB2B: boolean, dir: string){
         const dirs = ['/products', '/categories', '/attributes', 
-                     '/attributeSets', '/priceBooks', '/charges' ];
+                     '/attributeSets', '/priceBooks', '/charges', '/bundleElements'];
         const dirsToCreate = dirs.map(singleDir => './' + dir + singleDir);
         if(isB2B){
             dirsToCreate.push('./'+dir+'/provisioningPlans', './'+dir+'/provisioningTasks');
@@ -411,6 +411,40 @@ export class Util {
         return secondaryProductsNames;
     }
 
+    public static async retrieveBundleElementOptionProductsNames(productFileNames: Set<String>){
+        let productsTechIds = await Promise.all([...productFileNames].map(async productFileName => {
+            const product = await this.readProduct(productFileName);
+            return product['root']['enxCPQ__TECH_External_Id__c'];
+        }));
+
+        const allBundleElements = await this.readAllFiles('/bundleElements');
+        
+        const optionsForMatchedElements = allBundleElements
+        .filter(bundleElement => (
+            bundleElement['root']['enxCPQ__Bundle__r'] && productsTechIds.includes(bundleElement['root']['enxCPQ__Bundle__r']['enxCPQ__TECH_External_Id__c'])
+        ))
+        .reduce((optionsList, matchedBundleElement) => (
+            [...optionsList, ...matchedBundleElement['bundleElementOptions']]
+        ), []);
+        
+        const additionalProductsTechIds = optionsForMatchedElements.map(bundleElementOption => (
+            bundleElementOption['enxCPQ__Product__r'] && bundleElementOption['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']
+        ));
+        
+        const allProducts = await this.readAllFiles('/products');
+        const additionalRootProductsNames = allProducts
+        .filter(product => {
+            const isPrdOptionRelatedToBundleElOption = product['options'].some(productOption => (
+                additionalProductsTechIds.includes(productOption['enxCPQ__TECH_External_Id__c'])
+            ));
+            const isProductRelatedToBundleElOption = additionalProductsTechIds.includes(product['root']['enxCPQ__TECH_External_Id__c']);
+            return isPrdOptionRelatedToBundleElOption || isProductRelatedToBundleElOption;
+        })
+        .map(product => product['root']['Name']);
+
+        return additionalRootProductsNames;
+    }
+
     public static async  retrieveRelatedProductsFileNames(productFileNameList: Set<String>){
         let secondaryProductsNames = await this.retrieveRelatedProductsNames(productFileNameList);
         let secondaryProductsFileNames = new Set<String>();
@@ -421,10 +455,16 @@ export class Util {
         }
         return secondaryProductsFileNames;
     }
-
+    
     public static extractIdsOfPbeToUpdate(pricebookEntriesTarget: Array<any>){
         let idsOfPbeToUpdate = pricebookEntriesTarget.map(pbe => pbe.Product2.enxCPQ__TECH_External_Id__c)
         let result = new Set<String>([...idsOfPbeToUpdate])
         return result;
-     }
+    }
+
+    public static getSetsDifference(set1: Set<string>, set2: Set<string>): Set<string>{
+        return new Set([...set1].filter(element => (
+           !set2.has(element) 
+        )));
+    }
 }

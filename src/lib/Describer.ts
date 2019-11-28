@@ -17,6 +17,8 @@ export class Describer {
         Util.createDir('./' + this.dir);
         let queryFields:any = {};
         queryFields.productFieldNames = await this.describeProduct(conn);
+        queryFields.bundleElementFieldNames = await this.describeSObject(conn, 'enxCPQ__BundleElement__c');
+        queryFields.bundleElementOptionFieldNames = await this.describeSObject(conn, 'enxCPQ__BundleElementOption__c');
         queryFields.pricebookFieldNames = await this.describePricebook(conn);
         queryFields.pbeFieldNames = await this.describePricebookEntry(conn);
         queryFields.productAttrFieldNames = await this.describeProductAttr(conn);
@@ -173,5 +175,10 @@ export class Describer {
         let prvTaskAssignmentFieldNames = this.retrieveFieldNames(prvTaskAssignmentFields);
 
         return prvTaskAssignmentFieldNames;
+    }
+
+    public async describeSObject(connection: core.Connection, sObjectApiName){
+        const fields = await Queries.describeAllFields(connection, sObjectApiName);
+        return this.retrieveFieldNames(fields);
     }
 }
