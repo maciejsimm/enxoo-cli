@@ -465,6 +465,8 @@ export class ProductExporter {
 
         let chargeList = new Set<String>();
         charges.forEach(charge => {chargeList.add(charge['Name'])});
+        let chargeFileNames = new Set<String>();
+        charges.forEach(charge => {chargeFileNames.add(charge['Name'] + charge['enxCPQ__TECH_External_Id__c'])});
 
         let chargeElements = await Queries.queryChargeElements(conn, productList, chargeList);
         this.checkTechIds(chargeElements);
@@ -477,26 +479,31 @@ export class ProductExporter {
             ...chargeElements,
             ...chargeTiers
         ]);
-      
         for(let charge of charges){
-
-            let chargeName = charge['Name'];
-            let chargeToSave: any = {};
-            let chargeElementsToSave: any = [];
-            let chargeTiersToSave: any = [];
-            chargeToSave.root= charge;
             
-            chargeElements.filter(chargeElement => chargeElement['enxCPQ__Charge_Parent__r'] 
-                                                   && chargeElement['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
-                          .forEach(chargeElementToSave=>{ chargeElementsToSave.push(chargeElementToSave)});
+            let chargeName = charge['Name'];
+            let chargeTechId = charge['enxCPQ__TECH_External_Id__c'];
+            let chargeFileName = chargeName + chargeTechId;
 
-            chargeTiers.filter(chargeTier => chargeTier['enxCPQ__Charge_Parent__r']
-                                             && chargeTier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
-                       .forEach(chargeTierToSave=>{ chargeTiersToSave.push(chargeTierToSave)});              
+            if(chargeFileNames.has(chargeFileName)){
+                let chargeToSave: any = {};
+                let chargeElementsToSave: any = [];
+                let chargeTiersToSave: any = [];
+                chargeToSave.root= charge;
+                
+                chargeElements.filter(chargeElement => chargeElement['enxCPQ__Charge_Parent__r'] 
+                                                       && chargeElement['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
+                              .forEach(chargeElementToSave=>{ chargeElementsToSave.push(chargeElementToSave)});
 
-            chargeToSave.chargeElements = chargeElementsToSave;
-            chargeToSave.chargeTier = chargeTiersToSave;
-            Util.writeFile('/charges/' + Util.sanitizeFileName(chargeName) + '.json', chargeToSave);
+                chargeTiers.filter(chargeTier => chargeTier['enxCPQ__Charge_Parent__r']
+                                                 && chargeTier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
+                           .forEach(chargeTierToSave=>{ chargeTiersToSave.push(chargeTierToSave)});              
+
+                chargeToSave.chargeElements = chargeElementsToSave;
+                chargeToSave.chargeTier = chargeTiersToSave;
+                Util.writeFile('/charges/' + Util.sanitizeFileName(chargeName) + '_' + chargeTechId  + '.json', chargeToSave);
+                chargeFileNames.delete(chargeFileName);
+            }
         }
     }
 
