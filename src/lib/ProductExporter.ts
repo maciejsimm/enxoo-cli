@@ -93,7 +93,6 @@ export class ProductExporter {
 
     private async retrieveProduct(conn: Connection, productList: Set<string>) {
         Util.showSpinner('products export');
-        
         let productDefinitions = await Queries.queryProduct(conn, productList);
         this.checkTechIds(productDefinitions);
 
@@ -102,7 +101,6 @@ export class ProductExporter {
 
         let chargesIds = await Queries.queryProductChargesIds(conn, productList);
         let bundleElementsIds = await Queries.queryBundleElementsIds(conn, productList);
-        
         let productAttributes = await Queries.queryProductAttributes(conn, productList);
         this.checkTechIds(productAttributes);
 
@@ -231,7 +229,7 @@ export class ProductExporter {
             this.productList = new Set([... this.productList, ...secondaryProductNames]);
             let sizeAfterMerge = this.productList.size;
             if(sizeAfterMerge > sizeBeforeMerge){
-                this.retrieveSecondaryProducts(conn, secondaryProductNames);
+                await this.retrieveSecondaryProducts(conn, secondaryProductNames);
             }
         }
     }
@@ -239,8 +237,8 @@ export class ProductExporter {
     private async handleRetrievingRelatedAndBundleOptionProducts(connection: Connection, productNames: Set<string>){
         const productNamesBeforeRetrieve: Set<string> = new Set([...this.productList]);
         
-        this.retrieveSecondaryProducts(connection, productNames);
-        this.retrieveBundleElementOptionsProducts(connection, new Set([
+        await this.retrieveSecondaryProducts(connection, productNames);
+        await this.retrieveBundleElementOptionsProducts(connection, new Set([
             ...Util.getSetsDifference(this.productList, productNamesBeforeRetrieve),
             ...productNames
         ]));
@@ -248,7 +246,7 @@ export class ProductExporter {
         const newProductNames = Util.getSetsDifference(this.productList, productNamesBeforeRetrieve);
 
         if(newProductNames.size !== 0){
-            this.handleRetrievingRelatedAndBundleOptionProducts(connection, newProductNames);
+           await this.handleRetrievingRelatedAndBundleOptionProducts(connection, newProductNames);
         }
     }
 
