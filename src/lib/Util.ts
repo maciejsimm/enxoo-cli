@@ -467,4 +467,10 @@ export class Util {
            !set2.has(element) 
         )));
     }
+
+    public static constructFileName(object: any){
+        let objectName = object['Name'];
+        let objectTechId = object['enxCPQ__TECH_External_Id__c'];
+        return objectName + objectTechId;
+    }
 }
