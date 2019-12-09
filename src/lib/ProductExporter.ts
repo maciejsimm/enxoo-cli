@@ -93,7 +93,6 @@ export class ProductExporter {
 
     private async retrieveProduct(conn: Connection, productList: Set<string>) {
         Util.showSpinner('products export');
-        
         let productDefinitions = await Queries.queryProduct(conn, productList);
         this.checkTechIds(productDefinitions);
 
@@ -102,7 +101,6 @@ export class ProductExporter {
 
         let chargesIds = await Queries.queryProductChargesIds(conn, productList);
         let bundleElementsIds = await Queries.queryBundleElementsIds(conn, productList);
-        
         let productAttributes = await Queries.queryProductAttributes(conn, productList);
         this.checkTechIds(productAttributes);
 
@@ -231,7 +229,7 @@ export class ProductExporter {
             this.productList = new Set([... this.productList, ...secondaryProductNames]);
             let sizeAfterMerge = this.productList.size;
             if(sizeAfterMerge > sizeBeforeMerge){
-                this.retrieveSecondaryProducts(conn, secondaryProductNames);
+                await this.retrieveSecondaryProducts(conn, secondaryProductNames);
             }
         }
     }
@@ -239,8 +237,8 @@ export class ProductExporter {
     private async handleRetrievingRelatedAndBundleOptionProducts(connection: Connection, productNames: Set<string>){
         const productNamesBeforeRetrieve: Set<string> = new Set([...this.productList]);
         
-        this.retrieveSecondaryProducts(connection, productNames);
-        this.retrieveBundleElementOptionsProducts(connection, new Set([
+        await this.retrieveSecondaryProducts(connection, productNames);
+        await this.retrieveBundleElementOptionsProducts(connection, new Set([
             ...Util.getSetsDifference(this.productList, productNamesBeforeRetrieve),
             ...productNames
         ]));
@@ -248,7 +246,7 @@ export class ProductExporter {
         const newProductNames = Util.getSetsDifference(this.productList, productNamesBeforeRetrieve);
 
         if(newProductNames.size !== 0){
-            this.handleRetrievingRelatedAndBundleOptionProducts(connection, newProductNames);
+           await this.handleRetrievingRelatedAndBundleOptionProducts(connection, newProductNames);
         }
     }
 
@@ -465,6 +463,8 @@ export class ProductExporter {
 
         let chargeList = new Set<String>();
         charges.forEach(charge => {chargeList.add(charge['Name'])});
+        let chargeFileNames = new Set<String>();
+        charges.forEach(charge => {chargeFileNames.add(Util.constructFileName(charge))});
 
         let chargeElements = await Queries.queryChargeElements(conn, productList, chargeList);
         this.checkTechIds(chargeElements);
@@ -477,27 +477,30 @@ export class ProductExporter {
             ...chargeElements,
             ...chargeTiers
         ]);
-      
         for(let charge of charges){
 
-            let chargeName = charge['Name'];
-            let chargeToSave: any = {};
-            let chargeElementsToSave: any = [];
-            let chargeTiersToSave: any = [];
-            chargeToSave.root= charge;
-            
-            chargeElements.filter(chargeElement => chargeElement['enxCPQ__Charge_Parent__r'] 
-                                                   && chargeElement['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
-                          .forEach(chargeElementToSave=>{ chargeElementsToSave.push(chargeElementToSave)});
-
-            chargeTiers.filter(chargeTier => chargeTier['enxCPQ__Charge_Parent__r']
-                                             && chargeTier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])
-                       .forEach(chargeTierToSave=>{ chargeTiersToSave.push(chargeTierToSave)});              
-
-            chargeToSave.chargeElements = chargeElementsToSave;
-            chargeToSave.chargeTier = chargeTiersToSave;
-            Util.writeFile('/charges/' + Util.sanitizeFileName(chargeName) + '.json', chargeToSave);
+            let chargeFileName = Util.constructFileName(charge);
+            if(chargeFileNames.has(chargeFileName)){
+                Util.writeFile('/charges/' + Util.sanitizeFileName(charge['Name']) + '_' + charge['enxCPQ__TECH_External_Id__c']  + '.json', this.constructCharge(charge, chargeElements, chargeTiers));
+                chargeFileNames.delete(chargeFileName);
+            }
         }
+    }
+
+    private constructCharge(charge: any, chargeElements: String[], chargeTiers: String[]){
+        let chargeToSave: any = {};
+        chargeToSave.root= charge;
+        
+        let chargeElementsToSave: any = chargeElements.filter(chargeElement => chargeElement['enxCPQ__Charge_Parent__r'] 
+                                               && chargeElement['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])    
+
+        let chargeTiersToSave: any = chargeTiers.filter(chargeTier => chargeTier['enxCPQ__Charge_Parent__r']
+                                         && chargeTier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__TECH_External_Id__c'])             
+
+        chargeToSave.chargeElements = chargeElementsToSave;
+        chargeToSave.chargeTier = chargeTiersToSave;
+
+        return chargeToSave;
     }
 
     private async retrieveBundleElements(connection: Connection, productList: Set<string>){
