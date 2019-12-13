@@ -251,6 +251,8 @@ export class ProductExporter {
     }
 
     private async retrieveBundleElementOptionsProducts(connection: Connection, bundleNames: Set<string>){
+        const productNamesBeforeRetrieve: Set<string> = new Set([...this.productList]);
+        
         const optionsObjectsWithProductNames = await Queries.queryBundleElementOptionsProductNames(connection, bundleNames);
         const productNames = new Set(optionsObjectsWithProductNames.map(optionWithProductName => (
             optionWithProductName['enxCPQ__Product__r']['enxCPQ__Root_Product__r']
@@ -258,7 +260,12 @@ export class ProductExporter {
                 : optionWithProductName['enxCPQ__Product__r']['Name']
         )));
 
-        this.productList = new Set([... this.productList, ...productNames]);
+        const newProductNames = Util.getSetsDifference(productNames, productNamesBeforeRetrieve);
+        
+        if(newProductNames.size > 0){
+            this.productList = new Set([...this.productList, ...newProductNames]);
+            this.retrieveBundleElementOptionsProducts(connection, newProductNames);
+        }
     }
 
     private async retrieveCategoriesHelper(conn: Connection, categories:any){

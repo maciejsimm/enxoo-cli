@@ -144,6 +144,10 @@ export class ProductImporter {
           await Upsert.upsertObject(conn, 'Product2', this.chargeElements);
           await Upsert.upsertObject(conn, 'Product2', this.chargeTiers);
           await Upsert.upsertObject(conn, 'enxCPQ__BundleElement__c', this.bundleElements);
+          debugger;
+          for(let bOption of this.bundleElementOptions){
+              delete bOption['enxCPQ__Product__r']['enxCPQ__Root_Product__r'];
+          }
           await Upsert.upsertObject(conn, 'enxCPQ__BundleElementOption__c', this.bundleElementOptions);
 
           this.targetProductIds = await this.retrieveTargerProductIds(conn);

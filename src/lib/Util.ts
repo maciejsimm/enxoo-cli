@@ -427,9 +427,16 @@ export class Util {
             [...optionsList, ...matchedBundleElement['bundleElementOptions']]
         ), []);
         
-        const additionalProductsTechIds = optionsForMatchedElements.map(bundleElementOption => (
-            bundleElementOption['enxCPQ__Product__r'] && bundleElementOption['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']
-        ));
+        const additionalProductsTechIds = optionsForMatchedElements
+        .map(bundleElementOption => {
+            if(bundleElementOption['enxCPQ__Product__r'] && bundleElementOption['enxCPQ__Product__r']){
+                if(bundleElementOption['enxCPQ__Product__r'] && bundleElementOption['enxCPQ__Product__r']['enxCPQ__Root_Product__r']){
+                    return bundleElementOption['enxCPQ__Product__r'] && bundleElementOption['enxCPQ__Product__r']['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c'];
+                }
+                return bundleElementOption['enxCPQ__Product__r'] && bundleElementOption['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c'];
+            }
+        })
+        .filter((techId, index, techIdArray) => techIdArray.indexOf(techId) === index);
         
         const allProducts = await this.readAllFiles('/products');
         const additionalRootProductsNames = allProducts
@@ -441,6 +448,10 @@ export class Util {
             return isPrdOptionRelatedToBundleElOption || isProductRelatedToBundleElOption;
         })
         .map(product => product['root']['Name']);
+
+        // if(additionalRootProductsNames.length > 0){
+        //     additionalRootProductsNames = 
+        // }
 
         return additionalRootProductsNames;
     }
