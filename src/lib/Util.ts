@@ -269,19 +269,30 @@ export class Util {
     }
 
     public static sanitizeResult(result: any){
-        for(let props of result){
-            for(let prop in props){
-            if(prop.includes('.')){
-                let separatedProp = prop.split('.');
-                props[separatedProp[0]] = {};
-                if(props[prop]){
-                   props[separatedProp[0]][separatedProp[1]] = props[prop];
-                }else{
-                    props[separatedProp[0]] = null;
+        for(let mainObjectProperty of result){
+            for(let subProperty in mainObjectProperty){
+                if(subProperty.includes('.')){
+                    this.sanitizeDottedProperty(mainObjectProperty, subProperty, mainObjectProperty[subProperty]);
+                    delete mainObjectProperty[subProperty];
                 }
-                delete props[prop];
-            }}
+            }
         }
+    }
+
+    public static sanitizeDottedProperty(propertyOwner, property, value){
+        let separatedProps = property.split('.');
+        let currentProp = propertyOwner;
+        
+        for(let i = 0; i < separatedProps.length - 1; i++){
+            const separatedProp = separatedProps[i];
+            if(!currentProp[separatedProp]){
+                currentProp[separatedProp] = {};
+            }
+            
+            currentProp = currentProp[separatedProp];
+        }
+
+        currentProp[separatedProps[separatedProps.length - 1]] = value;
     }
     
     public static sanitizeForBulkImport(objs: any){
