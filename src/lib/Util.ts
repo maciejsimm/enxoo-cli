@@ -308,7 +308,6 @@ export class Util {
     }
     
     public static createPropertyTree (targetObject: any, fieldsStructure: string[], value: any) {
-        debugger;
         const [firstField, ...rest] = fieldsStructure;
         const mainProperty = targetObject ? targetObject : {};
         if(rest.length === 0) {
