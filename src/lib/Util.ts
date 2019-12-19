@@ -307,7 +307,7 @@ export class Util {
         .reduce((nestedObject, [field, value]) => Util.createPropertyTree(nestedObject, field.split('.'), value), {})
     }
     
-    public static createPropertyTree (targetObject: any, fieldsStructure: string[], value: any) {
+    private static createPropertyTree (targetObject: any, fieldsStructure: string[], value: any) {
         const [firstField, ...rest] = fieldsStructure;
         const mainProperty = targetObject ? targetObject : {};
         if(rest.length === 0) {
