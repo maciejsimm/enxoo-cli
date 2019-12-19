@@ -269,32 +269,22 @@ export class Util {
     }
 
     public static sanitizeResult(result: any){
-        for(let mainObjectProperty of result){
-            for(let subProperty in mainObjectProperty){
-                if(subProperty.includes('.')){
-                    this.sanitizeDottedProperty(mainObjectProperty, subProperty, mainObjectProperty[subProperty]);
-                    delete mainObjectProperty[subProperty];
+        for(let props of result){
+            for(let prop in props){
+                if(prop.includes('.')){
+                    let separatedProp = prop.split('.');
+                    props[separatedProp[0]] = {};
+                    if(props[prop]){
+                        props[separatedProp[0]][separatedProp[1]] = props[prop];
+                    } else{
+                        props[separatedProp[0]] = null;
+                    }
+                    delete props[prop];
                 }
             }
         }
     }
 
-    public static sanitizeDottedProperty(propertyOwner, property, value){
-        let separatedProps = property.split('.');
-        let currentProp = propertyOwner;
-        
-        for(let i = 0; i < separatedProps.length - 1; i++){
-            const separatedProp = separatedProps[i];
-            if(!currentProp[separatedProp]){
-                currentProp[separatedProp] = {};
-            }
-            
-            currentProp = currentProp[separatedProp];
-        }
-
-        currentProp[separatedProps[separatedProps.length - 1]] = value;
-    }
-    
     public static sanitizeForBulkImport(objs: any){
 
         for(let obj of objs){
@@ -310,6 +300,24 @@ export class Util {
                 }
            }
         }
+    }
+
+    public static convertFlatObjectToNestedObject(flatObject: any){
+        return Object.entries(flatObject)
+        .reduce((nestedObject, [field, value]) => Util.createPropertyTree(nestedObject, field.split('.'), value), {})
+    }
+    
+    public static createPropertyTree (targetObject: any, fieldsStructure: string[], value: any) {
+        debugger;
+        const [firstField, ...rest] = fieldsStructure;
+        const mainProperty = targetObject ? targetObject : {};
+        if(rest.length === 0) {
+          return { ...mainProperty, [firstField]: value };
+        }
+        return { 
+          ...mainProperty, 
+          [firstField]: Util.createPropertyTree(mainProperty[firstField], rest, value)
+        };
     }
 
     public static async readQueryJson(queryDir: string){
@@ -384,8 +392,9 @@ export class Util {
             })
             .on('end', function(info) { 
                 Util.hideSpinner(sobjectName +' export done. Retrieved: '+ records.length);
-                Util.sanitizeResult(records);
-                resolve(records); 
+                resolve(records.map(record => (
+                    Util.convertFlatObjectToNestedObject(record)
+                ))); 
             });
         })
     }
