@@ -484,4 +484,10 @@ export class Util {
         let objectTechId = object['enxCPQ__TECH_External_Id__c'];
         return objectName + objectTechId;
     }
+
+    public static convert2DTo1DArray(twoDimensionalArray: Array<Array<any>>){
+        return twoDimensionalArray.reduce((resultArray,current2DArrayElement) => (
+            resultArray.concat(...current2DArrayElement)
+        ), []);
+    }
 }

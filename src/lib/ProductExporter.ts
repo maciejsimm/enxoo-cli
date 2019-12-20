@@ -510,28 +510,99 @@ export class ProductExporter {
         return chargeToSave;
     }
 
-    private async retrieveBundleElements(connection: Connection, productList: Set<string>){
-        let bundleElements = await Queries.queryBundleElements(connection, productList);  
+    private async getBundleElementsByBundleTechIds(connection: Connection, bundleTechIds: Set<string>){
+        let bundleElements = await Queries.queryBundleElementsByBundleTechIds(connection, bundleTechIds);  
         this.checkTechIds(bundleElements);
 
+        return this.prepareBundleElementsStructure(connection, bundleElements);
+    }
+
+    private async prepareBundleElementsStructure(connection: Connection, bundleElementsFromQuery: Array<any>){
         let bundleElementOptions = await Queries.queryBundleElementOptions(
             connection, 
-            new Set(bundleElements.map(bundleElement => bundleElement['enxCPQ__TECH_External_Id__c']))
+            new Set(bundleElementsFromQuery.map(bundleElement => bundleElement['enxCPQ__TECH_External_Id__c']))
         );
         this.checkTechIds(bundleElementOptions);
-
-        for(let bundleElement of bundleElements){
-            const bundleElementOptionsToSave = bundleElementOptions.filter(option => (
+        
+        const bundleElementsStructuredForSave = bundleElementsFromQuery.map(bundleElement => {
+            const options = bundleElementOptions.filter(option => (
                 option['enxCPQ__Bundle_Element__r'] && option['enxCPQ__Bundle_Element__r']['enxCPQ__TECH_External_Id__c'] === bundleElement['enxCPQ__TECH_External_Id__c']
             ));
-            const elementToSave = {
+            return {
                 root: bundleElement,
-                bundleElementOptions: bundleElementOptionsToSave
+                bundleElementOptions: options
+            }
+        });
+
+        return bundleElementsStructuredForSave;
+    }
+
+
+    private async retrieveBundleElements(connection: Connection, productList: Set<string>){
+        const bundleElementsFromRootProductsQuery = await Queries.queryBundleElements(connection, productList);
+        let bundleElementsToSave = await this.prepareBundleElementsStructure(connection, bundleElementsFromRootProductsQuery);
+        // let bundleNamesToQueryBy = new Set<string>([...productList]);
+        let shouldQueryAdditionalBundleElements = true;
+
+        while(shouldQueryAdditionalBundleElements){
+
+            const additionalProductsTechIdsToQueryBy = Util.convert2DTo1DArray(bundleElementsToSave.map(bundleElement => {
+                const bundleElementOptionsProductsTechIds = bundleElement.bundleElementOptions.map(option => {
+                    if(option['enxCPQ__Product__r']){
+                        return option['enxCPQ__Product__r']['enxCPQ__Root_Product__r']
+                            ? option['enxCPQ__Product__r']['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c']
+                            : option['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c'];
+                    }
+                })
+                return bundleElementOptionsProductsTechIds;
+            }));
+
+
+            const additionallyQueriedBundleElements = await this.getBundleElementsByBundleTechIds(connection, new Set(additionalProductsTechIdsToQueryBy));
+            
+            const newBundleElementsTechIds = Util.getSetsDifference(
+                new Set(bundleElementsToSave.map(bundleElement => bundleElement['root']['enxCPQ__TECH_External_Id__c'])),
+                new Set(additionallyQueriedBundleElements.map(unstructurizedBundleElement => unstructurizedBundleElement['enxCPQ__TECH_External_Id__c']))
+            );
+
+            if(newBundleElementsTechIds.size === 0){
+                const newBundleElementsToSave = this.prepareBundleElementsStructure(
+                    connection, additionallyQueriedBundleElements.filter)
             }
 
-            const filePath = '/bundleElements/' + Util.sanitizeFileName(bundleElement['Name']) + '_' + bundleElement['enxCPQ__TECH_External_Id__c'] + '.json';
-            Util.writeFile(filePath, elementToSave);
+            const newBundleElements = bundleElements.filter(bundleElement => !currentBundleElementNames.includes(bundleElement['Name']));
+
+            bundleNamesToQueryBy = new Set(newBundleElements.map(bundleElement => {
+                return bundleElement.bundleElementOptions.map(option => {
+
+                })
+            }));
+
+            
+
         }
+        
+        // let bundleElements = await Queries.queryBundleElements(connection, productList);  
+        // this.checkTechIds(bundleElements);
+
+        // let bundleElementOptions = await Queries.queryBundleElementOptions(
+        //     connection, 
+        //     new Set(bundleElements.map(bundleElement => bundleElement['enxCPQ__TECH_External_Id__c']))
+        // );
+        // this.checkTechIds(bundleElementOptions);
+
+        // for(let bundleElement of bundleElements){
+        //     const bundleElementOptionsToSave = bundleElementOptions.filter(option => (
+        //         option['enxCPQ__Bundle_Element__r'] && option['enxCPQ__Bundle_Element__r']['enxCPQ__TECH_External_Id__c'] === bundleElement['enxCPQ__TECH_External_Id__c']
+        //     ));
+        //     const elementToSave = {
+        //         root: bundleElement,
+        //         bundleElementOptions: bundleElementOptionsToSave
+        //     }
+
+        //     const filePath = '/bundleElements/' + Util.sanitizeFileName(bundleElement['Name']) + '_' + bundleElement['enxCPQ__TECH_External_Id__c'] + '.json';
+        //     Util.writeFile(filePath, elementToSave);
+        // }
     }
 
     private checkTechIds(objects: Array<any>): void{
