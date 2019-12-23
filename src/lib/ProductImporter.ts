@@ -144,7 +144,7 @@ export class ProductImporter {
           await Upsert.upsertObject(conn, 'Product2', this.chargeElements);
           await Upsert.upsertObject(conn, 'Product2', this.chargeTiers);
           await Upsert.upsertObject(conn, 'enxCPQ__BundleElement__c', this.bundleElements);
-          debugger;
+          
           for(let bOption of this.bundleElementOptions){
               delete bOption['enxCPQ__Product__r']['enxCPQ__Root_Product__r'];
           }
@@ -398,6 +398,15 @@ export class ProductImporter {
 
         return new Set([...productFileNames, ...newProductFileNames]);
     }
+
+    private async addRelatedAndBundleElementOptionsPrdNames(productFileNames: Set<String>){
+        const containingRelatedProductFileNames = await this.addRelatedProductsNames(productFileNames);
+        const containingRelatedAndBundleElOptsPrdsFileNames = await this.addBundleElementOptionsProductNames(containingRelatedProductFileNames);
+        if(containingRelatedAndBundleElOptsPrdsFileNames.size === productFileNames.size){
+            return containingRelatedAndBundleElOptsPrdsFileNames;
+        }
+        return this.addRelatedAndBundleElementOptionsPrdNames(containingRelatedAndBundleElOptsPrdsFileNames);
+    }
     
     private async extractProduct(conn: Connection) {
         let productFileNameList= new Set<String>();
@@ -411,8 +420,7 @@ export class ProductImporter {
         }
 
         if(this.productList[0] !== '*ALL'){
-            productFileNameList = await this.addRelatedProductsNames(productFileNameList);
-            productFileNameList = await this.addBundleElementOptionsProductNames(productFileNameList);
+            productFileNameList = await this.addRelatedAndBundleElementOptionsPrdNames(productFileNameList);
         }
 
         // Collect all Ids' of products that will be inserted

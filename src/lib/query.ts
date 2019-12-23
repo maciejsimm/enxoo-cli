@@ -1425,7 +1425,7 @@ public static async queryBundleElementsByBundleTechIds(conn: Connection, bundleT
     }
 
     const query: string = "SELECT enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c, " + this.bundleElementQuery 
-        + " FROM enxCPQ__BundleElement__c enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(bundleTechIds) + ")";
+        + " FROM enxCPQ__BundleElement__c WHERE enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(bundleTechIds) + ")";
 
     return new Promise<String[]>((resolve: Function, reject: Function) => {
         conn.query(
