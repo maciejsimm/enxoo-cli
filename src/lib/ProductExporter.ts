@@ -513,7 +513,6 @@ export class ProductExporter {
     private async getBundleElementsByBundleTechIds(connection: Connection, bundleTechIds: Set<string>): Promise<Array<any>>{
         let bundleElements = await Queries.queryBundleElementsByBundleTechIds(connection, bundleTechIds);  
         this.checkTechIds(bundleElements);
-
         return this.prepareBundleElementsStructure(connection, bundleElements);
     }
 
