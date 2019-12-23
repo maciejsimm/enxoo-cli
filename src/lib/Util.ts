@@ -411,7 +411,7 @@ export class Util {
         return secondaryProductsNames;
     }
 
-    private static getBundleElementOptionProductTechId(bundleElementOption){
+    private static getBundleElementOptionProductTechId(bundleElementOption): string{
         if(bundleElementOption['enxCPQ__Product__r'] && bundleElementOption['enxCPQ__Product__r']){
             if(bundleElementOption['enxCPQ__Product__r'] && bundleElementOption['enxCPQ__Product__r']['enxCPQ__Root_Product__r']){
                 return bundleElementOption['enxCPQ__Product__r'] && bundleElementOption['enxCPQ__Product__r']['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c'];
@@ -499,7 +499,7 @@ export class Util {
         return objectName + objectTechId;
     }
 
-    public static convert2DTo1DArray(twoDimensionalArray: Array<Array<any>>){
+    public static convert2DTo1DArray(twoDimensionalArray: Array<Array<any>>): Array<any>{
         return twoDimensionalArray.reduce((resultArray,current2DArrayElement) => (
             resultArray.concat(...current2DArrayElement)
         ), []);

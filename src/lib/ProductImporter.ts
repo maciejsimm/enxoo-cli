@@ -145,9 +145,7 @@ export class ProductImporter {
           await Upsert.upsertObject(conn, 'Product2', this.chargeTiers);
           await Upsert.upsertObject(conn, 'enxCPQ__BundleElement__c', this.bundleElements);
           
-          for(let bOption of this.bundleElementOptions){
-              delete bOption['enxCPQ__Product__r']['enxCPQ__Root_Product__r'];
-          }
+          this.bundleElementOptions = this.prepareBundleElementOptionsForSave(this.bundleElementOptions);
           await Upsert.upsertObject(conn, 'enxCPQ__BundleElementOption__c', this.bundleElementOptions);
 
           this.targetProductIds = await this.retrieveTargerProductIds(conn);
@@ -378,7 +376,7 @@ export class ProductImporter {
         return result;
     }
 
-    private async addRelatedProductsNames(productFileNameList: Set<String>) {
+    private async addRelatedProductsNames(productFileNameList: Set<String>): Promise<Set<String>> {
         let relatedProductsNames = await Util.retrieveRelatedProductsNames(productFileNameList);
         this.productList = new Set([...this.productList, ...relatedProductsNames]);
         
@@ -386,7 +384,7 @@ export class ProductImporter {
         return new Set([...productFileNameList, ...relatedProductsFileNames]);
     }
 
-    private async addBundleElementOptionsProductNames(productFileNames: Set<String>){
+    private async addBundleElementOptionsProductNames(productFileNames: Set<String>): Promise<Set<String>> {
         const bundleElementOptionsProductNames = await Util.retrieveBundleElementOptionProductsNames(productFileNames);
         this.productList = new Set([...this.productList, ...bundleElementOptionsProductNames]);
         
@@ -399,7 +397,7 @@ export class ProductImporter {
         return new Set([...productFileNames, ...newProductFileNames]);
     }
 
-    private async addRelatedAndBundleElementOptionsPrdNames(productFileNames: Set<String>){
+    private async addRelatedAndBundleElementOptionsPrdNames(productFileNames: Set<String>): Promise<Set<String>> {
         const containingRelatedProductFileNames = await this.addRelatedProductsNames(productFileNames);
         const containingRelatedAndBundleElOptsPrdsFileNames = await this.addBundleElementOptionsProductNames(containingRelatedProductFileNames);
         if(containingRelatedAndBundleElOptsPrdsFileNames.size === productFileNames.size){
@@ -707,5 +705,13 @@ export class ProductImporter {
             }
         }
         return pbesToDeactivate;
+    }
+
+    private prepareBundleElementOptionsForSave(bundleElementOptions: Array<any>){
+        return bundleElementOptions.map(option => {
+            const optionWithCorrectProps = {...option};
+            delete optionWithCorrectProps['enxCPQ__Product__r']['enxCPQ__Root_Product__r'];
+            return optionWithCorrectProps;
+        });
     }
 }

@@ -250,7 +250,7 @@ export class ProductExporter {
         }
     }
 
-    private async retrieveBundleElementOptionsProducts(connection: Connection, bundleNames: Set<string>){
+    private async retrieveBundleElementOptionsProducts(connection: Connection, bundleNames: Set<string>): Promise<void>{
         const productNamesBeforeRetrieve: Set<string> = new Set([...this.productList]);
         
         const optionsObjectsWithProductNames = await Queries.queryBundleElementOptionsProductNames(connection, bundleNames);
@@ -510,7 +510,7 @@ export class ProductExporter {
         return chargeToSave;
     }
 
-    private async getBundleElementsByBundleTechIds(connection: Connection, bundleTechIds: Set<string>){
+    private async getBundleElementsByBundleTechIds(connection: Connection, bundleTechIds: Set<string>): Promise<Array<any>>{
         let bundleElements = await Queries.queryBundleElementsByBundleTechIds(connection, bundleTechIds);  
         this.checkTechIds(bundleElements);
 
@@ -538,7 +538,7 @@ export class ProductExporter {
     }
 
 
-    private async retrieveBundleElements(connection: Connection, productList: Set<string>){
+    private async retrieveBundleElements(connection: Connection, productList: Set<string>): Promise<void> {
         const bundleElementsFromRootProductsQuery = await Queries.queryBundleElements(connection, productList);
         let bundleElementsToSave = await this.prepareBundleElementsStructure(connection, bundleElementsFromRootProductsQuery);
         let shouldQueryAdditionalBundleElements = true;
