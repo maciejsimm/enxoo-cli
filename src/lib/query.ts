@@ -1553,8 +1553,9 @@ public static async bulkQuery(connection: Connection, query: string, queriedObje
             })
             .on('end', function(info) { 
                 Util.hideSpinner(queriedObjectsLabel + ' export done. Retrieved: '+ records.length);
-                Util.sanitizeResult(records);
-                resolve(records); 
+                resolve(records.map(record => (
+                    Util.convertFlatObjectToNestedObject(record)
+                )));
             });
     });
 }

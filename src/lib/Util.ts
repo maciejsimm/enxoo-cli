@@ -271,19 +271,20 @@ export class Util {
     public static sanitizeResult(result: any){
         for(let props of result){
             for(let prop in props){
-            if(prop.includes('.')){
-                let separatedProp = prop.split('.');
-                props[separatedProp[0]] = {};
-                if(props[prop]){
-                   props[separatedProp[0]][separatedProp[1]] = props[prop];
-                }else{
-                    props[separatedProp[0]] = null;
+                if(prop.includes('.')){
+                    let separatedProp = prop.split('.');
+                    props[separatedProp[0]] = {};
+                    if(props[prop]){
+                        props[separatedProp[0]][separatedProp[1]] = props[prop];
+                    } else{
+                        props[separatedProp[0]] = null;
+                    }
+                    delete props[prop];
                 }
-                delete props[prop];
-            }}
+            }
         }
     }
-    
+
     public static sanitizeForBulkImport(objs: any){
 
         for(let obj of objs){
@@ -299,6 +300,23 @@ export class Util {
                 }
            }
         }
+    }
+
+    public static convertFlatObjectToNestedObject(flatObject: any){
+        return Object.entries(flatObject)
+        .reduce((nestedObject, [field, value]) => Util.createPropertyTree(nestedObject, field.split('.'), value), {})
+    }
+    
+    private static createPropertyTree (targetObject: any, fieldsStructure: string[], value: any) {
+        const [firstField, ...rest] = fieldsStructure;
+        const mainProperty = targetObject ? targetObject : {};
+        if(rest.length === 0) {
+          return { ...mainProperty, [firstField]: value };
+        }
+        return { 
+          ...mainProperty, 
+          [firstField]: Util.createPropertyTree(mainProperty[firstField], rest, value)
+        };
     }
 
     public static async readQueryJson(queryDir: string){
@@ -373,8 +391,9 @@ export class Util {
             })
             .on('end', function(info) { 
                 Util.hideSpinner(sobjectName +' export done. Retrieved: '+ records.length);
-                Util.sanitizeResult(records);
-                resolve(records); 
+                resolve(records.map(record => (
+                    Util.convertFlatObjectToNestedObject(record)
+                ))); 
             });
         })
     }
