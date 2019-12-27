@@ -412,13 +412,16 @@ export class Util {
     }
 
     private static getBundleElementOptionProductTechId(bundleElementOption): string{
-        if(bundleElementOption['enxCPQ__Product__r'] && bundleElementOption['enxCPQ__Product__r']){
-            if(bundleElementOption['enxCPQ__Product__r'] && bundleElementOption['enxCPQ__Product__r']['enxCPQ__Root_Product__r']){
-                return bundleElementOption['enxCPQ__Product__r'] && bundleElementOption['enxCPQ__Product__r']['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c'];
-            }
-            return bundleElementOption['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c'];
+        if(!bundleElementOption['enxCPQ__Product__r']){
+            return null;
         }
-        return null;
+
+        const rootProduct = bundleElementOption['enxCPQ__Product__r'] && bundleElementOption['enxCPQ__Product__r']['enxCPQ__Root_Product__r'];
+        if(rootProduct){
+            return rootProduct['enxCPQ__TECH_External_Id__c'];
+        }
+
+        return bundleElementOption['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c'];
     }
 
     private static retrieveBundleElementOptionProductsTechIds(allBundleElements: Array<any>, rootProductsTechIds: Set<string>): Set<string>{
@@ -501,7 +504,7 @@ export class Util {
 
     public static convert2DTo1DArray(twoDimensionalArray: Array<Array<any>>): Array<any>{
         return twoDimensionalArray.reduce((resultArray,current2DArrayElement) => (
-            resultArray.concat(...current2DArrayElement)
+            [...resultArray, ...current2DArrayElement]
         ), []);
     }
 }

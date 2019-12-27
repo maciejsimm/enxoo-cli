@@ -536,6 +536,15 @@ export class ProductExporter {
         return bundleElementsStructuredForSave;
     }
 
+    private getOptionsTechIdsFromBundle(bundleElement: any){
+        return bundleElement.bundleElementOptions
+            .filter(option => option['enxCPQ__Product__r'])
+            .map(option => {
+                return option['enxCPQ__Product__r']['enxCPQ__Root_Product__r']
+                    ? option['enxCPQ__Product__r']['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c']
+                    : option['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c'];
+            })
+    }
 
     private async retrieveBundleElements(connection: Connection, productList: Set<string>): Promise<void> {
         const bundleElementsFromRootProductsQuery = await Queries.queryBundleElements(connection, productList);
@@ -543,17 +552,7 @@ export class ProductExporter {
         let shouldQueryAdditionalBundleElements = true;
 
         while(shouldQueryAdditionalBundleElements){
-            const additionalProductsTechIdsToQueryBy = Util.convert2DTo1DArray(bundleElementsToSave.map(bundleElement => {
-                const bundleElementOptionsProductsTechIds = bundleElement.bundleElementOptions.map(option => {
-                    if(option['enxCPQ__Product__r']){
-                        return option['enxCPQ__Product__r']['enxCPQ__Root_Product__r']
-                            ? option['enxCPQ__Product__r']['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c']
-                            : option['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c'];
-                    }
-                })
-                return bundleElementOptionsProductsTechIds;
-            }));
-
+            const additionalProductsTechIdsToQueryBy = Util.convert2DTo1DArray(bundleElementsToSave.map(this.getOptionsTechIdsFromBundle));
             const additionallyQueriedBundleElements = await this.getBundleElementsByBundleTechIds(connection, new Set(additionalProductsTechIdsToQueryBy));
             
             const bundleElementsToBeSavedTechIds = bundleElementsToSave.map(bundleElement => bundleElement['root']['enxCPQ__TECH_External_Id__c']);
