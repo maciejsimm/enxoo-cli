@@ -1409,6 +1409,49 @@ public static async queryBundleElementsIds(conn: Connection, bundleList: Set<Str
     });
 }
 
+public static async queryBundleElementsByBundleTechIds(conn: Connection, bundleTechIds: Set<String>): Promise<String[]> {
+    const queriedObjectsLabel: string = 'bundle elements';
+    Util.log('--- exporting ' + queriedObjectsLabel);
+
+    if(bundleTechIds.size > 90){
+        let paramsObject: Query = {
+            "queryBegining": "SELECT enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c, " + this.bundleElementQuery 
+                + " FROM enxCPQ__BundleElement__c WHERE enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c IN (",
+            "queryConditions": ")",
+            "objectsList": bundleTechIds,
+            "sobjectName": queriedObjectsLabel
+        }
+        return await Util.createQueryPromiseArray(paramsObject, conn);
+    }
+
+    const query: string = "SELECT enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c, " + this.bundleElementQuery 
+        + " FROM enxCPQ__BundleElement__c WHERE enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(bundleTechIds) + ")";
+
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+        conn.query(
+            query, 
+            null,
+            function (err, res) {
+                if (err){
+                    reject('Failed to retrieve ' + queriedObjectsLabel + '. Error: ' + err);
+                } 
+                if (res.records.length < 200){
+                    Util.log("--- " + queriedObjectsLabel + ": " + res.records.length);
+                    resolve(res.records);
+                } else{
+                    resolve(["useBulkApi"]);
+                }
+            }
+        );
+    }).then(async result => {
+        if(result[0] === 'useBulkApi'){
+            return await this.bulkQuery(conn, query, queriedObjectsLabel);
+        } else{
+            return result;
+        }
+    });
+}
+
 public static async queryBundleElements(conn: Connection, bundleList: Set<String>): Promise<String[]> {
     const queriedObjectsLabel: string = 'bundle elements';
     Util.log('--- exporting ' + queriedObjectsLabel);
@@ -1458,7 +1501,7 @@ public static async queryBundleElementOptions(conn: Connection, bundleElementsTe
 
     if(bundleElementsTechIds.size > 90){
         let paramsObject: Query = {
-            "queryBegining": "SELECT enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, " 
+            "queryBegining": "SELECT enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, " 
                 + this.bundleElementOptionQuery + " FROM enxCPQ__BundleElementOption__c WHERE enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c IN (",
             "queryConditions": ")",
             "objectsList": bundleElementsTechIds,
@@ -1467,7 +1510,7 @@ public static async queryBundleElementOptions(conn: Connection, bundleElementsTe
         return await Util.createQueryPromiseArray(paramsObject, conn);
     }
 
-    const query: string = "SELECT enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, "
+    const query: string = "SELECT enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, "
         + this.bundleElementOptionQuery + " FROM enxCPQ__BundleElementOption__c WHERE enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c IN (" 
         + Util.setToIdString(bundleElementsTechIds) + ")";
 

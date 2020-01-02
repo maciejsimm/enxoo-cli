@@ -250,7 +250,9 @@ export class ProductExporter {
         }
     }
 
-    private async retrieveBundleElementOptionsProducts(connection: Connection, bundleNames: Set<string>){
+    private async retrieveBundleElementOptionsProducts(connection: Connection, bundleNames: Set<string>): Promise<void>{
+        const productNamesBeforeRetrieve: Set<string> = new Set([...this.productList]);
+        
         const optionsObjectsWithProductNames = await Queries.queryBundleElementOptionsProductNames(connection, bundleNames);
         const productNames = new Set(optionsObjectsWithProductNames.map(optionWithProductName => (
             optionWithProductName['enxCPQ__Product__r']['enxCPQ__Root_Product__r']
@@ -258,7 +260,12 @@ export class ProductExporter {
                 : optionWithProductName['enxCPQ__Product__r']['Name']
         )));
 
-        this.productList = new Set([... this.productList, ...productNames]);
+        const newProductNames = Util.getSetsDifference(productNames, productNamesBeforeRetrieve);
+        
+        if(newProductNames.size > 0){
+            this.productList = new Set([...this.productList, ...newProductNames]);
+            this.retrieveBundleElementOptionsProducts(connection, newProductNames);
+        }
     }
 
     private async retrieveCategoriesHelper(conn: Connection, categories:any){
@@ -503,27 +510,66 @@ export class ProductExporter {
         return chargeToSave;
     }
 
-    private async retrieveBundleElements(connection: Connection, productList: Set<string>){
-        let bundleElements = await Queries.queryBundleElements(connection, productList);  
+    private async getBundleElementsByBundleTechIds(connection: Connection, bundleTechIds: Set<string>): Promise<Array<any>>{
+        let bundleElements = await Queries.queryBundleElementsByBundleTechIds(connection, bundleTechIds);  
         this.checkTechIds(bundleElements);
+        return this.prepareBundleElementsStructure(connection, bundleElements);
+    }
 
+    private async prepareBundleElementsStructure(connection: Connection, bundleElementsFromQuery: Array<any>): Promise<Array<any>>{
         let bundleElementOptions = await Queries.queryBundleElementOptions(
             connection, 
-            new Set(bundleElements.map(bundleElement => bundleElement['enxCPQ__TECH_External_Id__c']))
+            new Set(bundleElementsFromQuery.map(bundleElement => bundleElement['enxCPQ__TECH_External_Id__c']))
         );
         this.checkTechIds(bundleElementOptions);
-
-        for(let bundleElement of bundleElements){
-            const bundleElementOptionsToSave = bundleElementOptions.filter(option => (
+        
+        const bundleElementsStructuredForSave = bundleElementsFromQuery.map(bundleElement => {
+            const options = bundleElementOptions.filter(option => (
                 option['enxCPQ__Bundle_Element__r'] && option['enxCPQ__Bundle_Element__r']['enxCPQ__TECH_External_Id__c'] === bundleElement['enxCPQ__TECH_External_Id__c']
             ));
-            const elementToSave = {
+            return {
                 root: bundleElement,
-                bundleElementOptions: bundleElementOptionsToSave
+                bundleElementOptions: options
             }
+        });
 
-            const filePath = '/bundleElements/' + Util.sanitizeFileName(bundleElement['Name']) + '_' + bundleElement['enxCPQ__TECH_External_Id__c'] + '.json';
-            Util.writeFile(filePath, elementToSave);
+        return bundleElementsStructuredForSave;
+    }
+
+    private getOptionsTechIdsFromBundle(bundleElement: any){
+        return bundleElement.bundleElementOptions
+            .filter(option => option['enxCPQ__Product__r'])
+            .map(option => {
+                return option['enxCPQ__Product__r']['enxCPQ__Root_Product__r']
+                    ? option['enxCPQ__Product__r']['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c']
+                    : option['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c'];
+            })
+    }
+
+    private async retrieveBundleElements(connection: Connection, productList: Set<string>): Promise<void> {
+        const bundleElementsFromRootProductsQuery = await Queries.queryBundleElements(connection, productList);
+        let bundleElementsToSave = await this.prepareBundleElementsStructure(connection, bundleElementsFromRootProductsQuery);
+        let shouldQueryAdditionalBundleElements = true;
+
+        while(shouldQueryAdditionalBundleElements){
+            const additionalProductsTechIdsToQueryBy = Util.convert2DTo1DArray(bundleElementsToSave.map(this.getOptionsTechIdsFromBundle));
+            const additionallyQueriedBundleElements = await this.getBundleElementsByBundleTechIds(connection, new Set(additionalProductsTechIdsToQueryBy));
+            
+            const bundleElementsToBeSavedTechIds = bundleElementsToSave.map(bundleElement => bundleElement['root']['enxCPQ__TECH_External_Id__c']);
+            const newBundleElements = additionallyQueriedBundleElements.filter(bundleElement => (
+                !bundleElementsToBeSavedTechIds.includes(bundleElement['root']['enxCPQ__TECH_External_Id__c']
+            )));
+                
+            if(newBundleElements.length !== 0){
+                bundleElementsToSave = [...bundleElementsToSave, ...newBundleElements];
+            } else{
+                shouldQueryAdditionalBundleElements = false;
+            }
+        }
+        
+        for(let bundleElement of bundleElementsToSave){
+            const filePath = '/bundleElements/' + Util.sanitizeFileName(bundleElement['root']['Name']) + '_' + bundleElement['root']['enxCPQ__TECH_External_Id__c'] + '.json';
+            Util.writeFile(filePath, bundleElement);
         }
     }
 

@@ -144,6 +144,8 @@ export class ProductImporter {
           await Upsert.upsertObject(conn, 'Product2', this.chargeElements);
           await Upsert.upsertObject(conn, 'Product2', this.chargeTiers);
           await Upsert.upsertObject(conn, 'enxCPQ__BundleElement__c', this.bundleElements);
+          
+          this.bundleElementOptions = this.prepareBundleElementOptionsForSave(this.bundleElementOptions);
           await Upsert.upsertObject(conn, 'enxCPQ__BundleElementOption__c', this.bundleElementOptions);
 
           this.targetProductIds = await this.retrieveTargerProductIds(conn);
@@ -374,7 +376,7 @@ export class ProductImporter {
         return result;
     }
 
-    private async addRelatedProductsNames(productFileNameList: Set<String>) {
+    private async addRelatedProductsNames(productFileNameList: Set<String>): Promise<Set<String>> {
         let relatedProductsNames = await Util.retrieveRelatedProductsNames(productFileNameList);
         this.productList = new Set([...this.productList, ...relatedProductsNames]);
         
@@ -382,7 +384,7 @@ export class ProductImporter {
         return new Set([...productFileNameList, ...relatedProductsFileNames]);
     }
 
-    private async addBundleElementOptionsProductNames(productFileNames: Set<String>){
+    private async addBundleElementOptionsProductNames(productFileNames: Set<String>): Promise<Set<String>> {
         const bundleElementOptionsProductNames = await Util.retrieveBundleElementOptionProductsNames(productFileNames);
         this.productList = new Set([...this.productList, ...bundleElementOptionsProductNames]);
         
@@ -393,6 +395,15 @@ export class ProductImporter {
         }
 
         return new Set([...productFileNames, ...newProductFileNames]);
+    }
+
+    private async addRelatedAndBundleElementOptionsPrdNames(productFileNames: Set<String>): Promise<Set<String>> {
+        const containingRelatedProductFileNames = await this.addRelatedProductsNames(productFileNames);
+        const containingRelatedAndBundleElOptsPrdsFileNames = await this.addBundleElementOptionsProductNames(containingRelatedProductFileNames);
+        if(containingRelatedAndBundleElOptsPrdsFileNames.size === productFileNames.size){
+            return containingRelatedAndBundleElOptsPrdsFileNames;
+        }
+        return this.addRelatedAndBundleElementOptionsPrdNames(containingRelatedAndBundleElOptsPrdsFileNames);
     }
     
     private async extractProduct(conn: Connection) {
@@ -407,8 +418,7 @@ export class ProductImporter {
         }
 
         if(this.productList[0] !== '*ALL'){
-            productFileNameList = await this.addRelatedProductsNames(productFileNameList);
-            productFileNameList = await this.addBundleElementOptionsProductNames(productFileNameList);
+            productFileNameList = await this.addRelatedAndBundleElementOptionsPrdNames(productFileNameList);
         }
 
         // Collect all Ids' of products that will be inserted
@@ -695,5 +705,13 @@ export class ProductImporter {
             }
         }
         return pbesToDeactivate;
+    }
+
+    private prepareBundleElementOptionsForSave(bundleElementOptions: Array<any>){
+        return bundleElementOptions.map(option => {
+            const optionWithCorrectProps = {...option};
+            delete optionWithCorrectProps['enxCPQ__Product__r']['enxCPQ__Root_Product__r'];
+            return optionWithCorrectProps;
+        });
     }
 }
