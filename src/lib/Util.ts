@@ -304,30 +304,12 @@ export class Util {
         return this.fillMissingProperties(objs);
     }
 
-    private static isId(prop){
-        return prop === 'enxCPQ__TECH_External_Id__c' || prop ==='enxB2B_TECH_External_Id__c' || prop ==='enxB2B__TECH_External_ID__c' || prop ==='Id';
-    }
-
-    private static fillMissingProperties(objs: any){
-        const prepareObjectTemplate = (object, currentObject) =>{
-            const result={};
-                for(let prop in currentObject){
-                    if(this.isId(prop)){
-                        continue;
-                    }
-                    result[prop] = '';
-                }
-                for(let prop in object){
-                    if(this.isId(prop)){
-                        continue;
-                    }
-                    result[prop] = '';
-                }
-                
-                return result;
-            }
-            
-            const template  = objs.reduce(prepareObjectTemplate, {});
+    private static fillMissingProperties(objs){
+        const template = objs.reduce((template, current) => {
+                    
+                return {...template, 
+                        ...Object.keys(current).reduce((currentTemplate, key) => ({...currentTemplate, [key]: ''}),{})};
+            }, {})
             
             return objs.map(obj=>({...template, ...obj}));
     }
