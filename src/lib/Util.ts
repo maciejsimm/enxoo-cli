@@ -294,12 +294,42 @@ export class Util {
                     let newProp;
                     for(let innerProp in obj[prop]){
                         newProp = prop +'.'+innerProp;
-                        obj[newProp] = obj[prop][innerProp];
+                        obj[newProp] = obj[prop][innerProp] != null ? obj[prop][innerProp] : "";
                     }
                     delete obj[prop];
                 }
            }
         }
+
+        return this.fillMissingProperties(objs);
+    }
+
+    private static isId(prop){
+        return prop === 'enxCPQ__TECH_External_Id__c' || prop ==='enxB2B_TECH_External_Id__c' || prop ==='enxB2B__TECH_External_ID__c' || prop ==='Id';
+    }
+
+    private static fillMissingProperties(objs: any){
+        const prepareObjectTemplate = (object, currentObject) =>{
+            const result={};
+                for(let prop in currentObject){
+                    if(this.isId(prop)){
+                        continue;
+                    }
+                    result[prop] = '';
+                }
+                for(let prop in object){
+                    if(this.isId(prop)){
+                        continue;
+                    }
+                    result[prop] = '';
+                }
+                
+                return result;
+            }
+            
+            const template  = objs.reduce(prepareObjectTemplate, {});
+            
+            return objs.map(obj=>({...template, ...obj}));
     }
 
     public static convertFlatObjectToNestedObject(flatObject: any){
