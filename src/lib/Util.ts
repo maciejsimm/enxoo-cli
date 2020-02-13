@@ -296,7 +296,7 @@ export class Util {
                         newProp = prop +'.'+innerProp;
                         obj[newProp] = obj[prop][innerProp] != null ? obj[prop][innerProp] : "";
                     }
-                        delete obj[prop]
+                    delete obj[prop];
                 }
            }
         }
