@@ -301,17 +301,14 @@ export class Util {
            }
         }
 
-        return this.fillMissingProperties(objs);
+        return this.prepareObjectTemplate(objs);
     }
 
     private static isId(prop){
-        if(prop === 'enxCPQ__TECH_External_Id__c' || prop ==='enxB2B_TECH_External_Id__c' || prop ==='enxB2B__TECH_External_ID__c' || prop ==='Id'){
-            return true;
-        }
-        return false;
+        return prop === 'enxCPQ__TECH_External_Id__c' || prop ==='enxB2B_TECH_External_Id__c' || prop ==='enxB2B__TECH_External_ID__c' || prop ==='Id';
     }
 
-    private static fillMissingProperties(objs: any){
+    private static prepareObjectTemplate(objs: any){
         const doAssignment = (object, currentObject) =>{
             const result={};
                 for(let prop in currentObject){
@@ -330,10 +327,9 @@ export class Util {
                 return result;
             }
             
-            const template  = objs.reduce(doAssignment);
+            const template  = objs.reduce(doAssignment, {});
             
-            return objs.map(obj=>{
-                return {...template, ...obj}});
+            return objs.map(obj=>({...template, ...obj}));
     }
 
     public static convertFlatObjectToNestedObject(flatObject: any){
