@@ -234,9 +234,9 @@ export class Upsert {
 
     private static async upsertBulkObject(conn: Connection, sObjectName: string, data: Object[], techId: string): Promise<string> {
         Util.log('--- bulk importing ' + sObjectName + ': ' + data.length + ' records');
-        Util.sanitizeForBulkImport(data);
+        const dataToImport = Util.sanitizeForBulkImport(data);
         return new Promise<string>((resolve: Function, reject: Function) => {
-            conn.bulk.load(sObjectName, 'upsert', {'extIdField': techId}, data, async (err:any, rets:RecordResult[]) => {
+            conn.bulk.load(sObjectName, 'upsert', {'extIdField': techId}, dataToImport, async (err:any, rets:RecordResult[]) => {
                 if (err) {
                     Util.log(err);
                     reject('error creating ' + sObjectName + ': ' + err);
@@ -247,7 +247,7 @@ export class Upsert {
                                 .map((elem:RecordResult):number =>elem.success ? 1 : 0)
                                 .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
 
-                await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (data.length - successCount)); 
+                await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (dataToImport.length - successCount)); 
                 rets.forEach(async (ret, i) => {
                     if (ret.success === false) {
                         await Util.log('----- ['+ i +'] errors: ' + ret.errors);

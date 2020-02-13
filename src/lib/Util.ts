@@ -301,26 +301,39 @@ export class Util {
            }
         }
 
-        for(let i=0; i<objs.length-1; i++ ){
-            for(let prop in objs[i]){
-                if(prop === 'enxCPQ__TECH_External_Id__c' || prop ==='enxB2B_TECH_External_Id__c' || prop ==='enxB2B__TECH_External_ID__c' || prop ==='Id'){
-                    continue;
-                }
-                if( objs[i][prop] !=null  && objs[i+1][prop] == null ){
-                    objs[i+1][prop] = '';
-                }     
-            }
+        return this.fillMissingProperties(objs);
+    }
+
+    private static isId(prop){
+        if(prop === 'enxCPQ__TECH_External_Id__c' || prop ==='enxB2B_TECH_External_Id__c' || prop ==='enxB2B__TECH_External_ID__c' || prop ==='Id'){
+            return true;
         }
-        for(let i=objs.length-1; i>0; i-- ){
-            for(let prop in objs[i]){
-                if(prop === 'enxCPQ__TECH_External_Id__c' || prop ==='enxB2B_TECH_External_Id__c' || prop ==='enxB2B__TECH_External_ID__c' || prop ==='Id'){
-                    continue;
+        return false;
+    }
+
+    private static fillMissingProperties(objs: any){
+        const doAssignment = (object, currentObject) =>{
+            const result={};
+                for(let prop in currentObject){
+                    if(this.isId(prop)){
+                        continue;
+                    }
+                    result[prop] = '';
                 }
-                if( objs[i][prop] !=null  && objs[i-1][prop] ==null ){
-                    objs[i-1][prop] = '';
-                }    
+                for(let prop in object){
+                    if(this.isId(prop)){
+                        continue;
+                    }
+                    result[prop] = '';
+                }
+                
+                return result;
             }
-        }
+            
+            const template  = objs.reduce(doAssignment);
+            
+            return objs.map(obj=>{
+                return {...template, ...obj}});
     }
 
     public static convertFlatObjectToNestedObject(flatObject: any){
