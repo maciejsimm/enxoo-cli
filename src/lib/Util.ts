@@ -294,11 +294,32 @@ export class Util {
                     let newProp;
                     for(let innerProp in obj[prop]){
                         newProp = prop +'.'+innerProp;
-                        obj[newProp] = obj[prop][innerProp];
+                        obj[newProp] = obj[prop][innerProp] != null ? obj[prop][innerProp] : "";
                     }
-                    delete obj[prop];
+                        delete obj[prop]
                 }
            }
+        }
+
+        for(let i=0; i<objs.length-1; i++ ){
+            for(let prop in objs[i]){
+                if(prop === 'enxCPQ__TECH_External_Id__c' || prop ==='enxB2B_TECH_External_Id__c' || prop ==='enxB2B__TECH_External_ID__c' || prop ==='Id'){
+                    continue;
+                }
+                if( objs[i][prop] !=null  && objs[i+1][prop] == null ){
+                    objs[i+1][prop] = '';
+                }     
+            }
+        }
+        for(let i=objs.length-1; i>0; i-- ){
+            for(let prop in objs[i]){
+                if(prop === 'enxCPQ__TECH_External_Id__c' || prop ==='enxB2B_TECH_External_Id__c' || prop ==='enxB2B__TECH_External_ID__c' || prop ==='Id'){
+                    continue;
+                }
+                if( objs[i][prop] !=null  && objs[i-1][prop] ==null ){
+                    objs[i-1][prop] = '';
+                }    
+            }
         }
     }
 

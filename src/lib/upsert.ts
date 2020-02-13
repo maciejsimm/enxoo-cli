@@ -243,7 +243,7 @@ export class Upsert {
                     return;
                 }
                 
-                let successCount = rets
+                const successCount = rets
                                 .map((elem:RecordResult):number =>elem.success ? 1 : 0)
                                 .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
 
