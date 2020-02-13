@@ -301,15 +301,15 @@ export class Util {
            }
         }
 
-        return this.prepareObjectTemplate(objs);
+        return this.fillMissingProperties(objs);
     }
 
     private static isId(prop){
         return prop === 'enxCPQ__TECH_External_Id__c' || prop ==='enxB2B_TECH_External_Id__c' || prop ==='enxB2B__TECH_External_ID__c' || prop ==='Id';
     }
 
-    private static prepareObjectTemplate(objs: any){
-        const doAssignment = (object, currentObject) =>{
+    private static fillMissingProperties(objs: any){
+        const prepareObjectTemplate = (object, currentObject) =>{
             const result={};
                 for(let prop in currentObject){
                     if(this.isId(prop)){
@@ -327,7 +327,7 @@ export class Util {
                 return result;
             }
             
-            const template  = objs.reduce(doAssignment, {});
+            const template  = objs.reduce(prepareObjectTemplate, {});
             
             return objs.map(obj=>({...template, ...obj}));
     }
