@@ -427,8 +427,10 @@ export class Util {
         for (let prodname of productFileNameList) {
             const prod = await this.readProduct(prodname);
             if(prod['productRelationships']) {
-                secondaryProductsTechIds = [...secondaryProductsTechIds, ...prod['productRelationships']
-                    .map(productRelationship => productRelationship['enxCPQ__Secondary_Product__r']['enxCPQ__TECH_External_Id__c'])];
+                secondaryProductsTechIds = [
+                            ...secondaryProductsTechIds, 
+                            ...prod['productRelationships']
+                            .map(productRelationship => productRelationship['enxCPQ__Secondary_Product__r']['enxCPQ__TECH_External_Id__c'])];
             }
         }
         let allProducts = await this.readAllFiles('/products');
