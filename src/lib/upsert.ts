@@ -27,7 +27,7 @@ export class Upsert {
             if (elem['Product2'] && elem['Product2'] !== null) {
                 let productTechId = elem['Product2']['enxCPQ__TECH_External_Id__c'];
                 let targetProductId = this.idMapping[productTechId];
-                if (targetProductId !== null) {
+                if (targetProductId != null) {
                     elem['Product2Id'] = targetProductId;
                     delete elem['Product2'];
                 }
