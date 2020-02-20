@@ -472,14 +472,14 @@ export class ProductImporter {
 
     private async extractPricebooks(conn: Connection) {
        // reading data for every pricebook
-       let dirNames = await Util.readDirNames('/pricebooks');
+       let dirNames = await Util.readDirNames('/priceBooks');
        let allPbes = [];
    
        for(let dirName of dirNames){
            if(dirName=== 'Standard Price Book' ){continue;}                        // <- to jest hardkod!!!
            let pbes = this.currencies.size > 0
-           ? await Util.readAllFiles('/pricebooks/' + dirName, this.currencies)
-           : await Util.readAllFiles('/pricebooks/' + dirName);
+           ? await Util.readAllFiles('/priceBooks/' + dirName, this.currencies)
+           : await Util.readAllFiles('/priceBooks/' + dirName);
            allPbes.push(pbes);
        }
        Util.showSpinner('---extracting PricebookEntry ids');
@@ -496,8 +496,8 @@ export class ProductImporter {
            }
        }    
        let stdPbes = this.currencies.size > 0 
-       ? await Util.readAllFiles('/pricebooks/Standard Price Book', this.currencies)
-       : await Util.readAllFiles('/pricebooks/Standard Price Book');
+       ? await Util.readAllFiles('/priceBooks/Standard Price Book', this.currencies)
+       : await Util.readAllFiles('/priceBooks/Standard Price Book');
        let sanitizedStdPbes = [];
        stdPbes.forEach(allstdpbe => {!this.isB2B ? Util.removeB2BFields(allstdpbe['stdEntries']) : null,
                                      sanitizedStdPbes = [...sanitizedStdPbes, ...this.extractObjects(allstdpbe['stdEntries'], this.sourceProductIds, 'Product2')]});
@@ -546,7 +546,7 @@ export class ProductImporter {
         let allCharges = await Util.readAllFiles('/charges');
         let allAttributes = await Util.readAllFiles('/attributes');
         let allAttributeSets = await Util.readAllFiles('/attributeSets');
-        let allPricebooks = await Util.readAllFiles('/pricebooks');
+        let allPricebooks = await Util.readAllFiles('/priceBooks');
         const allBundleElements = await Util.readAllFiles('/bundleElements');
 
         let attributeSetsRoot:any = [];
