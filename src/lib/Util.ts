@@ -209,6 +209,43 @@ export class Util {
             });   
         });            
     }
+    public static async getMasterProductsNames(productFileNames: Set<String>) {
+        let techIds = new Set<String>(); 
+
+        await Promise.all([...productFileNames].map(async productFileName => {
+            const product = await this.readProduct(productFileName);
+            const masterProductTechIds = product['attributeValueDependencies'].map(attValDependency=>{
+                const masterProduct = attValDependency['enxCPQ__Master_Product__r'];
+                if(masterProduct !=null && masterProduct['enxCPQ__TECH_External_Id__c'] !=null){
+                    return masterProduct['enxCPQ__TECH_External_Id__c'];
+                }
+            });
+            techIds = new Set<String>([...techIds, ...masterProductTechIds]);
+            return;
+        }));
+
+        const allProducts = await this.readAllFiles('/products');
+        return new Set(allProducts.reduce((acc, product) => {
+            const root = product['root'];
+            if(techIds.has(root['enxCPQ__TECH_External_Id__c']) && root['Name']){
+                return [...acc, root['Name']];
+            }
+            return acc;
+        }, []));
+        
+    }
+
+    public static async getMasterProductsFileNames(productNames: Set<string>) {
+        
+        let masterProductsFileNames = new Set<String>();
+        for (let productName of productNames){
+            const prdNames = await Util.matchFileNames(productName);
+            masterProductsFileNames = new Set([...masterProductsFileNames, ...prdNames]);
+        }
+        
+        return masterProductsFileNames;
+    }
+
     public static async retrieveAllFileName(){
         let allProducts = await this.readAllFiles('/products');
         let allProductsNames = new Set<string>();

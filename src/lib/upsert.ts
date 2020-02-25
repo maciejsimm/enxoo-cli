@@ -263,7 +263,7 @@ export class Upsert {
         Util.sanitizeForInsert(data, sObjectName);
         
         if(data.length===0){
-            Util.log('--- importing ' + sObjectName + ': ' + data.length + ' records');
+            Util.log('--- updating ' + sObjectName + ': ' + data.length + ' records');
             return;
         }
 
