@@ -214,12 +214,13 @@ export class Util {
 
         await Promise.all([...productFileNames].map(async productFileName => {
             const product = await this.readProduct(productFileName);
-            const masterProductTechIds = product['attributeValueDependencies'].map(attValDependency=>{
-                const masterProduct = attValDependency['enxCPQ__Master_Product__r'];
+            const masterProductTechIds = product['attributeValueDependencies'].reduce((acc, dependency)=>{
+                const masterProduct = dependency['enxCPQ__Master_Product__r'];
                 if(masterProduct !=null && masterProduct['enxCPQ__TECH_External_Id__c'] !=null){
-                    return masterProduct['enxCPQ__TECH_External_Id__c'];
+                    return [...acc, masterProduct['enxCPQ__TECH_External_Id__c']];
                 }
-            });
+                return acc;
+            }, []);
             techIds = new Set<String>([...techIds, ...masterProductTechIds]);
             return;
         }));

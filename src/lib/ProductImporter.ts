@@ -450,7 +450,7 @@ export class ProductImporter {
             }
             this.products.push(prod);
         }
- 
+              
         // Building lists of records to upsert on target org
         for (let product of this.products) {
             delete product['root']['Id'];

@@ -366,11 +366,6 @@ export class ProductExporter {
                 return acc;
             },[]);
 
-            // attributeValues.filter(attributeValue => attributeValue['enxCPQ__Attribute__r'] 
-            //                                          && attributeValue['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] === attribute['enxCPQ__TECH_External_Id__c'])
-            //                 .filter(attributeValue =.)
-            //               // .forEach(attributeValue=>{attributeToSave.values.push(attributeValue)});     
-
             Util.writeFile('/attributes/' + Util.sanitizeFileName(attribute['Name']) + '_' + attribute['enxCPQ__TECH_External_Id__c']+ '.json', attributeToSave);
         })};
     }
