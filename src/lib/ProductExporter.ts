@@ -69,13 +69,7 @@ export class ProductExporter {
         }
         Util.setDir(this.dir);
         await Queries.retrieveQueryJson(this.dir);
-        if(this.productList[0] !== '*ALL'){
-            if(this.isRelated){
-                await this.handleRetrievingRelatedAndBundleOptionProducts(conn, this.productList);
-            } else{
-                await this.retrieveBundleElementOptionsProducts(conn, this.productList);
-            }
-        } 
+        await this.handleAtributeValueDependencies(conn, this.productList);
         await this.retrievePriceBooks(conn, this.productList);
         Util.createAllDirs(this.isB2B, this.dir);
         await this.retrieveProduct(conn, this.productList);
@@ -191,6 +185,49 @@ export class ProductExporter {
    
            Util.hideSpinner('products export done'); 
       }
+    }
+
+    private async handleAtributeValueDependencies(conn : Connection, productList: Set<string>){
+        const productNamesBeforeRetrieve: Set<string> = new Set([...this.productList]);
+        if(productList[0] !== '*ALL'){
+
+            if(this.isRelated){
+                await this.handleRetrievingRelatedAndBundleOptionProducts(conn, productList);
+            } else{
+                await this.retrieveBundleElementOptionsProducts(conn, productList);
+            }
+
+            const masterProductsDependencies = await Queries.queryMasterProductsOfAttributeValueDependencies(conn, this.productList);
+            if(masterProductsDependencies.length >0){
+
+                const masterProductsNames = new Set(masterProductsDependencies.reduce((acc, dependency) => {
+                    const masterProduct = dependency['enxCPQ__Master_Product__r'];
+                    if(masterProduct !=null && masterProduct['Name'] !=null){
+                        return [...acc, masterProduct['Name']];
+                    }
+                    return acc;
+                }, []));
+
+                const dependentAttrTechIds = new Set(masterProductsDependencies.reduce((acc, dependency) => {
+                    const dependentAttrTechId = dependency['enxCPQ__Dependent_Attribute__r'];
+                    if(dependentAttrTechId !=null && dependentAttrTechId['enxCPQ__TECH_External_Id__c'] !=null){
+                        return [...acc, dependentAttrTechId['enxCPQ__TECH_External_Id__c']];
+                    }
+                    return acc;
+                }, []));
+
+                if(dependentAttrTechIds.size > 0){
+                    this.attributeIds = new Set ([...this.attributeIds, ...dependentAttrTechIds]);
+                }
+                if(masterProductsNames.size > 0){
+                    this.productList = new Set ([...this.productList, ...masterProductsNames]);
+                }
+            }
+            const newProductNames = Util.getSetsDifference(this.productList, productNamesBeforeRetrieve);
+            if(newProductNames.size > 0 ){
+                this.handleAtributeValueDependencies(conn, newProductNames);
+            }
+        }
     }
 
     private extractIds(product:any) {
@@ -317,10 +354,17 @@ export class ProductExporter {
             let attributeToSave:any = {};
             attributeToSave.root = attribute;
             attributeToSave.values = new Array<any>();
+            attributeToSave.values= attributeValues.reduce((acc, attributeValue) => {
+                const rootAtribute = attributeValue['enxCPQ__Attribute__r'];
+                const exclusive = attributeValue ['enxCPQ__Exclusive_for_Product__r'];
+                const rootAtributeMatch = rootAtribute != null && rootAtribute['enxCPQ__TECH_External_Id__c'] === attribute['enxCPQ__TECH_External_Id__c'];
+                const isExclusiveForRightProduct = exclusive ===  null || this.productList.has(exclusive['enxCPQ__TECH_External_Id__c']);
+                if(rootAtributeMatch && isExclusiveForRightProduct){
+                    return [...acc, attributeValue];
+                }
 
-            attributeValues.filter(attributeValue => attributeValue['enxCPQ__Attribute__r'] 
-                                                     && attributeValue['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] === attribute['enxCPQ__TECH_External_Id__c'])
-                           .forEach(attributeValue=>{attributeToSave.values.push(attributeValue)});     
+                return acc;
+            },[]);
 
             Util.writeFile('/attributes/' + Util.sanitizeFileName(attribute['Name']) + '_' + attribute['enxCPQ__TECH_External_Id__c']+ '.json', attributeToSave);
         })};

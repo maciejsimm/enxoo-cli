@@ -1879,6 +1879,45 @@ public static async bulkQueryAttributeValueDependencies(conn: Connection, produc
             });
     })
 }
+
+public static async queryMasterProductsOfAttributeValueDependencies(conn: Connection, productList: Set<String>): Promise<String[]> {
+    const queriedObjectsLabel: string = 'Master Products Of Attribute Value Dependencies';
+    Util.log('--- exporting ' + queriedObjectsLabel);
+    if(productList.size >90){
+        let paramsObject: Query={
+            "queryBegining": "SELECT enxCPQ__Master_Product__r.Name, enxCPQ__Dependent_Attribute__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeValueDependency__c WHERE enxCPQ__Product__r.Name IN (",
+            "queryConditions": ") ORDER BY enxCPQ__TECH_External_Id__c",
+            "objectsList": productList,
+            "sobjectName": "Master Products Of Attribute Value Dependencies"
+        }
+        return await Util.createQueryPromiseArray(paramsObject, conn);
+    }
+    const query : string = "SELECT enxCPQ__Master_Product__r.Name, enxCPQ__Dependent_Attribute__r.enxCPQ__TECH_External_Id__c FROM enxCPQ__AttributeValueDependency__c WHERE enxCPQ__Product__r.Name IN (" 
+        + Util.setToIdString(productList) + ") ORDER BY enxCPQ__TECH_External_Id__c";
+    return new Promise<String[]>((resolve: Function, reject: Function) => {
+
+        conn.query(query, 
+        null,
+        (err, res) => {
+            if (err) reject('Failed to retrieve ' + queriedObjectsLabel + ': ' +'. Error: ' + err);
+            if (res.records.length < 200){
+                Util.log("--- " + queriedObjectsLabel + ": " + res.records.length);
+                resolve(res.records);
+            }
+            else{
+                resolve(["useBulkApi"]);
+            }
+        });
+    }).then(async result =>{
+        if(result[0] === 'useBulkApi'){
+            return await this.bulkQuery(conn, query, queriedObjectsLabel);
+        }else{
+            return result;
+        }
+  }
+ );
+}
+
 public static async queryAttributeRules(conn: Connection, productList: Set<String>): Promise<String[]> {
         Util.log('--- exporting attribute rules ');
         if(productList.size >90){
@@ -2048,27 +2087,28 @@ public static async bulkQueryCategories(conn: Connection, categoryIds: Set<Strin
     }
 
 public static async queryAttributeValues(conn: Connection, attributeIds: Set<String>): Promise<String[]> {
-        Util.log('--- exporting product attribute values');
+        Util.log('--- exporting attribute values');
         if(attributeIds.size === 0){
             return[];
         }
         if(attributeIds.size >90){
+
             let paramsObject: Query={     
-                "queryBegining": "SELECT Id, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery+" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (",
+                "queryBegining": "SELECT Id, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery+" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (",
                 "queryConditions": ") ORDER BY enxCPQ__Order__c",
                 "objectsList": attributeIds,
-                "sobjectName": "product attribute values"
+                "sobjectName": "attribute values"
             }
             return await Util.createQueryPromiseArray(paramsObject, conn);
         }
         return new Promise<String[]>((resolve: Function, reject: Function) => {
 
-            conn.query("SELECT Id, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery+" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c", 
+            conn.query("SELECT Id, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery+" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c", 
             null,
             (err, res) => {
-                if (err) reject('Failed to retrieve product attribute values: ' + attributeIds + '. Error: ' + err);
+                if (err) reject('Failed to retrieve attribute values: ' + attributeIds + '. Error: ' + err);
                 if (res.records.length < 200){
-                    Util.log("--- product attribute values: " + res.records.length);
+                    Util.log("--- attribute values: " + res.records.length);
                     resolve(res.records);
                 }
                 else{
@@ -2086,7 +2126,7 @@ public static async queryAttributeValues(conn: Connection, attributeIds: Set<Str
 }
 public static async bulkQueryAttributeValues(conn: Connection, attributeIds: Set<String>): Promise<String[]> {
         Util.showSpinner('---bulk exporting product attribute values');
-        let query = "SELECT Id, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery+" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Global__c = true AND enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c";
+        let query = "SELECT Id, enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, "+ this.attrValuesQuery+" FROM enxCPQ__AttributeValue__c WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN (" + Util.setToIdString(attributeIds) + ") ORDER BY enxCPQ__Order__c";
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
             let records = []; 
             conn.bulk.query(query)
@@ -2094,10 +2134,10 @@ public static async bulkQueryAttributeValues(conn: Connection, attributeIds: Set
                     records.push(rec);
                 })
                 .on('error', (err) => { 
-                    reject('error retrieving product attribute values' + err);  
+                    reject('error retrieving attribute values' + err);  
                 })
                 .on('end', (info) => { 
-                    Util.hideSpinner('product attribute values export done. Retrieved: '+ records.length);
+                    Util.hideSpinner('attribute values export done. Retrieved: '+ records.length);
                     Util.sanitizeResult(records);
                     resolve(records); 
                 });

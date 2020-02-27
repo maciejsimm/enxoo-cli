@@ -406,20 +406,34 @@ export class ProductImporter {
         return this.addRelatedAndBundleElementOptionsPrdNames(containingRelatedAndBundleElOptsPrdsFileNames);
     }
     
-    private async extractProduct(conn: Connection) {
-        let productFileNameList= new Set<String>();
-        // We need to query ID's of records in target org in order to delete or match ID's
-        let prdAttrsTarget = await Queries.queryProductAttributeIds(conn, this.productList);                 // for delete                                
-        prdAttrsTarget.forEach(prdAttr => {this.productAttributesIds.push(prdAttr['Id'])});
+    private async addProductsFromDependencies(productFileNames: Set<String>) {
 
+        const relatedAndBundleElementOptionsPrdNames =  await this.addRelatedAndBundleElementOptionsPrdNames(productFileNames);
+        const masterProductNames = await Util.getMasterProductsNames(relatedAndBundleElementOptionsPrdNames);
+
+        this.productList = new Set([...this.productList, ...masterProductNames]);
+        const result = new Set([...relatedAndBundleElementOptionsPrdNames, ...await Util.getMasterProductsFileNames(masterProductNames)]);
+
+        if(productFileNames.size === result.size){
+            return result;
+        }
+        return this.addProductsFromDependencies(result)
+    }
+
+    private async extractProduct(conn: Connection) {
+        
+        let productFileNameList= new Set<String>();
         for (let productName of this.productList){
             let prdNames = await Util.matchFileNames(productName);
             productFileNameList = new Set([...productFileNameList, ...prdNames]);
         }
-
+        
         if(this.productList[0] !== '*ALL'){
-            productFileNameList = await this.addRelatedAndBundleElementOptionsPrdNames(productFileNameList);
+            productFileNameList = await this.addProductsFromDependencies(productFileNameList);
         }
+        // We need to query ID's of records in target org in order to delete or match ID's
+        const prdAttrsTarget = await Queries.queryProductAttributeIds(conn, this.productList);  
+        this.productAttributesIds = prdAttrsTarget.map(prdAttr => prdAttr['Id']);               // for delete                                
 
         // Collect all Ids' of products that will be inserted
         for (let prodname of productFileNameList) {
@@ -436,7 +450,7 @@ export class ProductImporter {
             }
             this.products.push(prod);
         }
- 
+              
         // Building lists of records to upsert on target org
         for (let product of this.products) {
             delete product['root']['Id'];

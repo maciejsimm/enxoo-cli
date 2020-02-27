@@ -209,6 +209,43 @@ export class Util {
             });   
         });            
     }
+    public static async getMasterProductsNames(productFileNames: Set<String>) {
+        let techIds : Array<String>= []; 
+
+        await Promise.all([...productFileNames].map(async productFileName => {
+            const product = await this.readProduct(productFileName);
+            const masterProductTechIds = product['attributeValueDependencies'].reduce((acc, dependency)=>{
+                const masterProduct = dependency['enxCPQ__Master_Product__r'];
+                if(masterProduct !=null && masterProduct['enxCPQ__TECH_External_Id__c'] !=null){
+                    return [...acc, masterProduct['enxCPQ__TECH_External_Id__c']];
+                }
+                return acc;
+            }, []);
+            techIds = [...techIds, ...masterProductTechIds];
+            return;
+        }));
+
+        const allProducts = await this.readAllFiles('/products');
+        return allProducts.reduce((acc, product) => {
+            const root = product['root'];
+            if(techIds.includes(root['enxCPQ__TECH_External_Id__c']) && root['Name']){
+                return [...acc, root['Name']];
+            }
+            return acc;
+        }, []);
+        
+    }
+
+    public static async getMasterProductsFileNames(productNames: Array<string>) {
+        let masterProductsFileNames : Array<String>= []; 
+        await Promise.all([...productNames].map(async productName => {
+            const productFileNames = await Util.matchFileNames(productName);
+            masterProductsFileNames = [...masterProductsFileNames, ...productFileNames];
+            return;
+        }))
+        return masterProductsFileNames;
+    }
+
     public static async retrieveAllFileName(){
         let allProducts = await this.readAllFiles('/products');
         let allProductsNames = new Set<string>();
