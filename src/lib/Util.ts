@@ -210,7 +210,7 @@ export class Util {
         });            
     }
     public static async getMasterProductsNames(productFileNames: Set<String>) {
-        let techIds = new Set<String>(); 
+        let techIds : Array<String>= []; 
 
         await Promise.all([...productFileNames].map(async productFileName => {
             const product = await this.readProduct(productFileName);
@@ -221,29 +221,28 @@ export class Util {
                 }
                 return acc;
             }, []);
-            techIds = new Set<String>([...techIds, ...masterProductTechIds]);
+            techIds = [...techIds, ...masterProductTechIds];
             return;
         }));
 
         const allProducts = await this.readAllFiles('/products');
-        return new Set(allProducts.reduce((acc, product) => {
+        return allProducts.reduce((acc, product) => {
             const root = product['root'];
-            if(techIds.has(root['enxCPQ__TECH_External_Id__c']) && root['Name']){
+            if(techIds.includes(root['enxCPQ__TECH_External_Id__c']) && root['Name']){
                 return [...acc, root['Name']];
             }
             return acc;
-        }, []));
+        }, []);
         
     }
 
-    public static async getMasterProductsFileNames(productNames: Set<string>) {
-        
-        let masterProductsFileNames = new Set<String>();
-        for (let productName of productNames){
-            const prdNames = await Util.matchFileNames(productName);
-            masterProductsFileNames = new Set([...masterProductsFileNames, ...prdNames]);
-        }
-        
+    public static async getMasterProductsFileNames(productNames: Array<string>) {
+        let masterProductsFileNames : Array<String>= []; 
+        await Promise.all([...productNames].map(async productName => {
+            const productFileNames = await Util.matchFileNames(productName);
+            masterProductsFileNames = [...masterProductsFileNames, ...productFileNames];
+            return;
+        }))
         return masterProductsFileNames;
     }
 
