@@ -1,6 +1,9 @@
 export interface Query{
-    queryBegining: string;
-    queryConditions: string;
-    objectsList: Set<String>;
-    sobjectName: string;
+    sObjectName: string;
+    countQuery?: string;
+    finalQuery?: String;
+    numberOfRecords?: Number;
+    queryBegining?: string;
+    queryConditions?: string;
+    objectsList?: Set<String>;
 }

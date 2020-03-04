@@ -20,9 +20,6 @@
 // pricebookEntries
 // provisioningTasks
 // provisioningTaskAssignments
-// priceRules
-// priceRuleConditions
-// priceRuleActions
 
 import { Util } from './Util';
 import { Connection } from 'jsforce';
