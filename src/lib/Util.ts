@@ -408,7 +408,6 @@ public static async countResults(conn: Connection, sObjectName: string, query: s
             const finalQuery = query.finalQuery + queryEnding;
             const queryResult = await this.createBulkQuery(connection, finalQuery, query.sObjectName);
             result = [...result, ...queryResult];
-            // debugger
             lastSfId = queryResult[queryResult.length -1]['Id'];
             queryEnding = " AND Id > " +"'"+lastSfId +"'"+ " ORDER BY ID LIMIT 40000";
         }
