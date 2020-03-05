@@ -49,7 +49,6 @@ export class Upsert {
     }
 
     public static mapPricebooks  (sourcePricebooks:any, targetPricebooks:any){
-    debugger
         Util.log("--- mapping pricebooks");
         for (let i = 0 ; i < sourcePricebooks.length; i++) {
             for (let j = 0; j < targetPricebooks.length; j++) {
