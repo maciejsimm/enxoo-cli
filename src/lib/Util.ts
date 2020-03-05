@@ -130,12 +130,12 @@ export class Util {
         }
     }
 
-    public static sanitizeForInsert (arr:any, sObjectName:string)  {
+    public static sanitizeForInsertAndUpdate (arr:any, sObjectName:string, isInsert: boolean)  {
       
         for (let i = 0; i < arr.length; i++) {
             for (let prop in arr[i]) {
                 if (prop === 'attributes') delete arr[i][prop]; 
-                if (prop === 'Id') delete arr[i][prop];   
+                if (prop === 'Id' && isInsert) delete arr[i][prop];   
                 if ((prop ==='Pricebook2' || prop ==='Product2') && arr[i][prop] == null){
                     arr[i][prop] ={}; 
                     arr[i][prop]['enxCPQ__TECH_External_Id__c'] = null;
