@@ -452,11 +452,11 @@ public static async countResults(conn: Connection, sObjectName: string, query: s
        });
      }
 
-    private static async constructPromiseArray(connection : Connection, query : Query, listChunkes : String[][]){
-        return listChunkes.map(async list =>{
-            const set = new Set(list);
-            const finalQuery = query.queryBegining +  Util.setToIdString(set) + query.queryConditions;
-            const finalCountQuery : string = query.countQuery +  Util.setToIdString(set) + query.queryConditions;
+    private static async constructPromiseArray(connection : Connection, query : Query, conditionParametersChunkes : String[][]){
+        return conditionParametersChunkes.map(async chunk =>{
+            const chunkSet = new Set(chunk);
+            const finalQuery = query.queryBegining +  Util.setToIdString(chunkSet) + query.queryConditions;
+            const finalCountQuery : string = query.countQuery +  Util.setToIdString(chunkSet) + query.queryConditions;
             const numberOfRecords = await this.countResults(connection, query.sObjectName, finalCountQuery);
             if(numberOfRecords > 1){
                 const queryObject : Query = {
