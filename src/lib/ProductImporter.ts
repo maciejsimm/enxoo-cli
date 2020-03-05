@@ -154,7 +154,8 @@ export class ProductImporter {
           await Upsert.upsertObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributes);
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeValue__c', this.prdAttributeValues);
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeValue__c', this.attributeValues);
-          let pricebooks = this.retrieveNonStandardPricebooks();
+          let pricebooks = this.retrievePricebooksWithNonEmptyTechId();
+          debugger;
           await Upsert.upsertObject(conn, 'Pricebook2', pricebooks);
           this.targetPricebooksIds = await this.retrieveTargetPricebookIds(conn);
           Upsert.mapPricebooks(this.sourcePricebooksIds,  this.targetPricebooksIds);
@@ -192,8 +193,8 @@ export class ProductImporter {
       }     
 }
 
-    private retrieveNonStandardPricebooks(){
-        return this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
+    private retrievePricebooksWithNonEmptyTechId(){
+        return this.pricebooks.filter(pricebook => pricebook['enxCPQ__TECH_External_Id__c'] !=null);
     }
 
     private async retrieveTargerProductIds(conn: Connection){
