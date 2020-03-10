@@ -154,7 +154,6 @@ export class ProductImporter {
           await Upsert.upsertObject(conn, 'enxCPQ__ProductAttribute__c', this.productAttributes);
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeValue__c', this.prdAttributeValues);
           await Upsert.upsertObject(conn, 'enxCPQ__AttributeValue__c', this.attributeValues);
-          debugger;
           let pricebooks = this.retrieveNonStandardPricebooks();
           await Upsert.upsertObject(conn, 'Pricebook2', pricebooks);
           this.targetPricebooksIds = await this.retrieveTargetPricebookIds(conn);

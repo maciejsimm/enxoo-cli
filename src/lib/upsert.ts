@@ -110,7 +110,6 @@ export class Upsert {
     public static async insertObject(conn: Connection, sObjectName: string, data: Object[]): Promise<string>{ 
         Util.sanitizeForInsertAndUpdate(data, sObjectName, true);
         if(sObjectName ==='PricebookEntry'){
-            debugger;
             this.fixIds(data);
         }
         if(data.length > 80 && data.length < 9001){
