@@ -6,6 +6,7 @@ import * as fsExtra from 'fs-extra'
 import { Connection } from 'jsforce';
 import * as _ from 'lodash';
 import {Query} from  '../entity/queryEntity';
+
 export class Util {
 
     public static OBJECT_MISSING_TECH_ID_ERROR: string = 'Object is missing TECH_External_Id__c field value';
@@ -114,6 +115,9 @@ export class Util {
                     delete obj[prop];
                     continue;
                 }
+                if (prop === 'Id') {
+                    delete obj[prop];
+                }
 
                 if (prop.indexOf('__r') !== -1 && obj[prop] == null) delete obj[prop];
 
@@ -130,7 +134,8 @@ export class Util {
       
         for (let i = 0; i < arr.length; i++) {
             for (let prop in arr[i]) {
-                if (prop === 'attributes') delete arr[i][prop];    
+                if (prop === 'attributes') delete arr[i][prop]; 
+                if (prop === 'Id') delete arr[i][prop];   
                 if ((prop ==='Pricebook2' || prop ==='Product2') && arr[i][prop] == null){
                     arr[i][prop] ={}; 
                     arr[i][prop]['enxCPQ__TECH_External_Id__c'] = null;
@@ -380,10 +385,39 @@ export class Util {
         });
     });
 }
+public static async countResults(conn: Connection, sObjectName: string, query: string): Promise<Number> {
+    Util.log('--- counting records for: ' + sObjectName);
+    return new Promise<Number>((resolve: Function, reject: Function) => {
+    conn.query(query, 
+    null,
+    (err, res) => {
+        if (err) reject('error retrieving record types: ' + err);
+        Util.log("--- records: " + res.records[0]['expr0']);
+        resolve(res.records[0]['expr0']);
+        });
+    })
+}
+
+    public static async createQueryPromiseArrayBasedOnSfIds(query: Query, connection: Connection): Promise<String[]>{
+        Util.log('---Bulk exporting ' + query.sObjectName +' in promise Array- this might take a while');
+        let result : String[] = [];
+        let lastSfId : String;
+        let queryEnding = " ORDER BY ID LIMIT 40000";
+        
+        while(result.length < query.numberOfRecords){
+            const finalQuery = query.finalQuery + queryEnding;
+            const queryResult = await this.createBulkQuery(connection, finalQuery, query.sObjectName);
+            result = [...result, ...queryResult];
+            lastSfId = queryResult[queryResult.length -1]['Id'];
+            queryEnding = " AND Id > " +"'"+lastSfId +"'"+ " ORDER BY ID LIMIT 40000";
+        }
+        
+        return Promise.resolve(result);
+    }
 
     public static async createQueryPromiseArray(query: Query, connection: Connection, secondaryQuery?: Query): Promise<String[]>{
-        Util.log('---Bulk exporting ' + query.sobjectName +' in promise Array- this might take a while');
-        let firstPromises:Array<Promise<String[]>> = new Array<Promise<String[]>>();
+        Util.log('---Bulk exporting ' + query.sObjectName +' in promise Array- this might take a while');
+     
         let firstListArray = Array.from(query.objectsList.values());
         let firstListChunkes = _.chunk(firstListArray, 90);
 
@@ -393,11 +427,7 @@ export class Util {
             secondListArray = Array.from(secondaryQuery.objectsList.values());
             secondListChunkes = _.chunk(secondListArray, 90);
         }
-       firstPromises = firstListChunkes.map(fList =>{
-            let fSet = new Set(fList);
-            let finalQuery = query.queryBegining +  Util.setToIdString(fSet) + query.queryConditions;
-            return this.createBulkQuery(connection, finalQuery, query.sobjectName);
-       });
+        const firstPromises:Array<Promise<String[]>> = await this.constructPromiseArray(connection, query, firstListChunkes);
 
         return new  Promise<String[]>(async(resolve: Function, reject: Function) => {
             await Promise.all(firstPromises).then(async firstResults =>{
@@ -406,20 +436,15 @@ export class Util {
                     records= [...records,...firstResult];
                 } 
                 if(!secondaryQuery){
-                    Util.log('exported ' +Array.from(new Set(records)).length +' records of ' +query.sobjectName)
+                    Util.log('exported ' +Array.from(new Set(records)).length +' records of ' +query.sObjectName)
                     resolve (Array.from(new Set(records)));
                 }else{
-                    let secondPromises:Array<Promise<String[]>> = new Array<Promise<String[]>>();
-                    secondPromises = secondListChunkes.map(sList =>{
-                        let sSet = new Set(sList);
-                        let finalQuery = query.queryBegining +  Util.setToIdString(sSet) + query.queryConditions;
-                        return this.createBulkQuery(connection, finalQuery, secondaryQuery.sobjectName)
-                   });
+                    const secondPromises:Array<Promise<String[]>> = await this.constructPromiseArray(connection, secondaryQuery, secondListChunkes);
                     await Promise.all(secondPromises).then(async secondResults =>{
                         for(let secondResult of secondResults){
                             records= [...records,...secondResult];
                         } 
-                        Util.log('exported ' +Array.from(new Set(records)).length +' records of ' +secondaryQuery.sobjectName)
+                        Util.log('exported ' +Array.from(new Set(records)).length +' records of ' +secondaryQuery.sObjectName)
                         resolve (Array.from(new Set(records)));
                  });
               }
@@ -427,7 +452,26 @@ export class Util {
        });
      }
 
-    public static async createBulkQuery(conn:Connection, query:string, sobjectName: string): Promise<String[]>{
+    private static async constructPromiseArray(connection : Connection, query : Query, conditionParametersChunkes : String[][]){
+        return conditionParametersChunkes.map(async chunk =>{
+            const chunkSet = new Set(chunk);
+            const finalQuery = query.queryBegining +  Util.setToIdString(chunkSet) + query.queryConditions;
+            const finalCountQuery : string = query.countQuery +  Util.setToIdString(chunkSet) + query.queryConditions;
+            const numberOfRecords = await this.countResults(connection, query.sObjectName, finalCountQuery);
+            if(numberOfRecords > 1){
+                const queryObject : Query = {
+                    "sObjectName": query.sObjectName,
+                    "finalQuery": finalQuery,
+                    "numberOfRecords" : numberOfRecords
+                }
+                return this.createQueryPromiseArrayBasedOnSfIds(queryObject, connection);
+            }
+            return this.createBulkQuery(connection, finalQuery, query.sObjectName);
+        });
+    }
+
+    public static async createBulkQuery(conn:Connection, query:string, sobjectName: String): Promise<String[]>{
+        Util.showSpinner('---bulk exporting ' + sobjectName);
         return new  Promise<String[]>((resolve: Function, reject: Function) => {
         let records = []; 
        
@@ -577,5 +621,14 @@ export class Util {
         return twoDimensionalArray.reduce((resultArray,current2DArrayElement) => (
             [...resultArray, ...current2DArrayElement]
         ), []);
+    }
+
+    public static async useQueryPromiseArray(query: String, numberOfRecords: Number, conn: Connection, sobjectName: string):Promise<String[]>{
+        const queryObject: Query = {
+            "finalQuery": query,
+            "numberOfRecords": numberOfRecords,
+            "sObjectName": sobjectName,
+        }
+        return await this.createQueryPromiseArrayBasedOnSfIds(queryObject, conn);
     }
 }

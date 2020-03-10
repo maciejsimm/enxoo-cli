@@ -47,7 +47,6 @@ export default class Org extends SfdxCommand {
 
     const exporter = new ProductExporter(products, b2b, dir, related, currencies);
     await exporter.all(conn);
-
     this.ux.log('*** Finished ***');
     
     return null;
