@@ -193,7 +193,7 @@ export class ProductImporter {
 }
 
     private retrieveNonStandardPricebooks(){
-        return this.pricebooks.filter(pricebook => pricebook['Name'] !== 'Standard Price Book');
+        return this.pricebooks.filter(pricebook => pricebook['Name'] !=='Standard Price Book');
     }
 
     private async retrieveTargerProductIds(conn: Connection){

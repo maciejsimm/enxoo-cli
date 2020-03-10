@@ -49,7 +49,6 @@ export class Upsert {
     }
 
     public static mapPricebooks  (sourcePricebooks:any, targetPricebooks:any){
-    
         Util.log("--- mapping pricebooks");
         for (let i = 0 ; i < sourcePricebooks.length; i++) {
             for (let j = 0; j < targetPricebooks.length; j++) {
@@ -58,7 +57,11 @@ export class Upsert {
                     break;
                 }
                 if (sourcePricebooks[i].IsStandard && targetPricebooks[j].IsStandard) {
-                    this.idMapping['std'] = targetPricebooks[j].Id;
+                    if(sourcePricebooks[i].techId !=null){
+                        this.idMapping[sourcePricebooks[i].techId] = targetPricebooks[j].Id;
+                    }else{
+                        this.idMapping['std'] = targetPricebooks[j].Id;
+                    }
                     break;
                 }
             }
@@ -105,7 +108,7 @@ export class Upsert {
     }
 
     public static async insertObject(conn: Connection, sObjectName: string, data: Object[]): Promise<string>{ 
-        Util.sanitizeForInsert(data, sObjectName);
+        Util.sanitizeForInsertAndUpdate(data, sObjectName, true);
         if(sObjectName ==='PricebookEntry'){
             this.fixIds(data);
         }
@@ -260,7 +263,7 @@ export class Upsert {
     }
 
     public static async updateObject(conn: Connection, sObjectName: string, data: Object[]): Promise<string> {
-        Util.sanitizeForInsert(data, sObjectName);
+        Util.sanitizeForInsertAndUpdate(data, sObjectName, false);
         
         if(data.length===0){
             Util.log('--- updating ' + sObjectName + ': ' + data.length + ' records');
