@@ -62,6 +62,13 @@ export class Util {
             })
     }
 
+    public static warn(msg: any) {
+        UX.create()
+            .then((ux) => {
+                ux.warn(msg);
+            })
+    }
+
     public static setToIdString(aSet: Set<any>):String {
         let result = '';
         if (aSet.size === 0 || aSet === null || aSet === undefined) return "''";
@@ -260,6 +267,7 @@ export class Util {
         return allProductsNames;
     }
 
+    // TO DEL
     public static async writeFile(path:string, dataToSanitaze:any){
         await fs.writeFile('./' + this.dir + path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {
             if(err) {
@@ -267,13 +275,15 @@ export class Util {
             }
         });
     }
-
+    
+    // TO DEL
     public static createDir(dir:string){
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir, { recursive: true });
         }
     }
-
+    
+    // TO DEL
     public static createAllDirs(isB2B: boolean, dir: string){
         const dirs = ['/products', '/categories', '/attributes', 
                      '/attributeSets', '/priceBooks', '/charges', '/bundleElements'];

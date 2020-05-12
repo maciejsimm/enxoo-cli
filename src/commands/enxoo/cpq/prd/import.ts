@@ -1,8 +1,6 @@
 import {core, flags, SfdxCommand} from '@salesforce/command';
 import {AnyJson} from '@salesforce/ts-types';
-import { ProductImporter } from '../../../../lib/ProductImporter';
-import {getJsforceConnection } from '../../../../lib/jsforceHelper';
-import { Connection } from 'jsforce';
+import { ProductImport } from '../../../../lib/product/ProductImport';
 
 // Initialize Messages with the current plugin directory
 core.Messages.importMessagesDirectory(__dirname);
@@ -35,19 +33,18 @@ export default class Org extends SfdxCommand {
 
   public async run(): Promise<AnyJson> {
 
-    // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
-    let conn: Connection;
-    conn = await getJsforceConnection(this.org.getConnection().getConnectionOptions());
-    let userName = this.org.getUsername();
-
-    conn.bulk.pollInterval = 5000; // 5 sec
-    conn.bulk.pollTimeout = 6000000; //6000 sec
+    const conn = this.org.getConnection();
+    conn['maxRequest'] = 5000;
+    
     const [products, b2b, dir, currencies] = [this.flags.products, this.flags.b2b, this.flags.dir, this.flags.currencies]
 
     this.ux.log('*** Begin Importing ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
 
-    const importer = new ProductImporter(products, b2b, dir, userName, currencies);
-    await importer.all(conn);
+    const importer = new ProductImport(dir, conn);
+    await importer.import(products, b2b, currencies);
+
+    // const importer = new ProductImporter(products, b2b, dir, userName, currencies);
+    // await importer.all(conn);
 
     this.ux.log('*** Finished ***');
     

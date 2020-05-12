@@ -53,6 +53,8 @@ export class ProductExporter {
     }
 
     public async all(conn: Connection) {
+        console.log('Im in the all expoert Finished');
+        debugger;
         if(this.productList[0] === '*ALL'){
             this.productList = new Set<string>();
             let productList = await Queries.queryAllProductNames(conn);
@@ -60,43 +62,37 @@ export class ProductExporter {
                 this.productList.add(product['Name']);
             }
         }
+        console.log('productList', this.productList);
         Queries.setIsRelated(this.isRelated);
         if(this.currencies){
             Queries.setCurrencies(this.currencies);
         }
         Util.setDir(this.dir);
         await Queries.retrieveQueryJson(this.dir);
+        Util.createAllDirs(this.isB2B, this.dir);
         await this.handleAtributeValueDependencies(conn, this.productList);
         await this.retrievePriceBooks(conn, this.productList);
-        Util.createAllDirs(this.isB2B, this.dir);
         await this.retrieveProduct(conn, this.productList);
+        console.log('retrieveProduct Finished');
         await this.retrieveCharges(conn, this.productList);
+        console.log('retrieveCharges Finished');
         await this.retrieveBundleElements(conn, this.productList);
+        console.log('retrieveBundleElements Finished');
     
         if(this.isB2B){
            await this.retrieveProvisioningPlans(conn);
+           console.log('retrieveProvisioningPlans Finished');
            await this.retrieveProvisioningTasks(conn);
+           console.log('retrieveProvisioningTasks Finished');
         }
-        await this.retrieveCategories(conn);
-        await this.retrieveAttributes(conn);
         await this.retrieveAttributeSets(conn);
+        console.log('retrieveAttributeSets Finished');
     } 
 
     private async retrieveProduct(conn: Connection, productList: Set<string>) {
-        Util.showSpinner('products export');
-        let productDefinitions = await Queries.queryProduct(conn, productList);
-        this.checkTechIds(productDefinitions);
 
-        let options = await Queries.queryProductOptions(conn, productList);
-        this.checkTechIds(options);
 
-        let chargesIds = await Queries.queryProductChargesIds(conn, productList);
         let bundleElementsIds = await Queries.queryBundleElementsIds(conn, productList);
-        let productAttributes = await Queries.queryProductAttributes(conn, productList);
-        this.checkTechIds(productAttributes);
-
-        let attributeValues = await Queries.queryProductAttributeValues(conn, productList);
-        this.checkTechIds(attributeValues);
 
         let attributeDefaultValues = await Queries.queryAttributeDefaultValues(conn, productList);
         this.checkTechIds(attributeDefaultValues);
@@ -447,6 +443,8 @@ export class ProductExporter {
 
         if(priceBooks){
         priceBooks.forEach(priceBook => {
+
+            console.log('priceBook', priceBook['Name']);
 
             const priceBookTechExtId = priceBook['enxCPQ__TECH_External_Id__c'];
             Util.createDir('./' + this.dir +'/priceBooks/' + Util.sanitizeFileName(priceBook['Name']));

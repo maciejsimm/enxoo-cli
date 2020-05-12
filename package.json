@@ -6,29 +6,28 @@
   "bugs": "https://github.com/maciejsimm/enxoo-cli/issues",
   "dependencies": {
     "@oclif/command": "1",
-    "@oclif/config": "1",
+    "@oclif/config": "^1.14.0",
     "@oclif/errors": "1",
-    "@salesforce/command": "^1.0.1",
-    "@salesforce/core": "^1.0.1",
-    "jsforce": "^1.9.3",
+    "@salesforce/command": "^3.0.0",
+    "@salesforce/core": "^2.3.0",
     "salesforce": "^0.1.2",
-    "tslib": "1"
+    "tslib": "^1.11.1"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1",
-    "@oclif/plugin-help": "^2",
+    "@oclif/plugin-help": "^2.2.3",
     "@oclif/test": "^1",
     "@salesforce/dev-config": "^1.1.4",
-    "@types/chai": "^4",
+    "@types/chai": "^4.2.11",
     "@types/mocha": "^5",
-    "@types/node": "^10",
+    "@types/node": "^10.17.19",
     "chai": "^4",
     "globby": "^8",
     "mocha": "^5",
     "nyc": "^13",
     "sinon": "5",
     "ts-node": "^7",
-    "typescript": "^3.0"
+    "typescript": "^3.8.3"
   },
   "engines": {
     "node": ">=8.0.0"
