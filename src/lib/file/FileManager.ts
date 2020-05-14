@@ -81,7 +81,8 @@ export class FileManager {
                            'attributeSets', 
                            'priceBooks', 
                            'charges', 
-                           'bundleElements'];
+                           'bundleElements',
+                           'settings'];
 
         if (this.isB2B) {
             directories.push('provisioningPlans',

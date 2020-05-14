@@ -70,7 +70,7 @@ export class ProductImport {
 
     }
 
-    private setProductImportScope(productToImportNames: Array<string>, allProductsLocal: Array<string>, allProductsRemote: Array<any>) {
+    private setProductImportScope(productToImportNames: Array<string>, allProductsLocal: Array<String>, allProductsRemote: Array<any>) {
         // @TO_DO
 
         if (productToImportNames[0] === '*ALL') { 
