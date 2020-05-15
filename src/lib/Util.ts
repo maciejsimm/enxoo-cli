@@ -41,28 +41,28 @@ export class Util {
 		throw new core.SfdxError(msg, "Error", null, -1);
     }
     
-    public static showSpinner(msg: any) {
+    public static async showSpinner(msg: any) {
         UX.create()
             .then((ux) => {
                 ux.startSpinner(msg);
             })    
     }
 
-    public static hideSpinner(msg: any) {
+    public static async hideSpinner(msg: any) {
         UX.create()
             .then((ux) => {
                 ux.stopSpinner(msg);
             })
     }
 
-    public static log(msg: any) {
+    public static async log(msg: any) {
         UX.create()
             .then((ux) => {
                 ux.log(msg);
             })
     }
 
-    public static warn(msg: any) {
+    public static async warn(msg: any) {
         UX.create()
             .then((ux) => {
                 ux.warn(msg);
@@ -134,6 +134,61 @@ export class Util {
                     }
                 }
             }
+        }
+
+        return obj;
+    }
+
+    public static sanitizeDeepForUpsert(objParam: any) {
+        
+        let obj:any;
+
+        let isArray = objParam instanceof Array;
+        let isString = (typeof objParam == 'string');
+        let isObject = (typeof objParam == 'object' && !isArray && !isString);
+
+        if (isArray) {
+            obj = [];
+            for (let subObj of objParam) {
+                obj.push(this.sanitizeDeepForUpsert(subObj));
+            }
+            return obj;
+        }
+
+        if (isObject) {
+            obj = {};
+            for (let prop in objParam) {
+                if (prop === 'attributes') {
+                    // delete obj[prop];
+                    continue;
+                }
+                if (prop === 'Id') {
+                    // delete obj[prop];
+                    continue;
+                }
+
+                if (prop.indexOf('__r') !== -1 && obj[prop] == null) {
+                    // delete obj[prop];
+                    continue;
+                }
+
+                if (prop.indexOf('__r') !== -1) {
+                    // delete obj[prop];
+                    continue;
+                } 
+
+                if (typeof(obj[prop]) === 'object') {
+                    for (let innerProp in obj[prop]) {
+                        if (innerProp === 'attributes') {
+                            // delete obj[prop][innerProp];
+                            continue;
+                        } 
+                    }
+                }
+
+                obj[prop] = objParam[prop];
+            }
+            return obj;
         }
     }
 

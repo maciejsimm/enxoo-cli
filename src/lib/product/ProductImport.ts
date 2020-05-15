@@ -8,6 +8,7 @@ import { Connection } from "@salesforce/core";
 import { Upsert } from './../repository/Upsert';
 import { Util } from './../Util';
 import * as fs from 'fs';
+import { threadId } from 'worker_threads';
 
 export class ProductImport {
 
@@ -37,20 +38,18 @@ export class ProductImport {
                         exportB2BObjects: Boolean,
                         currencyNames: Set<String>) {
 
+        await this.setProductImportScope(productNames);
+        await this.setCategoryImportScope();
+        await this.setParentCategoryImportScope();
+        
+        const categories =  this.categories.map((c) => {return c.record});
+        const categoriesSanitized = Util.sanitizeDeepForUpsert(categories);
 
-        const productSelector = new ProductSelector();
-        const allProductsLocal = await this.getAllProductsLocal();
-        const allProductsRemote = await this.getAllProductsRemote(productSelector);
-
-        console.log('allProductsLocal ' + allProductsLocal.length);
-        console.log('allProductsRemote ' + allProductsRemote.length);
-
-        this.setProductImportScope(productNames, allProductsLocal, allProductsRemote);
-
+        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(categoriesSanitized), 'enxCPQ__Category__c');
+        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(categories), 'enxCPQ__Category__c');
 
         // // -- products begin
         
-
         // console.log('len: ' + this.products.length);
 
         // await Upsert.upsertData(this.connection, this.products.map((p) => {return p.record}), 'Product2');
@@ -70,36 +69,117 @@ export class ProductImport {
 
     }
 
-    private setProductImportScope(productToImportNames: Array<string>, allProductsLocal: Array<String>, allProductsRemote: Array<any>) {
-        // @TO_DO
+    private async setProductImportScope(productToImportNames: Array<string>) {
+        
+        const allProductsLocal = await this.getAllProductsLocal();
+
+        this.products = [];
+        this.productIds = [];
+
+        let productFileNames;
 
         if (productToImportNames[0] === '*ALL') { 
-
+            productFileNames = allProductsLocal;
         } else {
-
+            productFileNames = allProductsLocal.filter((elem) => {
+                                                            return productToImportNames.includes(elem.substring(0, elem.indexOf('_PRD')));
+                                                       });
         }
         
-        // const productJSONs = await this.fileManager.readAllFiles('products');
-        // // @ts-ignore
-        // this.products = productJSONs.map((str) => { let res = new Product(null); res.fillFromJSON(str); return res; })
-        //                             .filter((elem) => { return productNames.indexOf(elem.record.Name) !== -1 });
+        let productJSONArray = [];
+        productFileNames.forEach((fileName) => {
+            const productInputReader = this.fileManager.readFile('products', fileName);
+            productJSONArray.push(productInputReader);
+        });
 
-        // if (productToImportNames[0] === '*ALL') { 
-        //     this.productIds = allProducts.map((p) => { return p.id; });
-        // } else {
-        //     this.productIds = [];
-        //     productToImportNames.forEach((name) => {
-        //         const elem = allProducts.find(e => e.name === name);
-        //         if (elem === undefined) {
-        //             Util.warn('Product named ' + name + ' not found in target environment. Skipping');
-        //         } else {
-        //             this.productIds.push(elem.id);
-        //         }
-        //     });
-        // }
+        return Promise.all(productJSONArray).then((values) => {
+            const productsJSONs = values;
 
-        if (this.productIds.length === 0) {
-            Util.throwError('Nothing to import');
+            productsJSONs.forEach((prd) => {
+                const prodObj:Product = new Product(null);
+                prodObj.fillFromJSON(prd);
+
+                this.products.push(prodObj);
+                this.productIds.push(prodObj.getProductId());
+            });
+
+            if (this.productIds.length === 0) {
+                Util.throwError('Nothing to import');
+            }
+        })
+    }
+
+    private async setCategoryImportScope() {
+        this.categoryIds = [];
+        this.categories = [];
+        this.products.forEach((product) => {
+            const categoryId = product.getCategoryId();
+            if (categoryId !== null) this.categoryIds.push(categoryId);
+        });
+
+        const allCategoryFileNames = await this.fileManager.readAllFileNames('categories');
+
+        const categoryFileNames = allCategoryFileNames.filter((elem) => {
+            const fileNameId = elem.substring(elem.indexOf('_CAT')+1, elem.indexOf('.json'));
+            return this.categoryIds.includes(fileNameId);
+        });
+
+        let categoryJSONArray = [];
+        categoryFileNames.forEach((fileName) => {
+            const categoryInputReader = this.fileManager.readFile('categories', fileName);
+            categoryJSONArray.push(categoryInputReader);
+        });
+
+        return Promise.all(categoryJSONArray).then((values) => {
+            const categoryJSONs = values;
+
+            categoryJSONs.forEach((cat) => {
+                const catObj:Category = new Category(null);
+                catObj.fillFromJSON(cat);
+
+                this.categories.push(catObj);
+            });
+        });
+    }
+
+    private async setParentCategoryImportScope() {
+        let allCategoriesIdentified = false;
+
+        while (!allCategoriesIdentified) {
+            let parentCategoryIds = [];
+            this.categories.forEach((cat) => {
+                const parentCategoryId = cat.getParentCategory();
+                if (parentCategoryId !== null && !this.categoryIds.includes(parentCategoryId)) {
+                    this.categoryIds.push(parentCategoryId);
+                    parentCategoryIds.push(parentCategoryId);
+                }
+            });
+
+            if (parentCategoryIds.length === 0) allCategoriesIdentified = true;
+
+            const allCategoryFileNames = await this.fileManager.readAllFileNames('categories');
+
+            const categoryFileNames = allCategoryFileNames.filter((elem) => {
+                const fileNameId = elem.substring(elem.indexOf('_CAT')+1, elem.indexOf('.json'));
+                return parentCategoryIds.includes(fileNameId);
+            });
+    
+            let categoryJSONArray = [];
+            categoryFileNames.forEach((fileName) => {
+                const categoryInputReader = this.fileManager.readFile('categories', fileName);
+                categoryJSONArray.push(categoryInputReader);
+            });
+    
+            await Promise.all(categoryJSONArray).then((values) => {
+                const categoryJSONs = values;
+    
+                categoryJSONs.forEach((cat) => {
+                    const catObj:Category = new Category(null);
+                    catObj.fillFromJSON(cat);
+    
+                    this.categories.push(catObj);
+                });
+            });
         }
     }
 

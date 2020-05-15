@@ -17,6 +17,10 @@ export class Product extends Serializable {
         this.attributeValues = [];
     }
 
+    public getProductId() {
+        return this.record['enxCPQ__TECH_External_Id__c'];
+    }
+    
     public getFileName() {
         return this.record['Name'] +'_' + this.record['enxCPQ__TECH_External_Id__c']+ '.json'
     }
