@@ -42,30 +42,11 @@ export class ProductImport {
         await this.setCategoryImportScope();
         await this.setParentCategoryImportScope();
         
-        const categories =  this.categories.map((c) => {return c.record});
-        const categoriesSanitized = Util.sanitizeDeepForUpsert(categories);
+        const allCategories =  this.categories.map((c) => {return c.record});
+        const allCategoriesWithouthRelationships = Util.sanitizeDeepForUpsert(allCategories);
 
-        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(categoriesSanitized), 'enxCPQ__Category__c');
-        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(categories), 'enxCPQ__Category__c');
-
-        // // -- products begin
-        
-        // console.log('len: ' + this.products.length);
-
-        // await Upsert.upsertData(this.connection, this.products.map((p) => {return p.record}), 'Product2');
-
-        // // -- categories begin
-        // const categoriesJSONs = await this.fileManager.readAllFiles('categories');
-        // // @ts-ignore
-        // this.categories = categoriesJSONs.map((catString) => { let res = new Category(null); res.fillFromJSON(catString); return res; });
-
-        // await Upsert.upsertData(this.connection, this.categories.map((c) => {return c.record}), 'enxCPQ__Category__c');
-    
-
-
-        // // -- categories end
-
-        // return true;
+        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allCategoriesWithouthRelationships), 'enxCPQ__Category__c');
+        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allCategories), 'enxCPQ__Category__c');
 
     }
 

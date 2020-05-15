@@ -69,6 +69,27 @@ export class ProductExport {
 
         const categories = await productSelector.getCategories(this.connection, this.categoryIds);
         this.wrapCategories(categories);
+
+        // when exporting categories we need to get parent (and parent) categories as well
+        let allCategoriesExported = false;
+
+        while (!allCategoriesExported) {
+            let parentCategoryIds = [];
+            this.categories.forEach((cat) => {
+                const parentCategoryId = cat.getParentCategory();
+                if (parentCategoryId !== null && !this.categoryIds.includes(parentCategoryId)) {
+                    this.categoryIds.push(parentCategoryId);
+                    parentCategoryIds.push(parentCategoryId);
+                }
+            });
+
+            if (parentCategoryIds.length === 0) {
+                allCategoriesExported = true;
+            } else {
+                const parentCategories = await productSelector.getCategories(this.connection, parentCategoryIds);
+                this.wrapCategories(parentCategories);
+            }
+        }
         // -- categories end
 
 
@@ -229,7 +250,7 @@ export class ProductExport {
     }
 
     private wrapCategories(categories:Array<any>) {
-        this.categories = new Array<Category>();
+        if (!this.categories) this.categories = new Array<Category>();
         categories.forEach((c) => {
             this.categories.push(new Category(c));
         })
