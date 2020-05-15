@@ -1,4 +1,5 @@
 import { Serializable } from "./Serializable";
+import { REPL_MODE_STRICT } from "repl";
 
 export class Product extends Serializable {
 
@@ -31,6 +32,16 @@ export class Product extends Serializable {
         });
     }
 
+    public getAttributeSetIds() {
+        return this.productAttributes
+                        .filter((attr) => { 
+                            return attr['enxCPQ__Attribute_Set__r'] !== undefined 
+                        })
+                        .map((attr) => {
+                            return attr['enxCPQ__Attribute_Set__r']['enxCPQ__TECH_External_Id__c'];
+                        });
+    }
+
     public getCategoryId() {
         if (this.record['enxCPQ__Category__r'] !== null) {
             return this.record['enxCPQ__Category__r']['enxCPQ__TECH_External_Id__c'];
@@ -46,5 +57,9 @@ export class Product extends Serializable {
                 return charge['enxCPQ__TECH_External_Id__c'];
             }
         });
+    }
+
+    public getProducts() {
+        return [this.record, ...this.options, ...this.charges];
     }
 }

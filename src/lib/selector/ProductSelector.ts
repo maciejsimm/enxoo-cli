@@ -63,7 +63,7 @@ export class ProductSelector {
         const queryLabel = 'productAttr';
         const queryBody = this.settings[queryLabel];
         if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
+        const query = "SELECT " + queryBody + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM enxCPQ__ProductAttribute__c \
                         WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
         const attributes = await Query.executeQuery(connection, query, queryLabel);
@@ -103,6 +103,29 @@ export class ProductSelector {
         const attributeValues = await Query.executeQuery(connection, query, queryLabel);
         return attributeValues;
     }
+
+    public async getAttributeSets(connection: Connection, attributeSetIds:Array<String>) {
+        const queryLabel = 'attrSet';
+        const queryBody = this.settings[queryLabel];
+        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
+        const query = "SELECT " + queryBody + " \
+                         FROM enxCPQ__AttributeSet__c \
+                        WHERE enxCPQ__TECH_External_Id__c IN ('" + attributeSetIds.join('\',\'') + "')";
+        const attributeSets = await Query.executeQuery(connection, query, queryLabel);
+        return attributeSets;
+    }
+
+    public async getAttributeSetAttributes(connection: Connection, attributeSetIds:Array<String>) {
+        const queryLabel = 'attrSetAttr';
+        const queryBody = this.settings[queryLabel];
+        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
+        const query = "SELECT " + queryBody + ", enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c \
+                         FROM enxCPQ__AttributeSetAttribute__c \
+                        WHERE enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c IN ('" + attributeSetIds.join('\',\'') + "')";
+        const attributeSetAttributes = await Query.executeQuery(connection, query, queryLabel);
+        return attributeSetAttributes;
+    }
+
     
     public async getChargeDefinitions(connection: Connection, chargeIds:Array<String>) {
         const queryLabel = 'product';

@@ -1,14 +1,14 @@
 import { Serializable } from "./Serializable";
 
-export class Attribute extends Serializable {
+export class AttributeSet extends Serializable {
 
     public record:any;
-    public attributeValues:Array<any>;
+    public setAttributes:Array<any>;
     
-    constructor(attribute:any) {
+    constructor(attributeSet:any) {
         super();
-        this.record = attribute;
-        this.attributeValues = [];
+        this.record = attributeSet;
+        this.setAttributes = [];
     }
 
     public getFileName() {

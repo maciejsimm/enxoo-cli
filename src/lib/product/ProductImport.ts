@@ -1,6 +1,7 @@
 import { ProductSelector } from './../selector/ProductSelector';
 import { Product } from './Product';
 import { Attribute } from './Attribute';
+import { AttributeSet } from './AttributeSet';
 import { Charge } from './Charge';
 import { Category } from './Category';
 import { FileManager } from './../file/FileManager';
@@ -9,6 +10,7 @@ import { Upsert } from './../repository/Upsert';
 import { Util } from './../Util';
 import * as fs from 'fs';
 import { threadId } from 'worker_threads';
+import { resolve } from 'dns';
 
 export class ProductImport {
 
@@ -21,6 +23,7 @@ export class ProductImport {
 
     private products:Array<Product>;
     private attributes:Array<Attribute>;
+    private attributeSets:Array<AttributeSet>;
     private charges:Array<Charge>;
     private categories:Array<Category>;
 
@@ -39,14 +42,57 @@ export class ProductImport {
                         currencyNames: Set<String>) {
 
         await this.setProductImportScope(productNames);
+        await this.setAttributeSetImportScope();
         await this.setCategoryImportScope();
+        await this.setAttributeImportScope();
         await this.setParentCategoryImportScope();
         
-        const allCategories =  this.categories.map((c) => {return c.record});
-        const allCategoriesWithouthRelationships = Util.sanitizeDeepForUpsert(allCategories);
+        // -- attribute sets import begin
+        if (this.attributeSetIds.length > 0) {
+            const allAttributeSets = this.attributeSets.map((a) => {return a.record});
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeSets), 'enxCPQ__AttributeSet__c');
+        }
+        // -- attribute sets import end
 
-        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allCategoriesWithouthRelationships), 'enxCPQ__Category__c');
-        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allCategories), 'enxCPQ__Category__c');
+        
+        // -- categories import begin
+        if (this.categoryIds.length > 0) {
+            const allCategories =  this.categories.map((c) => {return c.record});
+            const allCategoriesWithouthRelationships = Util.sanitizeDeepForUpsert(allCategories);
+
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allCategoriesWithouthRelationships), 'enxCPQ__Category__c');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allCategories), 'enxCPQ__Category__c');
+        }
+        // -- categories import end
+
+
+        // -- attributes import begin
+        if (this.attributeIds.length > 0) {
+            const allAttributes = this.attributes.map((a) => {return a.record});
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributes), 'enxCPQ__Attribute__c');
+        }
+        // -- attributes import end
+
+
+        // -- products import begin
+        if (this.productIds.length > 0) {
+            let allProducts = [];
+            this.products.forEach(product => { allProducts = [...allProducts, ... product.getProducts()] });
+            const allProductsWithouthRelationships = Util.sanitizeDeepForUpsert(allProducts);
+
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithouthRelationships), 'Product2');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProducts), 'Product2');
+        }
+        // -- products import end
+
+
+        // -- attributes values import begin
+        let allAttributeValues = [];
+        this.attributes.forEach((attr) => { allAttributeValues = [...allAttributeValues, ...attr.attributeValues] });
+        this.products.forEach((prod) => { allAttributeValues = [...allAttributeValues, ...prod.attributeValues] });
+        // @TO-DO handle array > 200 items
+        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeValues), 'enxCPQ__AttributeValue__c');
+        // -- attributes values import end
 
     }
 
@@ -88,6 +134,41 @@ export class ProductImport {
                 Util.throwError('Nothing to import');
             }
         })
+    }
+
+    private async setAttributeSetImportScope() {
+        this.attributeSetIds = [];
+        this.attributeSets = [];
+
+        this.products.forEach(product => {
+            this.attributeSetIds = [...this.attributeSetIds, ...new Set(product.getAttributeSetIds())];
+        });
+
+        if (this.attributeSetIds.length > 0) {
+            const allAttributeSetFileNames = await this.fileManager.readAllFileNames('attributeSets');
+
+            const attributeSetFileNames = allAttributeSetFileNames.filter((elem) => {
+                const fileNameId = elem.substring(elem.indexOf('_ATS')+1, elem.indexOf('.json'));
+                return this.attributeSetIds.includes(fileNameId);
+            });
+
+            let attributeSetJSONArray = [];
+            attributeSetFileNames.forEach((fileName) => {
+                const attributeSetInputReader = this.fileManager.readFile('attributeSets', fileName);
+                attributeSetJSONArray.push(attributeSetInputReader);
+            });
+
+            return Promise.all(attributeSetJSONArray).then((values) => {
+                const attributeSetJSONs = values;
+
+                attributeSetJSONs.forEach((ast) => {
+                    const astObj:AttributeSet = new AttributeSet(null);
+                    astObj.fillFromJSON(ast);
+    
+                    this.attributeSets.push(astObj);
+                });
+            });
+        }
     }
 
     private async setCategoryImportScope() {
@@ -159,6 +240,41 @@ export class ProductImport {
                     catObj.fillFromJSON(cat);
     
                     this.categories.push(catObj);
+                });
+            });
+        }
+    }
+
+    private async setAttributeImportScope() {
+        this.attributeIds = [];
+        this.attributes = [];
+
+        this.products.forEach(product => {
+            this.attributeIds = [...this.attributeIds, ...new Set(product.getAttributeIds())];
+        });
+
+        if (this.attributeIds.length > 0) {
+            const allAttributeFileNames = await this.fileManager.readAllFileNames('attributes');
+
+            const attributeFileNames = allAttributeFileNames.filter((elem) => {
+                const fileNameId = elem.substring(elem.indexOf('_ATR')+1, elem.indexOf('.json'));
+                return this.attributeIds.includes(fileNameId);
+            });
+
+            let attributeJSONArray = [];
+            attributeFileNames.forEach((fileName) => {
+                const attributeInputReader = this.fileManager.readFile('attributes', fileName);
+                attributeJSONArray.push(attributeInputReader);
+            });
+
+            return Promise.all(attributeJSONArray).then((values) => {
+                const attributeJSONs = values;
+
+                attributeJSONs.forEach((atr) => {
+                    const atrObj:Attribute = new Attribute(null);
+                    atrObj.fillFromJSON(atr);
+    
+                    this.attributes.push(atrObj);
                 });
             });
         }

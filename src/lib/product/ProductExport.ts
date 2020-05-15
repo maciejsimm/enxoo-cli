@@ -1,6 +1,7 @@
 import { ProductSelector } from './../selector/ProductSelector';
 import { Product } from './Product';
 import { Attribute } from './Attribute';
+import { AttributeSet } from './AttributeSet';
 import { Charge } from './Charge';
 import { Category } from './Category';
 import { FileManager } from './../file/FileManager';
@@ -19,6 +20,7 @@ export class ProductExport {
 
     private products:Array<Product>;
     private attributes:Array<Attribute>;
+    private attributeSets:Array<AttributeSet>;
     private charges:Array<Charge>;
     private categories:Array<Category>;
 
@@ -105,6 +107,18 @@ export class ProductExport {
         // -- attributes end
 
 
+        // -- attribute sets begin
+        this.attributeSetIds = [];
+        this.products.forEach(product => { this.attributeSetIds = [... new Set(product.getAttributeSetIds())] });
+
+        const attributeSets = await productSelector.getAttributeSets(this.connection, this.attributeSetIds);
+        this.wrapAttributeSets(attributeSets);
+
+        const attributeSetAttributes = await productSelector.getAttributeSetAttributes(this.connection, this.attributeSetIds);
+        this.wrapAttributeSetAttributes(attributeSetAttributes);
+        // -- attribute sets end
+
+
         // -- charges begin
         this.chargeIds = [];
         this.products.forEach(product => { this.chargeIds = [...this.chargeIds, ...product.getChargeIds()] });
@@ -135,6 +149,10 @@ export class ProductExport {
 
         await this.categories.forEach((category) => {
             this.fileManager.writeFile('categories', category.getFileName(), category);
+        });
+
+        await this.attributeSets.forEach((attributeSet) => {
+            this.fileManager.writeFile('attributeSets', attributeSet.getFileName(), attributeSet);
         });
         // -- end saving files
     }
@@ -213,6 +231,22 @@ export class ProductExport {
         attributes.forEach((a) => {
             this.attributes.push(new Attribute(a));
         })
+    }
+
+    private wrapAttributeSets(attributeSets:Array<any>) {
+        this.attributeSets = new Array<AttributeSet>();
+        attributeSets.forEach((a) => {
+            this.attributeSets.push(new AttributeSet(a));
+        })
+    }
+
+    private wrapAttributeSetAttributes(attributeSetAttributes:Array<any>) {
+        attributeSetAttributes.forEach((asa) => {
+            const attributeSet = this.attributeSets.find(e => e.record['enxCPQ__TECH_External_Id__c'] === asa['enxCPQ__Attribute_Set__r']['enxCPQ__TECH_External_Id__c']);
+            if (attributeSet !== undefined) {
+                attributeSet.setAttributes.push(asa);
+            }
+        });
     }
 
     private wrapGlobalAttributeValues(globalAttributeValues:Array<any>) {
