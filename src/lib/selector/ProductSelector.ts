@@ -71,11 +71,20 @@ export class ProductSelector {
         return charges;
     }
 
-    public async getAttributes(connection: Connection, productIds:Array<String>) {
+    public async getProductAttributes(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'productAttr';
         const queryBody = this.settings[queryLabel];
         if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
         const query = "SELECT " + queryBody + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
+                         FROM enxCPQ__ProductAttribute__c \
+                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+        const attributes = await Query.executeQuery(connection, query, queryLabel);
+        return attributes;
+    }
+
+    public async getProductAttributeIds(connection: Connection, productIds:Array<String>) {
+        const queryLabel = 'productAttr';
+        const query = "SELECT Id \
                          FROM enxCPQ__ProductAttribute__c \
                         WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
         const attributes = await Query.executeQuery(connection, query, queryLabel);

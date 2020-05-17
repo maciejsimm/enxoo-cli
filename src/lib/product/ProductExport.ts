@@ -64,7 +64,7 @@ export class ProductExport {
         const charges = await productSelector.getCharges(this.connection, this.productIds);
         this.wrapProductCharges(charges);
 
-        const productAttributes = await productSelector.getAttributes(this.connection, this.productIds);
+        const productAttributes = await productSelector.getProductAttributes(this.connection, this.productIds);
         this.wrapProductAttributes(productAttributes);
                             
         const localAttributeValues = await productSelector.getLocalAttributeValues(this.connection, this.productIds);

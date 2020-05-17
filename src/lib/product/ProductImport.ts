@@ -10,9 +10,6 @@ import { FileManager } from './../file/FileManager';
 import { Connection } from "@salesforce/core";
 import { Upsert } from './../repository/Upsert';
 import { Util } from './../Util';
-import * as fs from 'fs';
-import { threadId } from 'worker_threads';
-import { resolve } from 'dns';
 
 export class ProductImport {
 
@@ -121,6 +118,17 @@ export class ProductImport {
         // -- attribute set attributes import end
 
 
+        // -- product attributes import begin
+        const productAttributesTarget = await productSelector.getProductAttributeIds(this.connection, this.productIds);
+        let allProductAttributes = [];
+        this.products.forEach((prod) => { allProductAttributes = [...allProductAttributes, ...prod.productAttributes] });
+        const allProductAttributesRTfix = Util.fixRecordTypes(allProductAttributes, recordTypes, 'enxCPQ__ProductAttribute__c');
+        // @TO-DO handle array > 200 items
+        await Upsert.deleteData(this.connection, productAttributesTarget, 'enxCPQ__ProductAttribute__c');
+        await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProductAttributesRTfix), 'enxCPQ__ProductAttribute__c');
+        // -- product attributes import end
+
+
         // -- product relationships import begin
         let allProductRelationships = [];
         this.products.forEach((prod) => { allProductRelationships = [...allProductRelationships, ...prod.productRelationships] });
@@ -164,14 +172,12 @@ export class ProductImport {
             const allProvisioningPlans =  this.provisioningPlans.map((plan) => {return plan.record});
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProvisioningPlans), 'enxB2B__ProvisioningPlan__c');
 
-            // @TO-DO - this should be delete & insert
             const provisioningTaskAssignmentsTarget = await productSelector.getProvisioningTaskAssignmentIds(this.connection, this.provisioningPlanIds);
             let allProvisioningTaskAssignments = [];
             this.provisioningPlans.forEach(plan => { allProvisioningTaskAssignments = [...allProvisioningTaskAssignments, ... plan.provisioningTasks] });
             await Upsert.deleteData(this.connection, provisioningTaskAssignmentsTarget, 'enxB2B__ProvisioningTaskAssignment__c');
             await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningTaskAssignments), 'enxB2B__ProvisioningTaskAssignment__c');
 
-            // @TO-DO - this should be delete & insert
             const provisioningPlanAssignmentsTarget = await productSelector.getProductProvisioningPlanIds(this.connection, this.productIds);
             let allProvisioningPlanAssignments = [];
             this.products.forEach(product => { allProvisioningPlanAssignments = [...allProvisioningPlanAssignments, ... product.provisioningPlans] });
