@@ -50,6 +50,7 @@ export class ProductImport {
         await this.setCategoryImportScope();
         await this.setAttributeImportScope();
         await this.setParentCategoryImportScope();
+        await this.setChargeImportScope();
 
         if (this.exportB2BObjects) {
             await this.setProvisioningPlanImportScope();
@@ -92,10 +93,11 @@ export class ProductImport {
         if (this.productIds.length > 0) {
             let allProducts = [];
             this.products.forEach(product => { allProducts = [...allProducts, ... product.getProducts()] });
-            const allProductsWithouthRelationships = Util.sanitizeDeepForUpsert(allProducts);
+            const allProductsRTfix = Util.fixRecordTypes(allProducts, recordTypes, 'Product2');
+            const allProductsWithouthRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
 
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithouthRelationships), 'Product2');
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProducts), 'Product2');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2');
         }
         // -- products import end
 
@@ -128,6 +130,18 @@ export class ProductImport {
         await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProductAttributesRTfix), 'enxCPQ__ProductAttribute__c');
         // -- product attributes import end
 
+
+        // -- charges import begin
+        if (this.chargeIds.length > 0) {
+            const allCharges = this.charges.map((c) => {return c.record});
+            const allChargesRTfix = Util.fixRecordTypes(allCharges, recordTypes, 'Product2');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allChargesRTfix), 'Product2');
+
+            let allChargeItems = [];
+            this.charges.forEach((charge) => { allChargeItems = [...allChargeItems, ...charge.chargeElements, ...charge.chargeTiers] });
+            const allChargeItemsRTfix = Util.fixRecordTypes(allChargeItems, recordTypes, 'Product2');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allChargeItemsRTfix), 'Product2');
+        }
 
         // -- product relationships import begin
         let allProductRelationships = [];
@@ -368,6 +382,41 @@ export class ProductImport {
                     atrObj.fillFromJSON(atr);
     
                     this.attributes.push(atrObj);
+                });
+            });
+        }
+    }
+
+    private async setChargeImportScope() {
+        this.chargeIds = [];
+        this.charges = [];
+
+        this.products.forEach(product => {
+            this.chargeIds = [...this.chargeIds, ...new Set(product.getChargeIds())];
+        });
+
+        if (this.chargeIds.length > 0) {
+            const allChargeFileNames = await this.fileManager.readAllFileNames('charges');
+
+            const chargeFileNames = allChargeFileNames.filter((elem) => {
+                const fileNameId = elem.substring(elem.indexOf('_PRD')+1, elem.indexOf('.json'));
+                return this.chargeIds.includes(fileNameId);
+            });
+
+            let chargeJSONArray = [];
+            chargeFileNames.forEach((fileName) => {
+                const chargeInputReader = this.fileManager.readFile('charges', fileName);
+                chargeJSONArray.push(chargeInputReader);
+            });
+
+            return Promise.all(chargeJSONArray).then((values) => {
+                const chargeJSONs = values;
+
+                chargeJSONs.forEach((chrg) => {
+                    const chrgObj:Charge = new Charge(null);
+                    chrgObj.fillFromJSON(chrg);
+    
+                    this.charges.push(chrgObj);
                 });
             });
         }

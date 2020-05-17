@@ -1,6 +1,4 @@
 import { Serializable } from "./Serializable";
-import { REPL_MODE_STRICT } from "repl";
-
 export class Product extends Serializable {
 
     public record:any;
@@ -73,6 +71,14 @@ export class Product extends Serializable {
                 return charge['enxCPQ__TECH_External_Id__c'];
             }
         });
+    }
+
+    public getAllProductIds() {
+        let result = [];
+        result = [...result, this.getProductId()];
+        result = [...result, ...this.options.map(opt => {return opt['enxCPQ__TECH_External_Id__c']})];
+        result = [...result, ...this.charges.map(chg => {return chg['enxCPQ__TECH_External_Id__c']})];
+        return result;
     }
 
     public getProducts() {

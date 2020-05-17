@@ -6,6 +6,7 @@ import { ProvisioningPlan } from './ProvisioningPlan';
 import { ProvisioningTask } from './ProvisioningTask';
 import { Charge } from './Charge';
 import { Category } from './Category';
+import { Pricebook } from './Pricebook';
 import { FileManager } from './../file/FileManager';
 import { Connection } from "@salesforce/core";
 import { Util } from './../Util';
@@ -19,7 +20,6 @@ export class ProductExport {
     private attributeSetIds:Array<String>;
     private provisioningPlanIds:Array<String>;
     private provisioningTaskIds:Array<String>;
-    private priceBookIds:Array<String>;
     private chargeIds:Array<String>;
 
     private products:Array<Product>;
@@ -29,6 +29,7 @@ export class ProductExport {
     private provisioningTasks:Array<ProvisioningTask>;
     private charges:Array<Charge>;
     private categories:Array<Category>;
+    private pricebooks:Array<Pricebook>;
 
     private targetDirectory:string;
     private exportB2BObjects:boolean;
@@ -86,7 +87,6 @@ export class ProductExport {
             const productProvisioningPlans = await productSelector.getProductProvisioningPlans(this.connection, this.productIds);
             this.wrapProductProvisioningPlans(productProvisioningPlans);
         }
-
         // -- products export end
 
 
@@ -158,6 +158,26 @@ export class ProductExport {
         this.wrapChargeTiers(chargeTiers);
         // -- charges end
 
+
+        // -- pricebooks begin
+        const pricebooks = await productSelector.getPricebooks(this.connection);
+        this.wrapPricebooks(pricebooks);
+
+        let pricebooksIds = [];
+        this.pricebooks.forEach(pbook => { pricebooksIds = [... pricebooksIds, pbook.getPricebookId()] })
+
+        let pricebookEntryProductIds = [];
+        this.products.forEach(product => { pricebookEntryProductIds = [... pricebookEntryProductIds, ...product.getAllProductIds()] });
+        this.charges.forEach(charge => { pricebookEntryProductIds = [... pricebookEntryProductIds, ...charge.getAllProductIds()] });
+
+        const standardPricebookEntries = await productSelector.getStandardPricebookEntries(this.connection, pricebookEntryProductIds);
+        this.wrapStandardPricebookEntries(standardPricebookEntries);
+
+        const allPricebookEntries = await productSelector.getPricebookEntries(this.connection, pricebookEntryProductIds, pricebooksIds);
+        this.wrapPricebookEntries(allPricebookEntries);
+        // -- pricebooks end
+
+
         // -- provisioning plans begin
         if (this.exportB2BObjects) {
             this.provisioningPlanIds = [];
@@ -197,6 +217,10 @@ export class ProductExport {
 
         await this.attributeSets.forEach((attributeSet) => {
             this.fileManager.writeFile('attributeSets', attributeSet.getFileName(), attributeSet);
+        });
+
+        await this.pricebooks.forEach((pbook) => {
+            this.fileManager.writeFile('priceBooks', pbook.getFileName(), pbook);
         });
 
         if (this.exportB2BObjects) {
@@ -410,6 +434,41 @@ export class ProductExport {
         categories.forEach((c) => {
             this.categories.push(new Category(c));
         })
+    }
+
+    private wrapPricebooks(pricebooks:Array<any>) {
+        this.pricebooks = new Array<Pricebook>();
+        pricebooks.forEach((pbook) => {
+            this.pricebooks.push(new Pricebook(pbook));
+        })
+    }
+
+    private wrapStandardPricebookEntries(pricebookEntries:Array<any>) {
+        pricebookEntries.forEach((pbe) => {
+            const pricebook = this.pricebooks.find(e => e.isStandard);
+            if (pricebook !== undefined) {
+                const productTechId = pbe['Product2']['enxCPQ__TECH_External_Id__c'];
+                if (pricebook.stdPricebookEntries.hasOwnProperty(productTechId)) {
+                    pricebook.stdPricebookEntries[productTechId].push(pbe);
+                } else {
+                    pricebook.stdPricebookEntries[productTechId] = [pbe];
+                }
+            }
+        });
+    }
+
+    private wrapPricebookEntries(pricebookEntries:Array<any>) {
+        pricebookEntries.forEach((pbe) => {
+            const pricebook = this.pricebooks.find(e => e.record['enxCPQ__TECH_External_Id__c'] === pbe['Pricebook2']['enxCPQ__TECH_External_Id__c']);
+            if (pricebook !== undefined) {
+                const productTechId = pbe['Product2']['enxCPQ__TECH_External_Id__c'];
+                if (pricebook.pricebookEntries.hasOwnProperty(productTechId)) {
+                    pricebook.pricebookEntries[productTechId].push(pbe);
+                } else {
+                    pricebook.pricebookEntries[productTechId] = [pbe];
+                }
+            }
+        });
     }
 
     private async loadQueryConfiguration(queryDir: string) {

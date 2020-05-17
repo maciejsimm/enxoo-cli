@@ -1,5 +1,4 @@
 import { Serializable } from "./Serializable";
-
 export class Attribute extends Serializable {
 
     public record:any;
