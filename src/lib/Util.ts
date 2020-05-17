@@ -125,6 +125,9 @@ export class Util {
                 if (prop === 'Id') {
                     delete obj[prop];
                 }
+                if (prop === 'IsStandard') {
+                    delete obj[prop];
+                }
 
                 if (prop.indexOf('__r') !== -1 && obj[prop] == null) delete obj[prop];
 

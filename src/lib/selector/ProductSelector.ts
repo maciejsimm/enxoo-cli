@@ -48,6 +48,15 @@ export class ProductSelector {
         return products;
     }
 
+    public async getProductIds(connection: Connection, productIds:Array<String>) {
+        const queryLabel = 'product Ids';
+        const query = "SELECT Id, enxCPQ__TECH_External_Id__c \
+                         FROM Product2 \
+                        WHERE enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+        const products = await Query.executeQuery(connection, query, queryLabel);
+        return products;
+    }
+
     public async getProductOptions(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'productOption';
         const queryBody = this.settings[queryLabel];
@@ -84,7 +93,7 @@ export class ProductSelector {
     }
 
     public async getProductAttributeIds(connection: Connection, productIds:Array<String>) {
-        const queryLabel = 'productAttr';
+        const queryLabel = 'productAttr ids';
         const query = "SELECT Id \
                          FROM enxCPQ__ProductAttribute__c \
                         WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
@@ -162,7 +171,7 @@ export class ProductSelector {
     }
 
     public async getProductProvisioningPlanIds(connection: Connection, productIds:Array<String>) {
-        const queryLabel = 'prvPlanAssignment';
+        const queryLabel = 'prvPlanAssignment ids';
         const query = "SELECT Id \
                          FROM enxB2B__ProvisioningPlanAssignment__c \
                         WHERE enxB2B__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
@@ -193,7 +202,7 @@ export class ProductSelector {
     }
 
     public async getProvisioningTaskAssignmentIds(connection: Connection, planIds:Array<String>) {
-        const queryLabel = 'prvTaskAssignment';
+        const queryLabel = 'prvTaskAssignment ids';
         const query = "SELECT Id \
                          FROM enxB2B__ProvisioningTaskAssignment__c \
                         WHERE enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c IN ('" + planIds.join('\',\'') + "')";
@@ -314,15 +323,31 @@ export class ProductSelector {
         return pricebooks;
     }
 
+    public async getPricebookIds(connection: Connection) {
+        const queryLabel = 'pricebook Ids';
+        const query = "SELECT Id, enxCPQ__TECH_External_Id__c, IsStandard \
+                         FROM Pricebook2";
+        const pricebooks = await Query.executeQuery(connection, query, queryLabel);
+        return pricebooks;
+    }
+
     public async getStandardPricebookEntries(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'pbe';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
         const query = "SELECT UnitPrice, IsActive, UseStandardPrice, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode \
                          FROM PricebookEntry \
                          WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                            AND Pricebook2.IsStandard = true \
                       ORDER BY CurrencyIsoCode, Product2Id, Id";
+        const pricebookEntries = await Query.executeQuery(connection, query, queryLabel);
+        return pricebookEntries;
+    }
+
+    public async getStandardPricebookEntryIds(connection: Connection, productIds:Array<String>) {
+        const queryLabel = 'pbe ids';
+        const query = "SELECT Id \
+                         FROM PricebookEntry \
+                         WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                           AND Pricebook2.IsStandard = true";
         const pricebookEntries = await Query.executeQuery(connection, query, queryLabel);
         return pricebookEntries;
     }
@@ -337,6 +362,16 @@ export class ProductSelector {
                            AND Pricebook2.enxCPQ__TECH_External_Id__c IN ('" + pricebookIds.join('\',\'') + "') \
                            AND Pricebook2.IsStandard = false \
                       ORDER BY CurrencyIsoCode, Product2Id, Id";
+        const pricebookEntries = await Query.executeQuery(connection, query, queryLabel);
+        return pricebookEntries;
+    }
+
+    public async getPricebookEntryIds(connection: Connection, productIds:Array<String>) {
+        const queryLabel = 'pbe ids';
+        const query = "SELECT Id \
+                         FROM PricebookEntry \
+                         WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                           AND Pricebook2.IsStandard = false";
         const pricebookEntries = await Query.executeQuery(connection, query, queryLabel);
         return pricebookEntries;
     }

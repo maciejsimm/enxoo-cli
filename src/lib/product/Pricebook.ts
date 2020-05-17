@@ -6,17 +6,13 @@ export class Pricebook extends Serializable {
     public isStandard:boolean;
     public pricebookEntries:any;       // object -> key -> product2 techId, value - list of pbes
     public stdPricebookEntries:any;    // object -> key -> product2 techId, value - list of pbes
-    // public pbes:Array<any>;
-    // public stdpbes:Array<any>;
     
     constructor(pricebook:any) {
         super();
         this.record = pricebook;
-        this.isStandard = pricebook['IsStandard'];
         this.stdPricebookEntries = new Map<string, any>();
         this.pricebookEntries = new Map<string, any>();
-        // this.pbes = [];
-        // this.stdpbes = [];
+        if (pricebook !== null) this.isStandard = pricebook['IsStandard'];
     }
 
     public getPricebookId() {
@@ -29,6 +25,47 @@ export class Pricebook extends Serializable {
     public getFileName() {
         if (this.record['IsStandard'] === true) return this.record['Name'] +'_' + 'PRBSTANDARD.json';
         return this.record['Name'] +'_' + this.record['enxCPQ__TECH_External_Id__c']+ '.json'
+    }
+
+    public getStandardPricebookEntriesToInsert(product2Ids:Array<any>, pricebook2Ids:Array<any>) {
+        let result = [];
+        if (this.stdPricebookEntries) {
+            const productKeys = Object.keys(this.stdPricebookEntries);
+            productKeys.forEach(key => {
+                let productId = product2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] == key).Id;
+                let pricebook2Id = pricebook2Ids.find(elem => elem['IsStandard'] == true).Id;
+
+                let pbes:Array<any> = this.stdPricebookEntries[key];
+                pbes.forEach((pbe) => {
+                    pbe.product2Id = productId;
+                    pbe.pricebook2Id = pricebook2Id;
+                    delete pbe['Product2'];
+                    delete pbe['Pricebook2'];
+                    result.push(pbe);
+                })
+            });
+        }
+        return result;
+    }
+
+    public getPricebookEntriesToInsert(product2Ids:Array<any>, pricebook2Ids:Array<any>) {
+        let result = [];
+        if (this.pricebookEntries) {
+            const productKeys = Object.keys(this.pricebookEntries);
+            productKeys.forEach(key => {
+                const productId = product2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] === key).Id;
+                const pricebook2Id = pricebook2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] === this.getPricebookId()).Id;
+                let pbes:Array<any> = this.pricebookEntries[key];
+                pbes.forEach((pbe) => {
+                    pbe.product2Id = productId;
+                    pbe.pricebook2Id = pricebook2Id;
+                    delete pbe['Product2'];
+                    delete pbe['Pricebook2'];
+                    result.push(pbe);
+                })
+            });
+        }
+        return result;
     }
 
 }

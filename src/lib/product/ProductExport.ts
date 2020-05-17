@@ -160,6 +160,7 @@ export class ProductExport {
 
 
         // -- pricebooks begin
+        // @TO-DO here we should load pricebooks from files first, because files might have more products than query scope
         const pricebooks = await productSelector.getPricebooks(this.connection);
         this.wrapPricebooks(pricebooks);
 
@@ -170,6 +171,7 @@ export class ProductExport {
         this.products.forEach(product => { pricebookEntryProductIds = [... pricebookEntryProductIds, ...product.getAllProductIds()] });
         this.charges.forEach(charge => { pricebookEntryProductIds = [... pricebookEntryProductIds, ...charge.getAllProductIds()] });
 
+        // @TO-DO bulk query should be made here
         const standardPricebookEntries = await productSelector.getStandardPricebookEntries(this.connection, pricebookEntryProductIds);
         this.wrapStandardPricebookEntries(standardPricebookEntries);
 

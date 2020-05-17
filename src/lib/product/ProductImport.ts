@@ -5,6 +5,7 @@ import { AttributeSet } from './AttributeSet';
 import { ProvisioningPlan } from './ProvisioningPlan';
 import { ProvisioningTask } from './ProvisioningTask';
 import { Charge } from './Charge';
+import { Pricebook } from './Pricebook';
 import { Category } from './Category';
 import { FileManager } from './../file/FileManager';
 import { Connection } from "@salesforce/core";
@@ -19,7 +20,6 @@ export class ProductImport {
     private attributeSetIds:Array<String>;
     private provisioningPlanIds:Array<String>;
     private provisioningTaskIds:Array<String>;
-    private priceBookIds:Array<String>;
     private chargeIds:Array<String>;
 
     private products:Array<Product>;
@@ -29,6 +29,7 @@ export class ProductImport {
     private provisioningTasks:Array<ProvisioningTask>;
     private charges:Array<Charge>;
     private categories:Array<Category>;
+    private pricebooks:Array<Pricebook>;
 
     private targetDirectory:string;
     private exportB2BObjects: boolean;
@@ -51,6 +52,7 @@ export class ProductImport {
         await this.setAttributeImportScope();
         await this.setParentCategoryImportScope();
         await this.setChargeImportScope();
+        await this.setPricebookImportScope();
 
         if (this.exportB2BObjects) {
             await this.setProvisioningPlanImportScope();
@@ -142,6 +144,35 @@ export class ProductImport {
             const allChargeItemsRTfix = Util.fixRecordTypes(allChargeItems, recordTypes, 'Product2');
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allChargeItemsRTfix), 'Product2');
         }
+
+
+        // -- pricebooks import begin
+        const allPricebooks = this.pricebooks.filter((p) => { return p.isStandard !== true; })
+                                             .map((p) => {return p.record});
+        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allPricebooks), 'Pricebook2');
+
+        let pricebookEntryProductIds = [];
+        this.products.forEach(product => { pricebookEntryProductIds = [... pricebookEntryProductIds, ...product.getAllProductIds()] });
+        this.charges.forEach(charge => { pricebookEntryProductIds = [... pricebookEntryProductIds, ...charge.getAllProductIds()] });
+        const pricebook2TargetIds = await productSelector.getPricebookIds(this.connection);
+        const product2TargetIds = await productSelector.getProductIds(this.connection, pricebookEntryProductIds);
+
+        let standardPricebookEntries = [];
+        let pricebookEntries = [];
+        this.pricebooks.forEach((pbook) => { 
+            standardPricebookEntries = [... standardPricebookEntries, ...pbook.getStandardPricebookEntriesToInsert(product2TargetIds, pricebook2TargetIds)];
+            pricebookEntries = [... pricebookEntries, ...pbook.getPricebookEntriesToInsert(product2TargetIds, pricebook2TargetIds)];
+        })
+
+        const stdPricebookEntriesTarget = await productSelector.getStandardPricebookEntryIds(this.connection, pricebookEntryProductIds);
+        const pricebookEntriesTarget = await productSelector.getPricebookEntryIds(this.connection, pricebookEntryProductIds);
+
+        await Upsert.deleteData(this.connection, pricebookEntriesTarget, 'PricebookEntry');
+        await Upsert.deleteData(this.connection, stdPricebookEntriesTarget, 'PricebookEntry');
+        await Upsert.insertData(this.connection, standardPricebookEntries, 'PricebookEntry');
+        await Upsert.insertData(this.connection, pricebookEntries, 'PricebookEntry');
+        // -- pricebooks import end
+
 
         // -- product relationships import begin
         let allProductRelationships = [];
@@ -420,6 +451,29 @@ export class ProductImport {
                 });
             });
         }
+    }
+
+    private async setPricebookImportScope() {
+        this.pricebooks = [];
+
+        const pricebookFileNames = await this.fileManager.readAllFileNames('priceBooks');
+
+        let pricebookJSONArray = [];
+        pricebookFileNames.forEach((fileName) => {
+            const pricebookInputReader = this.fileManager.readFile('priceBooks', fileName);
+            pricebookJSONArray.push(pricebookInputReader);
+        });
+
+        return Promise.all(pricebookJSONArray).then((values) => {
+            const pricebookJSONs = values;
+
+            pricebookJSONs.forEach((pbook) => {
+                const pbookObj:Pricebook = new Pricebook(null);
+                pbookObj.fillFromJSON(pbook);
+
+                this.pricebooks.push(pbookObj);
+            });
+        });
     }
 
     private async setProvisioningPlanImportScope() {
