@@ -192,6 +192,19 @@ export class Util {
         }
     }
 
+    public static fixRecordTypes (arr: any, recordTypes: any, objectName: string) {
+        let result = [];
+        arr.forEach(elem => {
+            if (elem.hasOwnProperty('RecordType')) {
+                const recordType = recordTypes.find(e => e.Object === objectName && e.DeveloperName === elem.RecordType.DeveloperName);
+                delete elem['RecordType'];
+                elem['RecordTypeId'] = recordType.id;
+            }
+            result.push(elem);
+        })
+        return result;
+    }
+
     public static sanitizeForInsert (arr:any, sObjectName:string)  {
       
         for (let i = 0; i < arr.length; i++) {

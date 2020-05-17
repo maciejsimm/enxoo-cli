@@ -7,10 +7,12 @@ import { resolve } from "dns";
 export class Upsert {
     public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string) {
         Util.showSpinner('-- Upserting ' + sObjectName);
+        
+        const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
 
         // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
-        sobjectsResult = await connection.sobject(sObjectName).upsert(records, 'enxCPQ__TECH_External_Id__c', {}, (err, rets:RecordResult[]) => {
+        sobjectsResult = await connection.sobject(sObjectName).upsert(records, externalIdString, {}, (err, rets:RecordResult[]) => {
             if (err) { 
                 Util.log(err); 
             }
@@ -36,11 +38,11 @@ export class Upsert {
     }
 
     public static async insertData(connection: Connection, records: Array<any>, sObjectName: string) {
-        Util.showSpinner('-- Upserting ' + sObjectName);
+        Util.showSpinner('-- Inserting ' + sObjectName);
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
 
         // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
-        sobjectsResult = await connection.sobject(sObjectName).upsert(records, 'Name', {}, (err, rets) => {
+        sobjectsResult = await connection.sobject(sObjectName).insert(records, {}, (err, rets) => {
             if (err) { Util.log(err); }
         });
 
@@ -50,18 +52,16 @@ export class Upsert {
         const errorCount = sobjectsResult.map((r):number => {return (r.success ? 0 : 1)})
                                         .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
 
-        Util.hideSpinner(' done. Success: ' + successCount + ', errors: ' + errorCount);
+        await Util.hideSpinner(' done. Success: ' + successCount + ', errors: ' + errorCount);
 
         if (errorCount > 0) {
-            sobjectsResult.forEach((r) => {
-                if (r.success === false) {
-                    Util.warn(JSON.stringify(r.errors).substring(0,150));
-                }
-            })
+            const errors = sobjectsResult.filter((elem) => {
+                                            return elem.success === false;
+                                        }).map((elem) => {
+                                            return {"error": elem['errors']};
+                                        });
+            await Util.warn(JSON.stringify(errors, null, 2));
         }
-
-        return 'finished';
-
     }
 
     public static async disableTriggers(connection: Connection) {

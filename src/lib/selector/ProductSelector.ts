@@ -10,6 +10,18 @@ export class ProductSelector {
         this.settings = querySettings;
     }
 
+    public async getRecordTypes(connection: Connection) {
+        const queryLabel = 'recordTypes';
+        const query = "SELECT Id, Name, DeveloperName, SObjectType \
+                         FROM RecordType";
+
+        const recordTypes = await Query.executeQuery(connection, query, queryLabel);
+
+        return recordTypes.map((rt) => {
+                                return { Object: rt['SobjectType'], DeveloperName: rt['DeveloperName'], id: rt['Id'] };
+                            });
+    }
+
     public async getAllProducts(connection: Connection) {
         const queryLabel = 'all products';
         const query = "SELECT Id, enxCPQ__TECH_External_Id__c, Name \
@@ -165,7 +177,7 @@ export class ProductSelector {
         const queryLabel = 'prvTask';
         const queryBody = this.settings[queryLabel];
         if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " \
+        const query = "SELECT " + queryBody + ", RecordType.DeveloperName \
                          FROM enxB2B__ProvisioningTask__c \
                         WHERE enxB2B__TECH_External_Id__c IN ('" + taskIds.join('\',\'') + "')";
         const tasks = await Query.executeQuery(connection, query, queryLabel);

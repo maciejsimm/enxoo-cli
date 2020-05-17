@@ -40,8 +40,8 @@ export default class Org extends SfdxCommand {
 
     this.ux.log('*** Begin Importing ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
 
-    const importer = new ProductImport(dir, conn);
-    await importer.import(products, b2b, currencies);
+    const importer = new ProductImport(dir, conn, b2b);
+    await importer.import(products, currencies);
 
     // const importer = new ProductImporter(products, b2b, dir, userName, currencies);
     // await importer.all(conn);

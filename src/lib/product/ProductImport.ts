@@ -2,6 +2,8 @@ import { ProductSelector } from './../selector/ProductSelector';
 import { Product } from './Product';
 import { Attribute } from './Attribute';
 import { AttributeSet } from './AttributeSet';
+import { ProvisioningPlan } from './ProvisioningPlan';
+import { ProvisioningTask } from './ProvisioningTask';
 import { Charge } from './Charge';
 import { Category } from './Category';
 import { FileManager } from './../file/FileManager';
@@ -18,27 +20,32 @@ export class ProductImport {
     private attributeIds:Array<String>;
     private categoryIds:Array<String>;
     private attributeSetIds:Array<String>;
+    private provisioningPlanIds:Array<String>;
+    private provisioningTaskIds:Array<String>;
     private priceBookIds:Array<String>;
     private chargeIds:Array<String>;
 
     private products:Array<Product>;
     private attributes:Array<Attribute>;
     private attributeSets:Array<AttributeSet>;
+    private provisioningPlans:Array<ProvisioningPlan>;
+    private provisioningTasks:Array<ProvisioningTask>;
     private charges:Array<Charge>;
     private categories:Array<Category>;
 
     private targetDirectory:string;
+    private exportB2BObjects: boolean;
     private connection:Connection;
     private fileManager:FileManager;
 
-    constructor(targetDirectory:string, connection: Connection) {
+    constructor(targetDirectory:string, connection: Connection, exportB2BObjects: boolean) {
         this.targetDirectory = targetDirectory;
+        this.exportB2BObjects = exportB2BObjects;
         this.fileManager = new FileManager(targetDirectory);
         this.connection = connection;
     }
 
     public async import(productNames: Array<string>,
-                        exportB2BObjects: Boolean,
                         currencyNames: Set<String>) {
 
         await this.setProductImportScope(productNames);
@@ -46,6 +53,14 @@ export class ProductImport {
         await this.setCategoryImportScope();
         await this.setAttributeImportScope();
         await this.setParentCategoryImportScope();
+
+        if (this.exportB2BObjects) {
+            await this.setProvisioningPlanImportScope();
+            await this.setProvisioningTaskImportScope();
+        }
+
+        const productSelector = new ProductSelector(null);
+        const recordTypes = await productSelector.getRecordTypes(this.connection);
 
         await Upsert.disableTriggers(this.connection);
         
@@ -115,9 +130,9 @@ export class ProductImport {
 
         // -- attribute rules import begin
         let allAttributeRules = [];
-        // @TO-DO record types mapping!!!
         this.products.forEach((prod) => { allAttributeRules = [...allAttributeRules, ...prod.attributeRules] });
-        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeRules), 'enxCPQ__AttributeRule__c');
+        const allAttributeRulesRTfix = Util.fixRecordTypes(allAttributeRules, recordTypes, 'enxCPQ__AttributeRule__c');
+        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeRulesRTfix), 'enxCPQ__AttributeRule__c');
         // -- attribute rules import end
 
 
@@ -133,6 +148,33 @@ export class ProductImport {
         this.products.forEach((prod) => { allAttributeValueDependencies = [...allAttributeValueDependencies, ...prod.attributeValueDependencies] });
         await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeValueDependencies), 'enxCPQ__AttributeValueDependency__c');
         // -- attribute value dependencies import end
+
+
+        // -- provisioning tasks import begin
+        if (this.provisioningTaskIds.length > 0) {
+            const allProvisioningTasks =  this.provisioningTasks.map((task) => {return task.record});
+            const allProvisioningTasksRTfix = Util.fixRecordTypes(allProvisioningTasks, recordTypes, 'enxB2B__ProvisioningTask__c');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProvisioningTasksRTfix), 'enxB2B__ProvisioningTask__c');
+        }
+        // -- provisioning tasks import end
+
+
+        // -- provisioning plans import begin
+        if (this.provisioningPlanIds.length > 0) {
+            const allProvisioningPlans =  this.provisioningPlans.map((plan) => {return plan.record});
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProvisioningPlans), 'enxB2B__ProvisioningPlan__c');
+
+            // @TO-DO - this should be delete & insert
+            let allProvisioningTaskAssignments = [];
+            this.provisioningPlans.forEach(plan => { allProvisioningTaskAssignments = [...allProvisioningTaskAssignments, ... plan.provisioningTasks] });
+            await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningTaskAssignments), 'enxB2B__ProvisioningTaskAssignment__c');
+
+            // @TO-DO - this should be delete & insert
+            let allProvisioningPlanAssignments = [];
+            this.products.forEach(product => { allProvisioningPlanAssignments = [...allProvisioningPlanAssignments, ... product.provisioningPlans] });
+            await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningPlanAssignments), 'enxB2B__ProvisioningPlanAssignment__c');
+        }
+        // -- provisioning plans import end
 
         await Upsert.enableTriggers(this.connection);
     }
@@ -316,6 +358,76 @@ export class ProductImport {
                     atrObj.fillFromJSON(atr);
     
                     this.attributes.push(atrObj);
+                });
+            });
+        }
+    }
+
+    private async setProvisioningPlanImportScope() {
+        this.provisioningPlanIds = [];
+        this.provisioningPlans = [];
+
+        this.products.forEach(product => {
+            this.provisioningPlanIds = [...this.provisioningPlanIds, ...new Set(product.getProvisioningPlanIds())];
+        });
+
+        if (this.provisioningPlanIds.length > 0) {
+            const allProvisioningPlanFileNames = await this.fileManager.readAllFileNames('provisioningPlans');
+
+            const provisioningPlanFileNames = allProvisioningPlanFileNames.filter((elem) => {
+                const fileNameId = elem.substring(elem.indexOf('_PPL')+1, elem.indexOf('.json'));
+                return this.provisioningPlanIds.includes(fileNameId);
+            });
+
+            let provisioningPlanJSONArray = [];
+            provisioningPlanFileNames.forEach((fileName) => {
+                const provisioningPlanInputReader = this.fileManager.readFile('provisioningPlans', fileName);
+                provisioningPlanJSONArray.push(provisioningPlanInputReader);
+            });
+
+            return Promise.all(provisioningPlanJSONArray).then((values) => {
+                const provisioningPlanJSONs = values;
+
+                provisioningPlanJSONs.forEach((ppl) => {
+                    const pplObj:ProvisioningPlan = new ProvisioningPlan(null);
+                    pplObj.fillFromJSON(ppl);
+    
+                    this.provisioningPlans.push(pplObj);
+                });
+            });
+        }
+    }
+
+    private async setProvisioningTaskImportScope() {
+        this.provisioningTaskIds = [];
+        this.provisioningTasks = [];
+
+        this.provisioningPlans.forEach(plan => {
+            this.provisioningTaskIds = [...this.provisioningTaskIds, ...new Set(plan.getProvisioningTaskIds())];
+        });
+
+        if (this.provisioningTaskIds.length > 0) {
+            const allProvisioningTaskFileNames = await this.fileManager.readAllFileNames('provisioningTasks');
+
+            const provisioningTaskFileNames = allProvisioningTaskFileNames.filter((elem) => {
+                const fileNameId = elem.substring(elem.indexOf('_PTS')+1, elem.indexOf('.json'));
+                return this.provisioningTaskIds.includes(fileNameId);
+            });
+
+            let provisioningTaskJSONArray = [];
+            provisioningTaskFileNames.forEach((fileName) => {
+                const provisioningTaskInputReader = this.fileManager.readFile('provisioningTasks', fileName);
+                provisioningTaskJSONArray.push(provisioningTaskInputReader);
+            });
+
+            return Promise.all(provisioningTaskJSONArray).then((values) => {
+                const provisioningTaskJSONs = values;
+
+                provisioningTaskJSONs.forEach((ptsk) => {
+                    const ptskObj:ProvisioningTask = new ProvisioningTask(null);
+                    ptskObj.fillFromJSON(ptsk);
+    
+                    this.provisioningTasks.push(ptskObj);
                 });
             });
         }
