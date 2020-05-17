@@ -81,6 +81,53 @@ export class ProductSelector {
         return attributeValues;
     }
 
+    public async getAttributeRules(connection: Connection, productIds:Array<String>) {
+        const queryLabel = 'attrRules';
+        const queryBody = this.settings[queryLabel];
+        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
+        const query = "SELECT " + queryBody + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
+                         FROM enxCPQ__AttributeRule__c \
+                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+        const attributeRules = await Query.executeQuery(connection, query, queryLabel);
+        return attributeRules;
+    }
+
+    public async getProductRelationships(connection: Connection, productIds:Array<String>) {
+        const queryLabel = 'productRelationships';
+        const queryBody = this.settings[queryLabel];
+        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
+        const query = "SELECT " + queryBody + " , enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Secondary_Product__r.enxCPQ__TECH_External_Id__c \
+                         FROM enxCPQ__ProductRelationship__c \
+                        WHERE enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+        const productRelationship = await Query.executeQuery(connection, query, queryLabel);
+        return productRelationship;
+    }
+
+    public async getAttributeDefaultValues(connection: Connection, productIds:Array<String>) {
+        const queryLabel = 'attrDefaultValues';
+        const queryBody = this.settings[queryLabel];
+        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
+        const query = "SELECT " + queryBody + " , enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Value__r.enxCPQ__TECH_External_Id__c \
+                         FROM enxCPQ__AttributeDefaultValue__c \
+                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+        const attrDefaultValues = await Query.executeQuery(connection, query, queryLabel);
+        return attrDefaultValues;
+    }
+
+    public async getAttributeValueDependencies(connection: Connection, productIds:Array<String>) {
+        const queryLabel = 'attrValueDependecy';
+        const queryBody = this.settings[queryLabel];
+        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
+        const query = "SELECT " + queryBody + " , enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Product__r.enxCPQ__TECH_External_Id__c, \
+                                                  enxCPQ__Master_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Dependent_Attribute__r.enxCPQ__TECH_External_Id__c, \
+                                                  enxCPQ__Master_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Dependent_Value__r.enxCPQ__TECH_External_Id__c \
+                         FROM enxCPQ__AttributeValueDependency__c \
+                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                     ORDER BY enxCPQ__TECH_Key__c";
+        const attrValueDependecy = await Query.executeQuery(connection, query, queryLabel);
+        return attrValueDependecy;
+    }
+
     public async getAttributeDefinitions(connection: Connection, attributeIds:Array<String>) {
         const queryLabel = 'attr';
         const queryBody = this.settings[queryLabel];

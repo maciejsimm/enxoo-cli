@@ -64,4 +64,52 @@ export class Upsert {
 
     }
 
+    public static async disableTriggers(connection: Connection) {
+
+        Util.showSpinner('-- Disabling triggers');
+
+        await this.enableTriggers(connection, false);
+
+        const data = { Name: "G_CPQ_DISABLE_TRIGGERS_99",
+                        enxCPQ__Setting_Name__c: "CPQ_DISABLE_TRIGGERS",
+                        enxCPQ__Context__c: "Global",
+                        enxCPQ__Col1__c: connection.getUsername() };
+    
+        return new Promise ((resolve, reject) => {
+            connection.sobject("enxCPQ__CPQ_Settings__c").insert(data, function(err, rets) {
+                if (err) {
+                    reject('error disabling triggers: ' + err);
+                    return;
+                }
+            
+            Util.hideSpinner(' done. Setting ID: ' + rets['id']);
+            resolve();
+            });
+        });      
+    }
+
+    public static async enableTriggers(connection: Connection, log:boolean=true) {
+        return new Promise ((resolve, reject) => {
+            if (log) Util.showSpinner('-- Enabling Triggers');
+
+            connection.query("SELECT Id FROM enxCPQ__CPQ_Settings__c WHERE Name = 'G_CPQ_DISABLE_TRIGGERS_99'", {}, (err, res) => {
+                if (res.records.length == 0) {
+                    if (log) Util.hideSpinner(' done.');
+                    resolve();
+                }
+
+                connection.sobject("enxCPQ__CPQ_Settings__c").del(res.records[0]['Id'], function(err, rets) {
+                    if (err) {
+                        reject('error enabling triggers: ' + err);
+                        return;
+                    }
+                    
+                    // @TO-DO check with Łuki, cause it's printed after '*** Finished ***'
+                    if (log) Util.hideSpinner(' done.');
+                    resolve();
+                }); 
+            });
+        });      
+    }
+
 }

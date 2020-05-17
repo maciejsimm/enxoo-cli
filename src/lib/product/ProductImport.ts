@@ -46,6 +46,8 @@ export class ProductImport {
         await this.setCategoryImportScope();
         await this.setAttributeImportScope();
         await this.setParentCategoryImportScope();
+
+        await Upsert.disableTriggers(this.connection);
         
         // -- attribute sets import begin
         if (this.attributeSetIds.length > 0) {
@@ -94,6 +96,45 @@ export class ProductImport {
         await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeValues), 'enxCPQ__AttributeValue__c');
         // -- attributes values import end
 
+
+        // -- attribute set attributes import begin
+        if (this.attributeSetIds.length > 0) {
+            let allSetAttributes = [];
+            this.attributeSets.forEach(ast => { allSetAttributes = [...allSetAttributes, ... ast.setAttributes] });
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allSetAttributes), 'enxCPQ__AttributeSetAttribute__c');
+        }
+        // -- attribute set attributes import end
+
+
+        // -- product relationships import begin
+        let allProductRelationships = [];
+        this.products.forEach((prod) => { allProductRelationships = [...allProductRelationships, ...prod.productRelationships] });
+        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductRelationships), 'enxCPQ__ProductRelationship__c');
+        // -- product relationships import end
+
+
+        // -- attribute rules import begin
+        let allAttributeRules = [];
+        // @TO-DO record types mapping!!!
+        this.products.forEach((prod) => { allAttributeRules = [...allAttributeRules, ...prod.attributeRules] });
+        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeRules), 'enxCPQ__AttributeRule__c');
+        // -- attribute rules import end
+
+
+        // -- attribute default values import begin
+        let allAttributeDefaultValues = [];
+        this.products.forEach((prod) => { allAttributeDefaultValues = [...allAttributeDefaultValues, ...prod.attributeDefaultValues] });
+        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeDefaultValues), 'enxCPQ__AttributeDefaultValue__c');
+        // -- attribute default values import end
+
+
+        // -- attribute value dependencies import begin
+        let allAttributeValueDependencies = [];
+        this.products.forEach((prod) => { allAttributeValueDependencies = [...allAttributeValueDependencies, ...prod.attributeValueDependencies] });
+        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeValueDependencies), 'enxCPQ__AttributeValueDependency__c');
+        // -- attribute value dependencies import end
+
+        await Upsert.enableTriggers(this.connection);
     }
 
     private async setProductImportScope(productToImportNames: Array<string>) {

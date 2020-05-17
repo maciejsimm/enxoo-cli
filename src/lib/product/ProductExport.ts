@@ -62,6 +62,18 @@ export class ProductExport {
                             
         const localAttributeValues = await productSelector.getLocalAttributeValues(this.connection, this.productIds);
         this.wrapAttributeValues(localAttributeValues);
+
+        const attributeRules = await productSelector.getAttributeRules(this.connection, this.productIds);
+        this.wrapAttributeRules(attributeRules);
+
+        const productRelationships = await productSelector.getProductRelationships(this.connection, this.productIds);
+        this.wrapProductRelationships(productRelationships);
+
+        const attributeDefaultValues = await productSelector.getAttributeDefaultValues(this.connection, this.productIds);
+        this.wrapAttributeDefaultValues(attributeDefaultValues);
+
+        const attributeValueDependencies = await productSelector.getAttributeValueDependencies(this.connection, this.productIds);
+        this.wrapAttributeValueDependencies(attributeValueDependencies);
         // -- products export end
 
 
@@ -222,6 +234,42 @@ export class ProductExport {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
                 product.attributeValues.push(ava);
+            }
+        });
+    }
+
+    private wrapAttributeRules(attributeRules:Array<any>) {
+        attributeRules.forEach((arl) => {
+            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === arl['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
+            if (product !== undefined) {
+                product.attributeRules.push(arl);
+            }
+        });
+    }
+
+    private wrapProductRelationships(productRelationships:Array<any>) {
+        productRelationships.forEach((arl) => {
+            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === arl['enxCPQ__Primary_Product__r']['enxCPQ__TECH_External_Id__c']);
+            if (product !== undefined) {
+                product.productRelationships.push(arl);
+            }
+        });
+    }
+
+    private wrapAttributeDefaultValues(attributeDefaultValues:Array<any>) {
+        attributeDefaultValues.forEach((adv) => {
+            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === adv['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
+            if (product !== undefined) {
+                product.attributeDefaultValues.push(adv);
+            }
+        });
+    }
+
+    private wrapAttributeValueDependencies(attributeValueDependencies:Array<any>) {
+        attributeValueDependencies.forEach((avd) => {
+            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === avd['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
+            if (product !== undefined) {
+                product.attributeValueDependencies.push(avd);
             }
         });
     }

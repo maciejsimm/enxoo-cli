@@ -8,6 +8,10 @@ export class Product extends Serializable {
     public charges:Array<any>;
     public productAttributes:Array<any>;
     public attributeValues:Array<any>;
+    public attributeRules:Array<any>;
+    public productRelationships:Array<any>;
+    public attributeDefaultValues:Array<any>;
+    public attributeValueDependencies:Array<any>;
     
     constructor(product:any) {
         super();
@@ -16,6 +20,10 @@ export class Product extends Serializable {
         this.charges = [];
         this.productAttributes = [];
         this.attributeValues = [];
+        this.attributeRules = [];
+        this.productRelationships = [];
+        this.attributeDefaultValues = [];
+        this.attributeValueDependencies = [];
     }
 
     public getProductId() {
@@ -35,7 +43,7 @@ export class Product extends Serializable {
     public getAttributeSetIds() {
         return this.productAttributes
                         .filter((attr) => { 
-                            return attr['enxCPQ__Attribute_Set__r'] !== undefined 
+                            return attr['enxCPQ__Attribute_Set__r'] !== undefined && attr['enxCPQ__Attribute_Set__r'] !== null
                         })
                         .map((attr) => {
                             return attr['enxCPQ__Attribute_Set__r']['enxCPQ__TECH_External_Id__c'];
