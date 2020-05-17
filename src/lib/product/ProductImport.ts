@@ -165,13 +165,17 @@ export class ProductImport {
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProvisioningPlans), 'enxB2B__ProvisioningPlan__c');
 
             // @TO-DO - this should be delete & insert
+            const provisioningTaskAssignmentsTarget = await productSelector.getProvisioningTaskAssignmentIds(this.connection, this.provisioningPlanIds);
             let allProvisioningTaskAssignments = [];
             this.provisioningPlans.forEach(plan => { allProvisioningTaskAssignments = [...allProvisioningTaskAssignments, ... plan.provisioningTasks] });
+            await Upsert.deleteData(this.connection, provisioningTaskAssignmentsTarget, 'enxB2B__ProvisioningTaskAssignment__c');
             await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningTaskAssignments), 'enxB2B__ProvisioningTaskAssignment__c');
 
             // @TO-DO - this should be delete & insert
+            const provisioningPlanAssignmentsTarget = await productSelector.getProductProvisioningPlanIds(this.connection, this.productIds);
             let allProvisioningPlanAssignments = [];
             this.products.forEach(product => { allProvisioningPlanAssignments = [...allProvisioningPlanAssignments, ... product.provisioningPlans] });
+            await Upsert.deleteData(this.connection, provisioningPlanAssignmentsTarget, 'enxB2B__ProvisioningPlanAssignment__c');
             await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningPlanAssignments), 'enxB2B__ProvisioningPlanAssignment__c');
         }
         // -- provisioning plans import end
@@ -437,11 +441,5 @@ export class ProductImport {
         const productFileNames = await this.fileManager.readAllFileNames('products');
         return productFileNames;
     }
-
-    private async getAllProductsRemote(selector:ProductSelector) {
-        const productList = await selector.getAllProducts(this.connection);
-        const productNames = [...productList];
-        return productNames;
-    }   
 
 }
