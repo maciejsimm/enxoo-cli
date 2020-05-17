@@ -12,6 +12,7 @@ export class Product extends Serializable {
     public productRelationships:Array<any>;
     public attributeDefaultValues:Array<any>;
     public attributeValueDependencies:Array<any>;
+    public provisioningPlans:Array<any>;
     
     constructor(product:any) {
         super();
@@ -24,6 +25,7 @@ export class Product extends Serializable {
         this.productRelationships = [];
         this.attributeDefaultValues = [];
         this.attributeValueDependencies = [];
+        this.provisioningPlans = [];
     }
 
     public getProductId() {
@@ -48,6 +50,12 @@ export class Product extends Serializable {
                         .map((attr) => {
                             return attr['enxCPQ__Attribute_Set__r']['enxCPQ__TECH_External_Id__c'];
                         });
+    }
+
+    public getProvisioningPlanIds() {
+        return this.provisioningPlans.map((ppl) => {
+            return ppl['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c'];
+        });
     }
 
     public getCategoryId() {

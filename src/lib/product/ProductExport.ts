@@ -2,6 +2,8 @@ import { ProductSelector } from './../selector/ProductSelector';
 import { Product } from './Product';
 import { Attribute } from './Attribute';
 import { AttributeSet } from './AttributeSet';
+import { ProvisioningPlan } from './ProvisioningPlan';
+import { ProvisioningTask } from './ProvisioningTask';
 import { Charge } from './Charge';
 import { Category } from './Category';
 import { FileManager } from './../file/FileManager';
@@ -15,27 +17,32 @@ export class ProductExport {
     private attributeIds:Array<String>;
     private categoryIds:Array<String>;
     private attributeSetIds:Array<String>;
+    private provisioningPlanIds:Array<String>;
+    private provisioningTaskIds:Array<String>;
     private priceBookIds:Array<String>;
     private chargeIds:Array<String>;
 
     private products:Array<Product>;
     private attributes:Array<Attribute>;
     private attributeSets:Array<AttributeSet>;
+    private provisioningPlans:Array<ProvisioningPlan>;
+    private provisioningTasks:Array<ProvisioningTask>;
     private charges:Array<Charge>;
     private categories:Array<Category>;
 
     private targetDirectory:string;
+    private exportB2BObjects:boolean;
     private connection:Connection;
     private fileManager:FileManager;
 
-    constructor(targetDirectory:string, connection: Connection) {
+    constructor(targetDirectory:string, connection: Connection, exportB2BObjects: boolean) {
         this.targetDirectory = targetDirectory;
-        this.fileManager = new FileManager(targetDirectory);
+        this.exportB2BObjects = exportB2BObjects;
+        this.fileManager = new FileManager(targetDirectory, exportB2BObjects);
         this.connection = connection;
     }
 
     public async export(productNames: Array<string>,
-                        exportB2BObjects: Boolean,
                         exportRelationships: Boolean,
                         currencyNames: Set<String>) {
         
@@ -74,6 +81,12 @@ export class ProductExport {
 
         const attributeValueDependencies = await productSelector.getAttributeValueDependencies(this.connection, this.productIds);
         this.wrapAttributeValueDependencies(attributeValueDependencies);
+
+        if (this.exportB2BObjects) {
+            const productProvisioningPlans = await productSelector.getProductProvisioningPlans(this.connection, this.productIds);
+            this.wrapProductProvisioningPlans(productProvisioningPlans);
+        }
+
         // -- products export end
 
 
@@ -109,7 +122,7 @@ export class ProductExport {
 
         // -- attributes begin
         this.attributeIds = [];
-        this.products.forEach(product => { this.attributeIds = [... product.getAttributeIds()] });
+        this.products.forEach(product => { this.attributeIds = [...this.attributeIds, ...product.getAttributeIds()] });
 
         const attributes = await productSelector.getAttributeDefinitions(this.connection, this.attributeIds);
         this.wrapAttributes(attributes);
@@ -121,7 +134,7 @@ export class ProductExport {
 
         // -- attribute sets begin
         this.attributeSetIds = [];
-        this.products.forEach(product => { this.attributeSetIds = [... new Set(product.getAttributeSetIds())] });
+        this.products.forEach(product => { this.attributeSetIds = [...this.attributeSetIds, ...new Set(product.getAttributeSetIds())] });
 
         const attributeSets = await productSelector.getAttributeSets(this.connection, this.attributeSetIds);
         this.wrapAttributeSets(attributeSets);
@@ -145,6 +158,25 @@ export class ProductExport {
         this.wrapChargeTiers(chargeTiers);
         // -- charges end
 
+        // -- provisioning plans begin
+        if (this.exportB2BObjects) {
+            this.provisioningPlanIds = [];
+            this.products.forEach(product => { this.provisioningPlanIds = [... this.provisioningPlanIds, ...new Set(product.getProvisioningPlanIds())] });
+
+            const provisioningPlans = await productSelector.getProvisioningPlans(this.connection, this.provisioningPlanIds);
+            this.wrapProvisioningPlans(provisioningPlans);
+
+            const provisioningTaskAssignments = await productSelector.getProvisioningTaskAssignments(this.connection, this.provisioningPlanIds);
+            this.wrapProvisioningTaskAssignments(provisioningTaskAssignments);
+
+            this.provisioningTaskIds = [];
+            this.provisioningPlans.forEach(plan => { this.provisioningTaskIds = [...this.provisioningTaskIds, ... new Set(plan.getProvisioningTaskIds())]});
+
+            const provisioningTasks = await productSelector.getProvisioningTasks(this.connection, this.provisioningTaskIds);
+            this.wrapProvisioningTasks(provisioningTasks);
+        }
+        // -- provisioning plans end
+
 
         // -- saving files begin
         await this.products.forEach((product) => {
@@ -166,6 +198,16 @@ export class ProductExport {
         await this.attributeSets.forEach((attributeSet) => {
             this.fileManager.writeFile('attributeSets', attributeSet.getFileName(), attributeSet);
         });
+
+        if (this.exportB2BObjects) {
+            await this.provisioningPlans.forEach((plan) => {
+                this.fileManager.writeFile('provisioningPlans', plan.getFileName(), plan);
+            });
+
+            await this.provisioningTasks.forEach((task) => {
+                this.fileManager.writeFile('provisioningTasks', task.getFileName(), task);
+            });
+        }
         // -- end saving files
     }
 
@@ -272,6 +314,38 @@ export class ProductExport {
                 product.attributeValueDependencies.push(avd);
             }
         });
+    }
+
+    private wrapProductProvisioningPlans(provisioningPlans:Array<any>) {
+        provisioningPlans.forEach((ppl) => {
+            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ppl['enxB2B__Product__r']['enxCPQ__TECH_External_Id__c']);
+            if (product !== undefined) {
+                product.provisioningPlans.push(ppl);
+            }
+        });
+    }
+
+    private wrapProvisioningPlans(plans:Array<any>) {
+        this.provisioningPlans = new Array<ProvisioningPlan>();
+        plans.forEach((plan) => {
+            this.provisioningPlans.push(new ProvisioningPlan(plan));
+        })
+    }
+
+    private wrapProvisioningTaskAssignments(provisioningTaskAssignments:Array<any>) {
+        provisioningTaskAssignments.forEach((pta) => {
+            const provisioningPlan = this.provisioningPlans.find(e => e.record['enxB2B__TECH_External_Id__c'] === pta['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c']);
+            if (provisioningPlan !== undefined) {
+                provisioningPlan.provisioningTasks.push(pta);
+            }
+        });
+    }
+
+    private wrapProvisioningTasks(tasks:Array<any>) {
+        this.provisioningTasks = new Array<ProvisioningTask>();
+        tasks.forEach((task) => {
+            this.provisioningTasks.push(new ProvisioningTask(task));
+        })
     }
 
     private wrapAttributes(attributes:Array<any>) {

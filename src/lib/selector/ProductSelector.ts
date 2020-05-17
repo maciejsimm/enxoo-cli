@@ -128,6 +128,50 @@ export class ProductSelector {
         return attrValueDependecy;
     }
 
+    public async getProductProvisioningPlans(connection: Connection, productIds:Array<String>) {
+        const queryLabel = 'prvPlanAssignment';
+        const queryBody = this.settings[queryLabel];
+        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
+        const query = "SELECT " + queryBody + " , enxB2B__Product__r.enxCPQ__TECH_External_Id__c, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c \
+                         FROM enxB2B__ProvisioningPlanAssignment__c \
+                        WHERE enxB2B__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+        const planAssignments = await Query.executeQuery(connection, query, queryLabel);
+        return planAssignments;
+    }
+
+    public async getProvisioningPlans(connection: Connection, planIds:Array<String>) {
+        const queryLabel = 'prvPlan';
+        const queryBody = this.settings[queryLabel];
+        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
+        const query = "SELECT " + queryBody + " \
+                         FROM enxB2B__ProvisioningPlan__c \
+                        WHERE enxB2B__TECH_External_Id__c IN ('" + planIds.join('\',\'') + "')";
+        const plans = await Query.executeQuery(connection, query, queryLabel);
+        return plans;
+    }
+
+    public async getProvisioningTaskAssignments(connection: Connection, planIds:Array<String>) {
+        const queryLabel = 'prvTaskAssignment';
+        const queryBody = this.settings[queryLabel];
+        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
+        const query = "SELECT " + queryBody + " , enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__Provisioning_Task__r.enxB2B__TECH_External_Id__c \
+                         FROM enxB2B__ProvisioningTaskAssignment__c \
+                        WHERE enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c IN ('" + planIds.join('\',\'') + "')";
+        const taskAssignments = await Query.executeQuery(connection, query, queryLabel);
+        return taskAssignments;
+    }
+
+    public async getProvisioningTasks(connection: Connection, taskIds:Array<String>) {
+        const queryLabel = 'prvTask';
+        const queryBody = this.settings[queryLabel];
+        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
+        const query = "SELECT " + queryBody + " \
+                         FROM enxB2B__ProvisioningTask__c \
+                        WHERE enxB2B__TECH_External_Id__c IN ('" + taskIds.join('\',\'') + "')";
+        const tasks = await Query.executeQuery(connection, query, queryLabel);
+        return tasks;
+    }
+
     public async getAttributeDefinitions(connection: Connection, attributeIds:Array<String>) {
         const queryLabel = 'attr';
         const queryBody = this.settings[queryLabel];
