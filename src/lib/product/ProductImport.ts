@@ -109,7 +109,8 @@ export class ProductImport {
         this.attributes.forEach((attr) => { allAttributeValues = [...allAttributeValues, ...attr.attributeValues] });
         this.products.forEach((prod) => { allAttributeValues = [...allAttributeValues, ...prod.attributeValues] });
         // @TO-DO handle array > 200 items
-        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeValues), 'enxCPQ__AttributeValue__c');
+        if (allAttributeValues.length > 0)
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeValues), 'enxCPQ__AttributeValue__c');
         // -- attributes values import end
 
 
@@ -128,8 +129,10 @@ export class ProductImport {
         this.products.forEach((prod) => { allProductAttributes = [...allProductAttributes, ...prod.productAttributes] });
         const allProductAttributesRTfix = Util.fixRecordTypes(allProductAttributes, recordTypes, 'enxCPQ__ProductAttribute__c');
         // @TO-DO handle array > 200 items
-        await Upsert.deleteData(this.connection, productAttributesTarget, 'enxCPQ__ProductAttribute__c');
-        await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProductAttributesRTfix), 'enxCPQ__ProductAttribute__c');
+        if (productAttributesTarget.length > 0)
+            await Upsert.deleteData(this.connection, productAttributesTarget, 'enxCPQ__ProductAttribute__c');
+        if (allProductAttributesRTfix.length > 0)
+            await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProductAttributesRTfix), 'enxCPQ__ProductAttribute__c');
         // -- product attributes import end
 
 
@@ -159,16 +162,21 @@ export class ProductImport {
 
         let standardPricebookEntries = [];
         let pricebookEntries = [];
+
         this.pricebooks.forEach((pbook) => { 
             standardPricebookEntries = [... standardPricebookEntries, ...pbook.getStandardPricebookEntriesToInsert(product2TargetIds, pricebook2TargetIds)];
             pricebookEntries = [... pricebookEntries, ...pbook.getPricebookEntriesToInsert(product2TargetIds, pricebook2TargetIds)];
         })
 
-        const stdPricebookEntriesTarget = await productSelector.getStandardPricebookEntryIds(this.connection, pricebookEntryProductIds);
-        const pricebookEntriesTarget = await productSelector.getPricebookEntryIds(this.connection, pricebookEntryProductIds);
+        if (pricebookEntryProductIds.length > 0) {
+            const stdPricebookEntriesTarget = await productSelector.getStandardPricebookEntryIds(this.connection, pricebookEntryProductIds);
+            const pricebookEntriesTarget = await productSelector.getPricebookEntryIds(this.connection, pricebookEntryProductIds);
+            if (pricebookEntriesTarget.length > 0)
+                await Upsert.deleteData(this.connection, pricebookEntriesTarget, 'PricebookEntry');
+            if (stdPricebookEntriesTarget.length > 0)
+                await Upsert.deleteData(this.connection, stdPricebookEntriesTarget, 'PricebookEntry');
+        }
 
-        await Upsert.deleteData(this.connection, pricebookEntriesTarget, 'PricebookEntry');
-        await Upsert.deleteData(this.connection, stdPricebookEntriesTarget, 'PricebookEntry');
         await Upsert.insertData(this.connection, standardPricebookEntries, 'PricebookEntry');
         await Upsert.insertData(this.connection, pricebookEntries, 'PricebookEntry');
         // -- pricebooks import end
@@ -177,7 +185,8 @@ export class ProductImport {
         // -- product relationships import begin
         let allProductRelationships = [];
         this.products.forEach((prod) => { allProductRelationships = [...allProductRelationships, ...prod.productRelationships] });
-        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductRelationships), 'enxCPQ__ProductRelationship__c');
+        if (allProductRelationships.length > 0)
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductRelationships), 'enxCPQ__ProductRelationship__c');
         // -- product relationships import end
 
 
@@ -185,21 +194,24 @@ export class ProductImport {
         let allAttributeRules = [];
         this.products.forEach((prod) => { allAttributeRules = [...allAttributeRules, ...prod.attributeRules] });
         const allAttributeRulesRTfix = Util.fixRecordTypes(allAttributeRules, recordTypes, 'enxCPQ__AttributeRule__c');
-        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeRulesRTfix), 'enxCPQ__AttributeRule__c');
+        if (allAttributeRulesRTfix.length > 0)
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeRulesRTfix), 'enxCPQ__AttributeRule__c');
         // -- attribute rules import end
 
 
         // -- attribute default values import begin
         let allAttributeDefaultValues = [];
         this.products.forEach((prod) => { allAttributeDefaultValues = [...allAttributeDefaultValues, ...prod.attributeDefaultValues] });
-        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeDefaultValues), 'enxCPQ__AttributeDefaultValue__c');
+        if (allAttributeDefaultValues.length > 0)
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeDefaultValues), 'enxCPQ__AttributeDefaultValue__c');
         // -- attribute default values import end
 
 
         // -- attribute value dependencies import begin
         let allAttributeValueDependencies = [];
         this.products.forEach((prod) => { allAttributeValueDependencies = [...allAttributeValueDependencies, ...prod.attributeValueDependencies] });
-        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeValueDependencies), 'enxCPQ__AttributeValueDependency__c');
+        if (allAttributeValueDependencies.length > 0)
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeValueDependencies), 'enxCPQ__AttributeValueDependency__c');
         // -- attribute value dependencies import end
 
 
@@ -220,14 +232,18 @@ export class ProductImport {
             const provisioningTaskAssignmentsTarget = await productSelector.getProvisioningTaskAssignmentIds(this.connection, this.provisioningPlanIds);
             let allProvisioningTaskAssignments = [];
             this.provisioningPlans.forEach(plan => { allProvisioningTaskAssignments = [...allProvisioningTaskAssignments, ... plan.provisioningTasks] });
-            await Upsert.deleteData(this.connection, provisioningTaskAssignmentsTarget, 'enxB2B__ProvisioningTaskAssignment__c');
-            await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningTaskAssignments), 'enxB2B__ProvisioningTaskAssignment__c');
+            if (provisioningTaskAssignmentsTarget.length > 0)
+                await Upsert.deleteData(this.connection, provisioningTaskAssignmentsTarget, 'enxB2B__ProvisioningTaskAssignment__c');
+            if (allProvisioningTaskAssignments.length > 0)
+                await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningTaskAssignments), 'enxB2B__ProvisioningTaskAssignment__c');
 
             const provisioningPlanAssignmentsTarget = await productSelector.getProductProvisioningPlanIds(this.connection, this.productIds);
             let allProvisioningPlanAssignments = [];
             this.products.forEach(product => { allProvisioningPlanAssignments = [...allProvisioningPlanAssignments, ... product.provisioningPlans] });
-            await Upsert.deleteData(this.connection, provisioningPlanAssignmentsTarget, 'enxB2B__ProvisioningPlanAssignment__c');
-            await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningPlanAssignments), 'enxB2B__ProvisioningPlanAssignment__c');
+            if (provisioningPlanAssignmentsTarget.length > 0)
+                await Upsert.deleteData(this.connection, provisioningPlanAssignmentsTarget, 'enxB2B__ProvisioningPlanAssignment__c');
+            if (allProvisioningPlanAssignments.length > 0)
+                await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningPlanAssignments), 'enxB2B__ProvisioningPlanAssignment__c');
         }
         // -- provisioning plans import end
 

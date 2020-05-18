@@ -32,17 +32,20 @@ export class Pricebook extends Serializable {
         if (this.stdPricebookEntries) {
             const productKeys = Object.keys(this.stdPricebookEntries);
             productKeys.forEach(key => {
-                let productId = product2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] == key).Id;
-                let pricebook2Id = pricebook2Ids.find(elem => elem['IsStandard'] == true).Id;
+                const product = product2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] == key);
+                if (product !== undefined) {
+                    const productId = product.Id;
+                    const pricebook2Id = pricebook2Ids.find(elem => elem['IsStandard'] == true).Id;
 
-                let pbes:Array<any> = this.stdPricebookEntries[key];
-                pbes.forEach((pbe) => {
-                    pbe.product2Id = productId;
-                    pbe.pricebook2Id = pricebook2Id;
-                    delete pbe['Product2'];
-                    delete pbe['Pricebook2'];
-                    result.push(pbe);
-                })
+                    let pbes:Array<any> = this.stdPricebookEntries[key];
+                    pbes.forEach((pbe) => {
+                        pbe.product2Id = productId;
+                        pbe.pricebook2Id = pricebook2Id;
+                        delete pbe['Product2'];
+                        delete pbe['Pricebook2'];
+                        result.push(pbe);
+                    })
+                }
             });
         }
         return result;
@@ -53,16 +56,19 @@ export class Pricebook extends Serializable {
         if (this.pricebookEntries) {
             const productKeys = Object.keys(this.pricebookEntries);
             productKeys.forEach(key => {
-                const productId = product2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] === key).Id;
-                const pricebook2Id = pricebook2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] === this.getPricebookId()).Id;
-                let pbes:Array<any> = this.pricebookEntries[key];
-                pbes.forEach((pbe) => {
-                    pbe.product2Id = productId;
-                    pbe.pricebook2Id = pricebook2Id;
-                    delete pbe['Product2'];
-                    delete pbe['Pricebook2'];
-                    result.push(pbe);
-                })
+                const product = product2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] === key);
+                if (product !== undefined) {
+                    const productId = product.Id;
+                    const pricebook2Id = pricebook2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] === this.getPricebookId()).Id;
+                    let pbes:Array<any> = this.pricebookEntries[key];
+                    pbes.forEach((pbe) => {
+                        pbe.product2Id = productId;
+                        pbe.pricebook2Id = pricebook2Id;
+                        delete pbe['Product2'];
+                        delete pbe['Pricebook2'];
+                        result.push(pbe);
+                    })
+                }
             });
         }
         return result;
