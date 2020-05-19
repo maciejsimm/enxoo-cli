@@ -1,8 +1,6 @@
 import { Connection } from "@salesforce/core";
 import { Util } from './../Util';
-
 import { RecordResult } from 'jsforce';
-import { resolve } from "dns";
 
 export class Upsert {
     public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string) {
@@ -63,64 +61,6 @@ export class Upsert {
             });
         });
     }
-
-
-    // private static async upsertBulkObject(conn: Connection, sObjectName: string, data: Object[], techId: string): Promise<string> {
-    //     Util.log('--- bulk importing ' + sObjectName + ': ' + data.length + ' records');
-    //     const dataToImport = Util.sanitizeForBulkImport(data);
-    //     return new Promise<string>((resolve: Function, reject: Function) => {
-    //         conn.bulk.load(sObjectName, 'upsert', {'extIdField': techId}, dataToImport, async (err:any, rets:RecordResult[]) => {
-    //             if (err) {
-    //                 Util.log(err);
-    //                 reject('error creating ' + sObjectName + ': ' + err);
-    //                 return;
-    //             }
-                
-    //             const successCount = rets
-    //                             .map((elem:RecordResult):number =>elem.success ? 1 : 0)
-    //                             .reduce((prevVal:number, nextVal:number) => prevVal + nextVal);
-
-    //             await Util.hideSpinner(' Done. Success: ' + successCount + ', Errors: ' + (dataToImport.length - successCount)); 
-    //             rets.forEach(async (ret, i) => {
-    //                 if (ret.success === false) {
-    //                     await Util.log('----- ['+ i +'] errors: ' + ret.errors);
-    //                 } 
-    //             })
-
-    //             resolve('OK');
-    //         });
-    //     });
-    // }
-
-    // if (err) { return console.error(err); }
-    // for (var i=0; i < rets.length; i++) {
-    //   if (rets[i].success) {
-    //     console.log("#" + (i+1) + " loaded successfully, id = " + rets[i].id);
-    //   } else {
-    //     console.log("#" + (i+1) + " error occurred, message = " + rets[i].errors.join(', '));
-    //   }
-    // }
-
-
-    // const upsertBulkProducts = (conn, data) => {
-    //     sanitize(data);
-    //     return new Promise((resolve, reject) => {
-    //         conn.bulk.load("Product2", "upsert", {"extIdField": "enxCPQ__TECH_External_Id__c"}, data, function(err, rets) {
-    //             if (err) { reject(err); }
-    //             var successCount = 0;
-    //             var errorsCount = 0;
-    //             for (var i=0; i < rets.length; i++) {
-    //                 if (rets[i].success) {
-    //                     successCount++;
-    //                 } else {
-    //                     errorsCount++;
-    //                 }
-    //                 process.stdout.write("--- upsert success: " + successCount + " errors: " + errorsCount + "\r");
-    //             }
-    //             resolve();
-    //         });
-    //     });
-    // }
 
     public static async insertData(connection: Connection, records: Array<any>, sObjectName: string) {
         Util.showSpinner('-- Inserting ' + sObjectName);
