@@ -59,7 +59,7 @@ export class ProductImport {
             await this.setProvisioningTaskImportScope();
         }
 
-        const productSelector = new ProductSelector(null);
+        const productSelector = new ProductSelector(null, this.exportB2BObjects);
         const recordTypes = await productSelector.getRecordTypes(this.connection);
 
         await Upsert.disableTriggers(this.connection);

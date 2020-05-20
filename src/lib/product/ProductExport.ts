@@ -48,7 +48,7 @@ export class ProductExport {
                         currencyNames: Set<String>) {
         
         const querySettings = await this.loadQueryConfiguration(this.targetDirectory);
-        const productSelector = new ProductSelector(querySettings);
+        const productSelector = new ProductSelector(querySettings, this.exportB2BObjects);
         
         const allProducts = await this.getAllProducts(productSelector);
         this.setProductExportScope(productNames, allProducts);
@@ -478,10 +478,14 @@ export class ProductExport {
             let content;
             fs.readFile('./' + queryDir + '/queryConfiguration.json', function read(err, data) {
                 if (err) {
+                    if (err.code == 'ENOENT') {
+                        resolve({});
+                    }
                     reject(err);
+                } else {
+                    content = data.toString('utf8');
+                    resolve(JSON.parse(content));
                 }
-                content = data.toString('utf8');
-                resolve(JSON.parse(content));
             });
         });
     }

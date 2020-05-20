@@ -1,13 +1,15 @@
 import { Connection } from "@salesforce/core";
 import { Query } from "./Query";
-import { Util } from "../Util";
+import { Schema } from "./Schema"
 
 export class ProductSelector {
 
     private settings:any;
+    private exportB2BObjects:boolean;
 
-    constructor(querySettings?:any) {
+    constructor(querySettings:any, exportB2BObjects:boolean) {
         this.settings = querySettings;
+        this.exportB2BObjects = exportB2BObjects;
     }
 
     public async getRecordTypes(connection: Connection) {
@@ -38,9 +40,9 @@ export class ProductSelector {
 
     public async getProducts(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'product';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + ", enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.Product2), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + ", enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM Product2 \
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                           AND (RecordType.Name = 'Product' OR RecordType.Name = 'Bundle')";
@@ -59,9 +61,9 @@ export class ProductSelector {
 
     public async getProductOptions(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'productOption';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + ", enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.Product2), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + ", enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM Product2 \
                         WHERE enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                           AND RecordType.Name = 'Option'";
@@ -83,9 +85,9 @@ export class ProductSelector {
 
     public async getProductAttributes(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'productAttr';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.ProductAttribute), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM enxCPQ__ProductAttribute__c \
                         WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
         const attributes = await Query.executeQuery(connection, query, queryLabel);
@@ -103,9 +105,9 @@ export class ProductSelector {
 
     public async getLocalAttributeValues(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'attrValues';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " , enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.AttributeValue), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeValue__c \
                         WHERE enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
         const attributeValues = await Query.executeQuery(connection, query, queryLabel);
@@ -114,9 +116,9 @@ export class ProductSelector {
 
     public async getAttributeRules(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'attrRules';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.AttributeRule), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM enxCPQ__AttributeRule__c \
                         WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
         const attributeRules = await Query.executeQuery(connection, query, queryLabel);
@@ -125,9 +127,9 @@ export class ProductSelector {
 
     public async getProductRelationships(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'productRelationships';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " , enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Secondary_Product__r.enxCPQ__TECH_External_Id__c \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.ProductRelationship), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Secondary_Product__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__ProductRelationship__c \
                         WHERE enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
         const productRelationship = await Query.executeQuery(connection, query, queryLabel);
@@ -136,9 +138,9 @@ export class ProductSelector {
 
     public async getAttributeDefaultValues(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'attrDefaultValues';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " , enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Value__r.enxCPQ__TECH_External_Id__c \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.AttributeDefaultValue), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Value__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeDefaultValue__c \
                         WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
         const attrDefaultValues = await Query.executeQuery(connection, query, queryLabel);
@@ -147,9 +149,9 @@ export class ProductSelector {
 
     public async getAttributeValueDependencies(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'attrValueDependecy';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " , enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Product__r.enxCPQ__TECH_External_Id__c, \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.AttributeValueDependency), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Product__r.enxCPQ__TECH_External_Id__c, \
                                                   enxCPQ__Master_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Dependent_Attribute__r.enxCPQ__TECH_External_Id__c, \
                                                   enxCPQ__Master_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Dependent_Value__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeValueDependency__c \
@@ -161,9 +163,9 @@ export class ProductSelector {
 
     public async getProductProvisioningPlans(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'prvPlanAssignment';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " , enxB2B__Product__r.enxCPQ__TECH_External_Id__c, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.ProvisioningPlanAssignment), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " , enxB2B__Product__r.enxCPQ__TECH_External_Id__c, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c \
                          FROM enxB2B__ProvisioningPlanAssignment__c \
                         WHERE enxB2B__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
         const planAssignments = await Query.executeQuery(connection, query, queryLabel);
@@ -181,9 +183,9 @@ export class ProductSelector {
 
     public async getProvisioningPlans(connection: Connection, planIds:Array<String>) {
         const queryLabel = 'prvPlan';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.ProvisioningPlan), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " \
                          FROM enxB2B__ProvisioningPlan__c \
                         WHERE enxB2B__TECH_External_Id__c IN ('" + planIds.join('\',\'') + "')";
         const plans = await Query.executeQuery(connection, query, queryLabel);
@@ -192,9 +194,9 @@ export class ProductSelector {
 
     public async getProvisioningTaskAssignments(connection: Connection, planIds:Array<String>) {
         const queryLabel = 'prvTaskAssignment';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " , enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__Provisioning_Task__r.enxB2B__TECH_External_Id__c \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.ProvisioningTaskAssignment), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " , enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__Provisioning_Task__r.enxB2B__TECH_External_Id__c \
                          FROM enxB2B__ProvisioningTaskAssignment__c \
                         WHERE enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c IN ('" + planIds.join('\',\'') + "')";
         const taskAssignments = await Query.executeQuery(connection, query, queryLabel);
@@ -212,9 +214,9 @@ export class ProductSelector {
 
     public async getProvisioningTasks(connection: Connection, taskIds:Array<String>) {
         const queryLabel = 'prvTask';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + ", RecordType.DeveloperName \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.ProvisioningTask), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + ", RecordType.DeveloperName \
                          FROM enxB2B__ProvisioningTask__c \
                         WHERE enxB2B__TECH_External_Id__c IN ('" + taskIds.join('\',\'') + "')";
         const tasks = await Query.executeQuery(connection, query, queryLabel);
@@ -223,9 +225,9 @@ export class ProductSelector {
 
     public async getAttributeDefinitions(connection: Connection, attributeIds:Array<String>) {
         const queryLabel = 'attr';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.Attribute), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " \
                          FROM enxCPQ__Attribute__c \
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "')";
         const attributes = await Query.executeQuery(connection, query, queryLabel);
@@ -234,9 +236,9 @@ export class ProductSelector {
 
     public async getGlobalAttributeValues(connection: Connection, attributeIds:Array<String>) {
         const queryLabel = 'attrValues';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.AttributeValue), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeValue__c \
                         WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "') \
                           AND enxCPQ__Exclusive_for_Product__c = null";
@@ -246,9 +248,9 @@ export class ProductSelector {
 
     public async getAttributeSets(connection: Connection, attributeSetIds:Array<String>) {
         const queryLabel = 'attrSet';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.AttributeSet), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " \
                          FROM enxCPQ__AttributeSet__c \
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + attributeSetIds.join('\',\'') + "')";
         const attributeSets = await Query.executeQuery(connection, query, queryLabel);
@@ -257,9 +259,9 @@ export class ProductSelector {
 
     public async getAttributeSetAttributes(connection: Connection, attributeSetIds:Array<String>) {
         const queryLabel = 'attrSetAttr';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + ", enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.AttributeSetAttribute), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + ", enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeSetAttribute__c \
                         WHERE enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c IN ('" + attributeSetIds.join('\',\'') + "')";
         const attributeSetAttributes = await Query.executeQuery(connection, query, queryLabel);
@@ -269,9 +271,9 @@ export class ProductSelector {
     
     public async getChargeDefinitions(connection: Connection, chargeIds:Array<String>) {
         const queryLabel = 'product';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + ", enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.Product2), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + ", enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, \
                                                  enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM Product2 \
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + chargeIds.join('\',\'') + "')";
@@ -304,9 +306,9 @@ export class ProductSelector {
 
     public async getCategories(connection: Connection, categoryIds:Array<String>) {
         const queryLabel = 'category';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + " , enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.Category), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__Category__c \
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + categoryIds.join('\',\'') + "')";
         const categories = await Query.executeQuery(connection, query, queryLabel);
@@ -315,9 +317,9 @@ export class ProductSelector {
 
     public async getPricebooks(connection: Connection) {
         const queryLabel = 'pricebook';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + ", IsStandard \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.Pricebook), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + ", IsStandard \
                          FROM Pricebook2";
         const pricebooks = await Query.executeQuery(connection, query, queryLabel);
         return pricebooks;
@@ -354,9 +356,9 @@ export class ProductSelector {
 
     public async getPricebookEntries(connection: Connection, productIds:Array<String>, pricebookIds:Array<String>) {
         const queryLabel = 'pbe';
-        const queryBody = this.settings[queryLabel];
-        if (queryBody === undefined) Util.throwError('Undefined query configuration for: ' + queryLabel);
-        const query = "SELECT " + queryBody + ", Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode \
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.PricebookEntry), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + ", Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode \
                          FROM PricebookEntry \
                          WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                            AND Pricebook2.enxCPQ__TECH_External_Id__c IN ('" + pricebookIds.join('\',\'') + "') \
@@ -376,4 +378,12 @@ export class ProductSelector {
         return pricebookEntries;
     }
     
+    private filterFields(fieldNames:Array<string>) {
+        if (this.exportB2BObjects) {
+            return fieldNames;
+        } else {
+            return fieldNames.filter(elem => {return !elem.includes('enxB2B')});
+        }
+    }
+
 }
