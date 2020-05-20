@@ -160,7 +160,7 @@ export class ProductExport {
 
 
         // -- pricebooks begin
-        // @TO-DO here we should load pricebooks from files first, because files might have more products than query scope
+        this.loadPricebooks();
         const pricebooks = await productSelector.getPricebooks(this.connection);
         this.wrapPricebooks(pricebooks);
 
@@ -439,9 +439,14 @@ export class ProductExport {
     }
 
     private wrapPricebooks(pricebooks:Array<any>) {
-        this.pricebooks = new Array<Pricebook>();
         pricebooks.forEach((pbook) => {
-            this.pricebooks.push(new Pricebook(pbook));
+            let pricebook = this.pricebooks.find(p => p.record['enxCPQ__TECH_External_Id__c'] === pbook['enxCPQ__TECH_External_Id__c']);
+            if (pricebook === undefined) pricebook = this.pricebooks.find(p => p.record['IsStandard'] === pbook['IsStandard']);
+            if (pricebook !== undefined) {
+                pricebook.record = pbook;
+            } else {
+                this.pricebooks.push(new Pricebook(pbook));
+            }
         })
     }
 
@@ -449,9 +454,18 @@ export class ProductExport {
         pricebookEntries.forEach((pbe) => {
             const pricebook = this.pricebooks.find(e => e.isStandard);
             if (pricebook !== undefined) {
-                const productTechId = pbe['Product2']['enxCPQ__TECH_External_Id__c'];
+                let productTechId = pbe['Product2']['enxCPQ__TECH_External_Id__c'];
+                let currencyCode = pbe['CurrencyIsoCode'];
                 if (pricebook.stdPricebookEntries.hasOwnProperty(productTechId)) {
-                    pricebook.stdPricebookEntries[productTechId].push(pbe);
+                    const entriesArray = pricebook.stdPricebookEntries[productTechId];
+                    const elementIndex = entriesArray.findIndex(elem => {return elem['Product2']['enxCPQ__TECH_External_Id__c'] === productTechId && elem['CurrencyIsoCode'] === currencyCode});
+                    if (elementIndex !== -1) {
+                        pricebook.stdPricebookEntries[productTechId].splice(elementIndex, 1);
+                        pricebook.stdPricebookEntries[productTechId] = [...pricebook.stdPricebookEntries[productTechId], pbe];
+                    } else {
+                        pricebook.stdPricebookEntries[productTechId] = [...pricebook.stdPricebookEntries[productTechId], pbe];
+                    }
+                    pricebook.stdPricebookEntries[productTechId].sort((elem1, elem2) => { return elem1['CurrencyIsoCode'] > elem2['CurrencyIsoCode'] });
                 } else {
                     pricebook.stdPricebookEntries[productTechId] = [pbe];
                 }
@@ -463,13 +477,45 @@ export class ProductExport {
         pricebookEntries.forEach((pbe) => {
             const pricebook = this.pricebooks.find(e => e.record['enxCPQ__TECH_External_Id__c'] === pbe['Pricebook2']['enxCPQ__TECH_External_Id__c']);
             if (pricebook !== undefined) {
-                const productTechId = pbe['Product2']['enxCPQ__TECH_External_Id__c'];
+                let productTechId = pbe['Product2']['enxCPQ__TECH_External_Id__c'];
+                let currencyCode = pbe['CurrencyIsoCode'];
                 if (pricebook.pricebookEntries.hasOwnProperty(productTechId)) {
-                    pricebook.pricebookEntries[productTechId].push(pbe);
+                    const entriesArray = pricebook.pricebookEntries[productTechId];
+                    const elementIndex = entriesArray.findIndex(elem => {return elem['Product2']['enxCPQ__TECH_External_Id__c'] === productTechId && elem['CurrencyIsoCode'] === currencyCode});
+                    if (elementIndex !== -1) {
+                        pricebook.pricebookEntries[productTechId].splice(elementIndex, 1);
+                        pricebook.pricebookEntries[productTechId] = [...pricebook.pricebookEntries[productTechId], pbe];
+                    } else {
+                        pricebook.pricebookEntries[productTechId] = [...pricebook.pricebookEntries[productTechId], pbe];
+                    }
+                    pricebook.pricebookEntries[productTechId].sort((elem1, elem2) => { return elem1['CurrencyIsoCode'] > elem2['CurrencyIsoCode'] });
                 } else {
                     pricebook.pricebookEntries[productTechId] = [pbe];
                 }
             }
+        });
+    }
+
+    private async loadPricebooks() {
+        this.pricebooks = [];
+
+        const pricebookFileNames = await this.fileManager.readAllFileNames('priceBooks');
+
+        let pricebookJSONArray = [];
+        pricebookFileNames.forEach((fileName) => {
+            const pricebookInputReader = this.fileManager.readFile('priceBooks', fileName);
+            pricebookJSONArray.push(pricebookInputReader);
+        });
+
+        return Promise.all(pricebookJSONArray).then((values) => {
+            const pricebookJSONs = values;
+
+            pricebookJSONs.forEach((pbook) => {
+                const pbookObj:Pricebook = new Pricebook(null);
+                pbookObj.fillFromJSON(pbook);
+
+                this.pricebooks.push(pbookObj);
+            });
         });
     }
 

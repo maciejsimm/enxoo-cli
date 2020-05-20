@@ -225,18 +225,14 @@ export class Schema {
         'UnitPrice',
         'IsActive',
         'UseStandardPrice',
-        'enxCPQ__Charge_List_Price__c',
-        'enxCPQ__Current_Pricebook_Inventory__c',
-        'enxCPQ__Current_Pricebook_Lead_Time__c',
-        'enxCPQ__MRC_List__c',
-        'enxCPQ__Multiplier_Percent__c',
         'enxCPQ__OTC_List__c',
+        'enxCPQ__MRC_List__c',
+        'enxCPQ__Charge_List_Price__c',
+        'enxCPQ__Multiplier_Percent__c',
         'enxCPQ__Price_Modifier_Amount__c',
         'enxCPQ__Price_Modifier_Percent__c',
         'enxCPQ__Price_Override__c',
         'enxCPQ__TECH_External_Id__c',
-        'enxB2B__MRC_List__c',
-        'enxB2B__OTC_List__c',
         'enxB2B__Service_Capex__c'
     ]
 
