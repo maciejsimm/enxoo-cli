@@ -66,7 +66,8 @@ export class ProductSelector {
         const query = "SELECT " + queryFields.join(',') + ", enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM Product2 \
                         WHERE enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
-                          AND RecordType.Name = 'Option'";
+                          AND RecordType.Name = 'Option' \
+                     ORDER BY enxCPQ__TECH_External_Id__c";
         const products = await Query.executeQuery(connection, query, queryLabel);
         return products;
     }
@@ -77,7 +78,8 @@ export class ProductSelector {
                               enxCPQ__Charge_Model__c, enxCPQ__Charge_Type__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM Product2 \
                         WHERE enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
-                          AND RecordType.Name = 'Charge'";
+                          AND RecordType.Name = 'Charge' \
+                     ORDER BY enxCPQ__Charge_Type__c, enxCPQ__Sorting_Order__c, enxCPQ__TECH_External_Id__c";
 
         const charges = await Query.executeQuery(connection, query, queryLabel);
         return charges;
@@ -89,7 +91,8 @@ export class ProductSelector {
         const queryFields = [...this.filterFields(Schema.ProductAttribute), ...queryInject];
         const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM enxCPQ__ProductAttribute__c \
-                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                     ORDER BY enxCPQ__Order__c";
         const attributes = await Query.executeQuery(connection, query, queryLabel);
         return attributes;
     }
@@ -109,7 +112,8 @@ export class ProductSelector {
         const queryFields = [...this.filterFields(Schema.AttributeValue), ...queryInject];
         const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeValue__c \
-                        WHERE enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+                        WHERE enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                     ORDER BY enxCPQ__Order__c";
         const attributeValues = await Query.executeQuery(connection, query, queryLabel);
         return attributeValues;
     }
@@ -120,7 +124,8 @@ export class ProductSelector {
         const queryFields = [...this.filterFields(Schema.AttributeRule), ...queryInject];
         const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM enxCPQ__AttributeRule__c \
-                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                     ORDER BY enxCPQ__Order__c";
         const attributeRules = await Query.executeQuery(connection, query, queryLabel);
         return attributeRules;
     }
@@ -131,7 +136,8 @@ export class ProductSelector {
         const queryFields = [...this.filterFields(Schema.ProductRelationship), ...queryInject];
         const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Secondary_Product__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__ProductRelationship__c \
-                        WHERE enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+                        WHERE enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                     ORDER BY enxCPQ__TECH_External_Id__c";
         const productRelationship = await Query.executeQuery(connection, query, queryLabel);
         return productRelationship;
     }
@@ -142,7 +148,8 @@ export class ProductSelector {
         const queryFields = [...this.filterFields(Schema.AttributeDefaultValue), ...queryInject];
         const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Value__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeDefaultValue__c \
-                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                     ORDER BY enxCPQ__TECH_External_Id__c";
         const attrDefaultValues = await Query.executeQuery(connection, query, queryLabel);
         return attrDefaultValues;
     }
@@ -156,7 +163,7 @@ export class ProductSelector {
                                                   enxCPQ__Master_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Dependent_Value__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeValueDependency__c \
                         WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
-                     ORDER BY enxCPQ__TECH_Key__c";
+                     ORDER BY enxCPQ__Execution_Order__c, enxCPQ__TECH_Key__c, enxCPQ__TECH_External_Id__c";
         const attrValueDependecy = await Query.executeQuery(connection, query, queryLabel);
         return attrValueDependecy;
     }
@@ -176,7 +183,8 @@ export class ProductSelector {
         const queryLabel = 'prvPlanAssignment ids';
         const query = "SELECT Id \
                          FROM enxB2B__ProvisioningPlanAssignment__c \
-                        WHERE enxB2B__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+                        WHERE enxB2B__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                     ORDER BY enxB2B__Order__c";
         const planAssignments = await Query.executeQuery(connection, query, queryLabel);
         return planAssignments;
     }
@@ -198,7 +206,8 @@ export class ProductSelector {
         const queryFields = [...this.filterFields(Schema.ProvisioningTaskAssignment), ...queryInject];
         const query = "SELECT " + queryFields.join(',') + " , enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__Provisioning_Task__r.enxB2B__TECH_External_Id__c \
                          FROM enxB2B__ProvisioningTaskAssignment__c \
-                        WHERE enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c IN ('" + planIds.join('\',\'') + "')";
+                        WHERE enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c IN ('" + planIds.join('\',\'') + "') \
+                     ORDER BY enxB2B__Order__c";
         const taskAssignments = await Query.executeQuery(connection, query, queryLabel);
         return taskAssignments;
     }
@@ -241,7 +250,8 @@ export class ProductSelector {
         const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeValue__c \
                         WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "') \
-                          AND enxCPQ__Exclusive_for_Product__c = null";
+                          AND enxCPQ__Exclusive_for_Product__c = null \
+                     ORDER BY enxCPQ__Order__c";
         const attributeValues = await Query.executeQuery(connection, query, queryLabel);
         return attributeValues;
     }
@@ -263,7 +273,8 @@ export class ProductSelector {
         const queryFields = [...this.filterFields(Schema.AttributeSetAttribute), ...queryInject];
         const query = "SELECT " + queryFields.join(',') + ", enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeSetAttribute__c \
-                        WHERE enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c IN ('" + attributeSetIds.join('\',\'') + "')";
+                        WHERE enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c IN ('" + attributeSetIds.join('\',\'') + "') \
+                     ORDER BY enxCPQ__Order__c";
         const attributeSetAttributes = await Query.executeQuery(connection, query, queryLabel);
         return attributeSetAttributes;
     }
@@ -288,7 +299,8 @@ export class ProductSelector {
                               enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName  \
                          FROM Product2 \
                         WHERE enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c IN ('" + chargeIds.join('\',\'') + "') \
-                          AND RecordType.Name = 'Charge Element'";
+                          AND RecordType.Name = 'Charge Element' \
+                     ORDER BY enxCPQ__TECH_External_Id__c";
         const chargeElements = await Query.executeQuery(connection, query, queryLabel);
         return chargeElements;
     }
@@ -299,7 +311,8 @@ export class ProductSelector {
                               enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName  \
                          FROM Product2 \
                         WHERE enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c IN ('" + chargeIds.join('\',\'') + "') \
-                          AND RecordType.Name = 'Charge Tier'";
+                          AND RecordType.Name = 'Charge Tier' \
+                     ORDER BY enxCPQ__Value_From__c";
         const chargeElements = await Query.executeQuery(connection, query, queryLabel);
         return chargeElements;
     }
@@ -346,7 +359,7 @@ export class ProductSelector {
 
     public async getStandardPricebookEntryIds(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'std pbe ids';
-        const query = "SELECT Id \
+        const query = "SELECT Id, Product2Id, CurrencyIsoCode \
                          FROM PricebookEntry \
                          WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                            AND Pricebook2.IsStandard = true";
@@ -370,7 +383,7 @@ export class ProductSelector {
 
     public async getPricebookEntryIds(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'pbe ids';
-        const query = "SELECT Id \
+        const query = "SELECT Id, Product2Id, CurrencyIsoCode \
                          FROM PricebookEntry \
                          WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                            AND Pricebook2.IsStandard = false";

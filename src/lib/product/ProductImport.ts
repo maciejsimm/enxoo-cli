@@ -168,19 +168,33 @@ export class ProductImport {
             pricebookEntries = [... pricebookEntries, ...pbook.getPricebookEntriesToInsert(product2TargetIds, pricebook2TargetIds)];
         })
 
+        let stdPricebookEntriesTarget = [];
+        let pricebookEntriesTarget = [];
+
         if (pricebookEntryProductIds.length > 0) {
-            const stdPricebookEntriesTarget = await productSelector.getStandardPricebookEntryIds(this.connection, pricebookEntryProductIds);
-            const pricebookEntriesTarget = await productSelector.getPricebookEntryIds(this.connection, pricebookEntryProductIds);
-            if (pricebookEntriesTarget.length > 0)
-                await Upsert.deleteData(this.connection, pricebookEntriesTarget, 'PricebookEntry');
-            if (stdPricebookEntriesTarget.length > 0)
-                await Upsert.deleteData(this.connection, stdPricebookEntriesTarget, 'PricebookEntry');
+            stdPricebookEntriesTarget = await productSelector.getStandardPricebookEntryIds(this.connection, pricebookEntryProductIds);
+            pricebookEntriesTarget = await productSelector.getPricebookEntryIds(this.connection, pricebookEntryProductIds);
         }
 
-        await Upsert.insertData(this.connection, standardPricebookEntries, 'PricebookEntry');
-        await Upsert.insertData(this.connection, pricebookEntries, 'PricebookEntry');
-        // -- pricebooks import end
+        const stdPricebookEntriesResult = this.mapPricebookEntries(stdPricebookEntriesTarget, standardPricebookEntries);
+        const pricebookEntriesResult = this.mapPricebookEntries(pricebookEntriesTarget, pricebookEntries);
 
+        if (pricebookEntriesResult.toDelete.length > 0)
+            await Upsert.deleteData(this.connection, pricebookEntriesResult.toDelete, 'PricebookEntry');
+        if (stdPricebookEntriesResult.toDelete.length > 0)
+            await Upsert.deleteData(this.connection, stdPricebookEntriesResult.toDelete, 'PricebookEntry');
+
+        if (stdPricebookEntriesResult.toUpdate.length > 0) {
+            await Upsert.updateData(this.connection, stdPricebookEntriesResult.toUpdate, 'PricebookEntry');
+        }
+        if (pricebookEntriesResult.toUpdate.length > 0)
+            await Upsert.updateData(this.connection, pricebookEntriesResult.toUpdate, 'PricebookEntry');
+
+        if (stdPricebookEntriesResult.toInsert.length > 0)
+            await Upsert.insertData(this.connection, stdPricebookEntriesResult.toInsert, 'PricebookEntry');
+        if (pricebookEntriesResult.toInsert.length > 0)
+            await Upsert.insertData(this.connection, pricebookEntriesResult.toInsert, 'PricebookEntry');
+        // -- pricebooks import end
 
         // -- product relationships import begin
         let allProductRelationships = [];
@@ -216,7 +230,7 @@ export class ProductImport {
 
 
         // -- provisioning tasks import begin
-        if (this.provisioningTaskIds.length > 0) {
+        if (this.provisioningTaskIds && this.provisioningTaskIds.length > 0) {
             const allProvisioningTasks =  this.provisioningTasks.map((task) => {return task.record});
             const allProvisioningTasksRTfix = Util.fixRecordTypes(allProvisioningTasks, recordTypes, 'enxB2B__ProvisioningTask__c');
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProvisioningTasksRTfix), 'enxB2B__ProvisioningTask__c');
@@ -225,7 +239,7 @@ export class ProductImport {
 
 
         // -- provisioning plans import begin
-        if (this.provisioningPlanIds.length > 0) {
+        if (this.provisioningPlanIds && this.provisioningPlanIds.length > 0) {
             const allProvisioningPlans =  this.provisioningPlans.map((plan) => {return plan.record});
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProvisioningPlans), 'enxB2B__ProvisioningPlan__c');
 
@@ -565,6 +579,32 @@ export class ProductImport {
     private async getAllProductsLocal() {
         const productFileNames = await this.fileManager.readAllFileNames('products');
         return productFileNames;
+    }
+
+    private mapPricebookEntries(target:Array<any>, source:Array<any>) {
+        let result = {
+                toInsert: [], 
+                toUpdate: [], 
+                toDelete: []
+            };
+        
+        source.forEach((sourceElement) => {
+            const targetElementIndex = target.findIndex(e => { return e['Product2Id'] === sourceElement['Product2Id'] && e['CurrencyIsoCode'] === sourceElement['CurrencyIsoCode']; });
+            if (targetElementIndex !== -1) {
+                const targetElement = target.splice(targetElementIndex, 1)[0];
+                sourceElement['Id'] = targetElement['Id'];
+                delete sourceElement['Product2Id'];
+                delete sourceElement['Pricebook2Id'];
+                delete sourceElement['CurrencyIsoCode'];
+                result.toUpdate.push(sourceElement);
+            } else {
+                result.toInsert.push(sourceElement);
+            }
+        })
+
+        result.toDelete = [... target];
+
+        return result;
     }
 
 }

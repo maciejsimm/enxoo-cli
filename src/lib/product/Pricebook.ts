@@ -39,8 +39,8 @@ export class Pricebook extends Serializable {
 
                     let pbes:Array<any> = this.stdPricebookEntries[key];
                     pbes.forEach((pbe) => {
-                        pbe.product2Id = productId;
-                        pbe.pricebook2Id = pricebook2Id;
+                        pbe.Product2Id = productId;
+                        pbe.Pricebook2Id = pricebook2Id;
                         delete pbe['Product2'];
                         delete pbe['Pricebook2'];
                         result.push(pbe);
@@ -62,8 +62,8 @@ export class Pricebook extends Serializable {
                     const pricebook2Id = pricebook2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] === this.getPricebookId()).Id;
                     let pbes:Array<any> = this.pricebookEntries[key];
                     pbes.forEach((pbe) => {
-                        pbe.product2Id = productId;
-                        pbe.pricebook2Id = pricebook2Id;
+                        pbe.Product2Id = productId;
+                        pbe.Pricebook2Id = pricebook2Id;
                         delete pbe['Product2'];
                         delete pbe['Pricebook2'];
                         result.push(pbe);
