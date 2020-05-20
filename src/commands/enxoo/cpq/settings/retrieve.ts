@@ -1,6 +1,6 @@
 import {core, flags, SfdxCommand} from '@salesforce/command';
 import {AnyJson} from '@salesforce/ts-types';
-import { ProductExport } from '../../../../lib/product/ProductExport';
+import { SettingsExport } from '../../../../lib/settings/SettingsExport';
 
 // Initialize Messages with the current plugin directory
 core.Messages.importMessagesDirectory(__dirname);
@@ -14,11 +14,7 @@ export default class Org extends SfdxCommand {
   public static description = messages.getMessage('commandDescription');
 
   protected static flagsConfig = {
-    products: flags.array({char: 'p', required: true, description: messages.getMessage('productsFlagDescription')}),
-    b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('b2bFlagDescription')}),
-    related: flags.boolean({char: 'r', required: false, description: messages.getMessage('relatedFlagDescription')}),
-    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')}),
-    currencies: flags.array({char: 'c', required: false, description: messages.getMessage('currenciesFlagDescription')})
+    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')})
   };
 
   // Comment this out if your command does not require an org username
@@ -38,16 +34,13 @@ export default class Org extends SfdxCommand {
     // conn = await getJsforceConnection(this.org.getConnection().getConnectionOptions());
     const conn = this.org.getConnection();
 
-    const [products, b2b, dir, related, currencies] = [this.flags.products, this.flags.b2b, this.flags.dir,
-                                                      this.flags.related, this.flags.currencies];
+    const dir = this.flags.dir;
 
-    this.ux.log('*** Begin exporting ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
+    this.ux.log('*** Begin exporting settings ***');
     
-    const exporter = new ProductExport(dir, conn, b2b);
-    await exporter.export(products, related, currencies);
+    const exporter = new SettingsExport(dir, conn);
+    await exporter.export();
 
-    // const exporter = new ProductExporter(products, b2b, dir, related, currencies);
-    // await exporter.all(conn);
     this.ux.log('*** Finished ***');
     
     return null;

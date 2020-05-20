@@ -41,24 +41,31 @@ export class Util {
 		throw new core.SfdxError(msg, "Error", null, -1);
     }
     
-    public static showSpinner(msg: any) {
+    public static async showSpinner(msg: any) {
         UX.create()
             .then((ux) => {
                 ux.startSpinner(msg);
             })    
     }
 
-    public static hideSpinner(msg: any) {
+    public static async hideSpinner(msg: any) {
         UX.create()
             .then((ux) => {
                 ux.stopSpinner(msg);
             })
     }
 
-    public static log(msg: any) {
+    public static async log(msg: any) {
         UX.create()
             .then((ux) => {
                 ux.log(msg);
+            })
+    }
+
+    public static async warn(msg: any) {
+        UX.create()
+            .then((ux) => {
+                ux.warn(msg);
             })
     }
 
@@ -118,6 +125,9 @@ export class Util {
                 if (prop === 'Id') {
                     delete obj[prop];
                 }
+                if (prop === 'IsStandard') {
+                    delete obj[prop];
+                }
 
                 if (prop.indexOf('__r') !== -1 && obj[prop] == null) delete obj[prop];
 
@@ -128,6 +138,74 @@ export class Util {
                 }
             }
         }
+
+        return obj;
+    }
+
+    public static sanitizeDeepForUpsert(objParam: any) {
+        
+        let obj:any;
+
+        let isArray = objParam instanceof Array;
+        let isString = (typeof objParam == 'string');
+        let isObject = (typeof objParam == 'object' && !isArray && !isString);
+
+        if (isArray) {
+            obj = [];
+            for (let subObj of objParam) {
+                obj.push(this.sanitizeDeepForUpsert(subObj));
+            }
+            return obj;
+        }
+
+        if (isObject) {
+            obj = {};
+            for (let prop in objParam) {
+                if (prop === 'attributes') {
+                    // delete obj[prop];
+                    continue;
+                }
+                if (prop === 'Id') {
+                    // delete obj[prop];
+                    continue;
+                }
+
+                if (prop.indexOf('__r') !== -1 && obj[prop] == null) {
+                    // delete obj[prop];
+                    continue;
+                }
+
+                if (prop.indexOf('__r') !== -1) {
+                    // delete obj[prop];
+                    continue;
+                } 
+
+                if (typeof(obj[prop]) === 'object') {
+                    for (let innerProp in obj[prop]) {
+                        if (innerProp === 'attributes') {
+                            // delete obj[prop][innerProp];
+                            continue;
+                        } 
+                    }
+                }
+
+                obj[prop] = objParam[prop];
+            }
+            return obj;
+        }
+    }
+
+    public static fixRecordTypes (arr: any, recordTypes: any, objectName: string) {
+        let result = [];
+        arr.forEach(elem => {
+            if (elem.hasOwnProperty('RecordType')) {
+                const recordType = recordTypes.find(e => e.Object === objectName && e.DeveloperName === elem.RecordType.DeveloperName);
+                delete elem['RecordType'];
+                elem['RecordTypeId'] = recordType.id;
+            }
+            result.push(elem);
+        })
+        return result;
     }
 
     public static sanitizeForInsert (arr:any, sObjectName:string)  {
@@ -260,6 +338,7 @@ export class Util {
         return allProductsNames;
     }
 
+    // TO DEL
     public static async writeFile(path:string, dataToSanitaze:any){
         await fs.writeFile('./' + this.dir + path, JSON.stringify(Util.sanitizeJSON(dataToSanitaze), null, 3), function(err) {
             if(err) {
@@ -267,13 +346,15 @@ export class Util {
             }
         });
     }
-
+    
+    // TO DEL
     public static createDir(dir:string){
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir, { recursive: true });
         }
     }
-
+    
+    // TO DEL
     public static createAllDirs(isB2B: boolean, dir: string){
         const dirs = ['/products', '/categories', '/attributes', 
                      '/attributeSets', '/priceBooks', '/charges', '/bundleElements'];
