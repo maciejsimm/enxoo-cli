@@ -42,7 +42,8 @@ export class FileManager {
     }
 
     public async writeFile(fileDirectory:String, fileName: String, data:any) {
-        const path = './' + this.directory + '/' + fileDirectory + '/' + fileName;
+        const fileNameSanitized = fileName.split('/').join('');
+        const path = './' + this.directory + '/' + fileDirectory + '/' + fileNameSanitized;
         const contentJSON = JSON.stringify(Util.sanitizeJSON(data), null, 3);
         await fs.writeFile(path, contentJSON, function(err) {
             if (err) {

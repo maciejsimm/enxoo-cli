@@ -1,6 +1,7 @@
 import {core, flags, SfdxCommand} from '@salesforce/command';
 import {AnyJson} from '@salesforce/ts-types';
 import { SettingsExport } from '../../../../lib/settings/SettingsExport';
+import { Util } from '../../../../lib/Util';
 
 // Initialize Messages with the current plugin directory
 core.Messages.importMessagesDirectory(__dirname);
@@ -27,21 +28,15 @@ export default class Org extends SfdxCommand {
   protected static requiresProject = false;
 
   public async run(): Promise<AnyJson> {
-    // const name = this.flags.name || 'world';
-
-    // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
-    // let conn: Connection;
-    // conn = await getJsforceConnection(this.org.getConnection().getConnectionOptions());
     const conn = this.org.getConnection();
-
     const dir = this.flags.dir;
 
-    this.ux.log('*** Begin exporting settings ***');
+    Util.log('*** Begin exporting settings ***');
     
     const exporter = new SettingsExport(dir, conn);
     await exporter.export();
 
-    this.ux.log('*** Finished ***');
+    Util.log('*** Finished ***');
     
     return null;
   }

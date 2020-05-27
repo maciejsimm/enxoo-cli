@@ -1,6 +1,7 @@
 import {core, flags, SfdxCommand} from '@salesforce/command';
 import {AnyJson} from '@salesforce/ts-types';
 import { ProductExport } from '../../../../lib/product/ProductExport';
+import { Util } from '../../../../lib/Util';
 
 // Initialize Messages with the current plugin directory
 core.Messages.importMessagesDirectory(__dirname);
@@ -31,24 +32,17 @@ export default class Org extends SfdxCommand {
   protected static requiresProject = false;
 
   public async run(): Promise<AnyJson> {
-    // const name = this.flags.name || 'world';
-
-    // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
-    // let conn: Connection;
-    // conn = await getJsforceConnection(this.org.getConnection().getConnectionOptions());
     const conn = this.org.getConnection();
 
     const [products, b2b, dir, related, currencies] = [this.flags.products, this.flags.b2b, this.flags.dir,
                                                       this.flags.related, this.flags.currencies];
 
-    this.ux.log('*** Begin exporting ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
+    Util.log('*** Begin exporting ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
     
     const exporter = new ProductExport(dir, conn, b2b);
     await exporter.export(products, related, currencies);
 
-    // const exporter = new ProductExporter(products, b2b, dir, related, currencies);
-    // await exporter.all(conn);
-    this.ux.log('*** Finished ***');
+    Util.log('*** Finished ***');
     
     return null;
   }

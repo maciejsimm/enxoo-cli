@@ -284,7 +284,7 @@ export class ProductSelector {
         const queryLabel = 'product';
         const queryInject = this.settings[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.Product2), ...queryInject];
-        const query = "SELECT " + queryFields.join(',') + ", enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, \
+        const query = "SELECT " + queryFields.join(',') + ", enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, \
                                                  enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM Product2 \
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + chargeIds.join('\',\'') + "')";

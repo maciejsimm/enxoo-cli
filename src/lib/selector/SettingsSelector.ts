@@ -16,5 +16,14 @@ export class SettingsSelector {
         const settings = await Query.executeQuery(connection, query, queryLabel);
         return settings;
     }
+
+    public async getAllSettingIds(connection: Connection) {
+        const queryLabel = 'all settings';
+        const query = "SELECT Id \
+                         FROM enxCPQ__CPQ_Settings__c";
+
+        const settings = await Query.executeQuery(connection, query, queryLabel);
+        return settings;
+    }
     
 }
