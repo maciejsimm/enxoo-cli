@@ -46,6 +46,16 @@ export class Upsert {
         const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
         const dataToImport = Util.sanitizeForBulkImport(records);
 
+        // const someFunc = () => {
+        //     return new Promise<String[]>((resolve: Function, reject: Function) => {
+        //         connection.bulk.load(sObjectName, "upsert", {"extIdField": externalIdString}, dataToImport, (err:any, rets:RecordResult[]) => {
+        //             resolve();
+        //         });
+        //     });
+        // };
+
+        // await someFunc();
+        
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             connection.bulk.pollTimeout = 250000;
             connection.bulk.load(sObjectName, "upsert", {"extIdField": externalIdString}, dataToImport, async (err:any, rets:RecordResult[]) => {

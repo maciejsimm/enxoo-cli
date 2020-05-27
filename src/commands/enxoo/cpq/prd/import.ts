@@ -1,6 +1,7 @@
 import {core, flags, SfdxCommand} from '@salesforce/command';
 import {AnyJson} from '@salesforce/ts-types';
 import { ProductImport } from '../../../../lib/product/ProductImport';
+import { Util } from '../../../../lib/Util';
 
 // Initialize Messages with the current plugin directory
 core.Messages.importMessagesDirectory(__dirname);
@@ -38,15 +39,12 @@ export default class Org extends SfdxCommand {
     
     const [products, b2b, dir, currencies] = [this.flags.products, this.flags.b2b, this.flags.dir, this.flags.currencies]
 
-    this.ux.log('*** Begin Importing ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
+    Util.log('*** Begin Importing ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
 
     const importer = new ProductImport(dir, conn, b2b);
     await importer.import(products, currencies);
 
-    // const importer = new ProductImporter(products, b2b, dir, userName, currencies);
-    // await importer.all(conn);
-
-    this.ux.log('*** Finished ***');
+    Util.log('*** Finished ***');
     
     return null;
   }

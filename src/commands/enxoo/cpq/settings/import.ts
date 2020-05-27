@@ -1,6 +1,7 @@
 import {core, flags, SfdxCommand} from '@salesforce/command';
 import {AnyJson} from '@salesforce/ts-types';
 import { SettingsImport } from '../../../../lib/settings/SettingsImport';
+import { Util } from '../../../../lib/Util';
 
 // Initialize Messages with the current plugin directory
 core.Messages.importMessagesDirectory(__dirname);
@@ -34,12 +35,12 @@ export default class Org extends SfdxCommand {
     
     const dir = this.flags.dir;
 
-    this.ux.log('*** Begin Importing settings ***');
+    Util.log('*** Begin Importing settings ***');
 
     const importer = new SettingsImport(dir, conn);
     await importer.import();
 
-    this.ux.log('*** Finished ***');
+    Util.log('*** Finished ***');
     
     return null;
   }
