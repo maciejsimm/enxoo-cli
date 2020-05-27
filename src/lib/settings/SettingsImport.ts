@@ -1,6 +1,7 @@
 import { FileManager } from './../file/FileManager';
 import { Connection } from "@salesforce/core";
 import { Upsert } from './../repository/Upsert';
+import { SettingsSelector } from '../selector/SettingsSelector';
 
 export class SettingsImport {
 
@@ -15,8 +16,11 @@ export class SettingsImport {
     public async import() {
 
         const settings = await this.getSettings();
+        const settingsSelector = new SettingsSelector();
 
-        // @to-do this is prone to error, settings should be cleared first in order not to create duplicates
+        const settingsTargetIds = await settingsSelector.getAllSettingIds(this.connection);
+
+        await Upsert.deleteData(this.connection, settingsTargetIds, 'enxCPQ__CPQ_Settings__c');
         await Upsert.insertData(this.connection, settings, 'enxCPQ__CPQ_Settings__c');
 
     }
