@@ -1,6 +1,7 @@
 import {core, flags, SfdxCommand} from '@salesforce/command';
 import {AnyJson} from '@salesforce/ts-types';
-import { Describer } from '../../../../lib/Describer';
+import { Util } from '../../../../lib/Util';
+import { FileManager } from '../../../../lib/file/FileManager';
 
 // Initialize Messages with the current plugin directory
 core.Messages.importMessagesDirectory(__dirname);
@@ -20,7 +21,7 @@ export default class Org extends SfdxCommand {
   };
 
   // Comment this out if your command does not require an org username
-  protected static requiresUsername = true;
+  protected static requiresUsername = false;
 
   // Comment this out if your command does not support a hub org username
   protected static supportsDevhubUsername = true;
@@ -30,23 +31,46 @@ export default class Org extends SfdxCommand {
 
   public async run(): Promise<AnyJson> {
 
-    // this.org is guaranteed because requiresUsername=true, as opposed to supportsUsername
-    const conn = this.org.getConnection();
-    conn.bulk.pollInterval = 5000; // 5 sec
-    conn.bulk.pollTimeout = 300000; // 300 sec
     const b2b = this.flags.b2b;
     const dir = this.flags.dir;
 
-    this.ux.log('*** Begin Describing  ' + (b2b ? 'B2B + CPQ' : 'CPQ') + ' objects ***');
+    Util.log('*** Initializing configuration file for ' + (b2b ? 'B2B + CPQ' : 'CPQ') + ' setup ***');
+    Util.showSpinner('-- Writing queryConfiguration.json file ');
 
-    // @TO-DO - this should either be killed or should be moved to config and used fill in queryConfiguration.json file with those fields
-    //        - that are not specified in selectors
-
-    const describer = new Describer(b2b, dir);
-    await describer.all(conn);
-
-    this.ux.log('*** Finished ***');
+    const fileManager = new FileManager(dir, b2b);
+    // @TO-DO include comment in a file
+    fileManager.writeFile('', 'queryConfiguration.json', this.configurationObject);
+    
+    Util.hideSpinner(' done');
+    Util.log('*** Finished ***');
     
     return null;
   }
+
+  private messageLine1 = '// In this file, for each object you can specify comma separated list of custom fields that will be injected in query:';
+  private messageLine2 = '//    Example: product: [\'billing_label_1__c\', \'billing_label_2__c\']';
+
+  private configurationObject = { 
+    product: [], 
+    productOption: [], 
+    bundleElement: [], 
+    bundleElementOption: [], 
+    pricebook: [], 
+    pbe: [],
+    productAttr: [],
+    attrSetAttr: [],
+    attr: [],
+    attrValues: [],
+    attrDefaultValues: [],
+    productRelationships: [],
+    attrValueDependecy: [],
+    attrRules: [],
+    category: [],
+    attrSet: [],
+    prvPlanAssignment: [],
+    prvTask: [],
+    prvPlan: [],
+    prvTaskAssignment: []
+ };
+
 }
