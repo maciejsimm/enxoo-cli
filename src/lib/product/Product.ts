@@ -10,6 +10,8 @@ export class Product extends Serializable {
     public productRelationships:Array<any>;
     public attributeDefaultValues:Array<any>;
     public attributeValueDependencies:Array<any>;
+    public bundleElements:Array<any>;
+    public bundleElementOptions:Array<any>;
     public provisioningPlans:Array<any>;
     
     constructor(product:any) {
@@ -23,6 +25,8 @@ export class Product extends Serializable {
         this.productRelationships = [];
         this.attributeDefaultValues = [];
         this.attributeValueDependencies = [];
+        this.bundleElements = [];
+        this.bundleElementOptions = [];
         this.provisioningPlans = [];
     }
 
@@ -37,6 +41,12 @@ export class Product extends Serializable {
     public getAttributeIds() {
         return this.productAttributes.map((attr) => {
             return attr['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'];
+        });
+    }
+
+    public getBundleElementIds() {
+        return this.bundleElements.map((bel) => {
+            return bel['enxCPQ__TECH_External_Id__c'];
         });
     }
 

@@ -196,12 +196,29 @@ export class ProductImport {
             await Upsert.insertData(this.connection, pricebookEntriesResult.toInsert, 'PricebookEntry');
         // -- pricebooks import end
 
+
         // -- product relationships import begin
         let allProductRelationships = [];
         this.products.forEach((prod) => { allProductRelationships = [...allProductRelationships, ...prod.productRelationships] });
         if (allProductRelationships.length > 0)
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductRelationships), 'enxCPQ__ProductRelationship__c');
         // -- product relationships import end
+
+
+        // -- bundle elements import begin
+        let allBundleElements = [];
+        this.products.forEach((prod) => { allBundleElements = [...allBundleElements, ...prod.bundleElements] });
+        if (allBundleElements.length > 0)
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allBundleElements), 'enxCPQ__BundleElement__c');
+        // -- bundle elements import end
+
+
+        // -- bundle element options import begin
+        let allBundleElementOptions = [];
+        this.products.forEach((prod) => { allBundleElementOptions = [...allBundleElementOptions, ...prod.bundleElementOptions] });
+        if (allBundleElementOptions.length > 0)
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allBundleElementOptions), 'enxCPQ__BundleElementOption__c');
+        // -- bundle element options import end
 
 
         // -- attribute rules import begin
@@ -277,7 +294,8 @@ export class ProductImport {
             productFileNames = allProductsLocal;
         } else {
             productFileNames = allProductsLocal.filter((elem) => {
-                                                            return productToImportNames.includes(elem.substring(0, elem.indexOf('_PRD')));
+                                                            return productToImportNames.includes(elem.substring(0, elem.indexOf('_PRD'))) ||
+                                                                   productToImportNames.includes(elem.substring(0, elem.indexOf('_BDL')));
                                                        });
         }
         

@@ -16,8 +16,8 @@ export class SettingsImport {
     public async import() {
 
         const settings = await this.getSettings();
+        
         const settingsSelector = new SettingsSelector();
-
         const settingsTargetIds = await settingsSelector.getAllSettingIds(this.connection);
 
         await Upsert.deleteData(this.connection, settingsTargetIds, 'enxCPQ__CPQ_Settings__c');

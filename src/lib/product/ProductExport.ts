@@ -83,6 +83,14 @@ export class ProductExport {
         const attributeValueDependencies = await productSelector.getAttributeValueDependencies(this.connection, this.productIds);
         this.wrapAttributeValueDependencies(attributeValueDependencies);
 
+        const bundleElements = await productSelector.getBundleElements(this.connection, this.productIds);
+        this.wrapBundleElements(bundleElements);
+
+        let bundleElementIds = [];
+        this.products.forEach(product => { bundleElementIds = [...bundleElementIds, ...product.getBundleElementIds()] });
+        const bundleElementOptions = await productSelector.getBundleElementOptions(this.connection, bundleElementIds);
+        this.wrapBundleElementOptions(bundleElementOptions);
+
         if (this.exportB2BObjects) {
             const productProvisioningPlans = await productSelector.getProductProvisioningPlans(this.connection, this.productIds);
             this.wrapProductProvisioningPlans(productProvisioningPlans);
@@ -338,6 +346,37 @@ export class ProductExport {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === avd['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
                 product.attributeValueDependencies.push(avd);
+            }
+        });
+    }
+
+    private wrapBundleElements(bundleElements:Array<any>) {
+        bundleElements.forEach((bel) => {
+            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === bel['enxCPQ__Bundle__r']['enxCPQ__TECH_External_Id__c']);
+            if (product !== undefined) {
+                product.bundleElements.push(bel);
+            }
+        });
+    }
+
+    private wrapBundleElementOptions(bundleElementOptions:Array<any>) {
+        bundleElementOptions.forEach((bel) => {
+            let product;
+            for (let i = 0; i < this.products.length; i++) {
+                if (this.products[i].bundleElements.length > 0) {
+                    for (let j = 0; j < this.products[i].bundleElements.length; j++) {
+                        const element = this.products[i].bundleElements[j];
+                        if (bel['enxCPQ__Bundle_Element__r']['enxCPQ__TECH_External_Id__c'] == element['enxCPQ__TECH_External_Id__c']) {
+                            product = this.products[i];
+                            break;
+                        }
+                    }
+                }
+                if (product !== null) break;
+            }
+
+            if (product !== null) {
+                product.bundleElementOptions.push(bel);
             }
         });
     }

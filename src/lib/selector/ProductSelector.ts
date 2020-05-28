@@ -85,6 +85,30 @@ export class ProductSelector {
         return charges;
     }
 
+    public async getBundleElements(connection: Connection, productIds:Array<String>) {
+        const queryLabel = 'bundleElement';
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.BundleElement), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c \
+                         FROM enxCPQ__BundleElement__c \
+                        WHERE enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                     ORDER BY enxCPQ__Order__c";
+        const elements = await Query.executeQuery(connection, query, queryLabel);
+        return elements;
+    }
+
+    public async getBundleElementOptions(connection: Connection, bundleElementIds:Array<String>) {
+        const queryLabel = 'bundleElementOption';
+        const queryInject = this.settings[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.BundleElementOption), ...queryInject];
+        const query = "SELECT " + queryFields.join(',') + " , enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c \
+                         FROM enxCPQ__BundleElementOption__c \
+                        WHERE enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c IN ('" + bundleElementIds.join('\',\'') + "') \
+                     ORDER BY enxCPQ__Bundle_Element__c, enxCPQ__Order__c";
+        const elementOptions = await Query.executeQuery(connection, query, queryLabel);
+        return elementOptions;
+    }
+
     public async getProductAttributes(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'productAttr';
         const queryInject = this.settings[queryLabel] || [];

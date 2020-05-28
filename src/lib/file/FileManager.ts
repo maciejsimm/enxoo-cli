@@ -67,8 +67,7 @@ export class FileManager {
                            'attributes', 
                            'attributeSets', 
                            'priceBooks', 
-                           'charges', 
-                           'bundleElements',
+                           'charges',
                            'settings'];
 
         if (this.isB2B) {
