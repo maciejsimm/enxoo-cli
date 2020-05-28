@@ -38,7 +38,8 @@ export default class Org extends SfdxCommand {
     Util.showSpinner('-- Writing queryConfiguration.json file ');
 
     const fileManager = new FileManager(dir, b2b);
-    // @TO-DO include comment in a file
+    // @TO-DO 1. include comment in a file
+    // @TO-DO 2. documentation of this method in Knowledge Base
     fileManager.writeFile('', 'queryConfiguration.json', this.configurationObject);
     
     Util.hideSpinner(' done');

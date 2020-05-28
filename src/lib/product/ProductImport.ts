@@ -206,6 +206,7 @@ export class ProductImport {
 
 
         // -- bundle elements import begin
+        // @TO-DO - this doesn't handle removal of bundle elements
         let allBundleElements = [];
         this.products.forEach((prod) => { allBundleElements = [...allBundleElements, ...prod.bundleElements] });
         if (allBundleElements.length > 0)
@@ -214,6 +215,7 @@ export class ProductImport {
 
 
         // -- bundle element options import begin
+        // @TO-DO - this doesn't handle removal of bundle element options
         let allBundleElementOptions = [];
         this.products.forEach((prod) => { allBundleElementOptions = [...allBundleElementOptions, ...prod.bundleElementOptions] });
         if (allBundleElementOptions.length > 0)

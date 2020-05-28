@@ -38,6 +38,47 @@ export class ProductSelector {
                             });
     }
 
+    public async getAllRelatedProducts(connection: Connection, productIds:Array<String>) {
+
+        const queryRelationships = "SELECT enxCPQ__Secondary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Secondary_Product__r.Name \
+                                      FROM enxCPQ__ProductRelationship__c \
+                                     WHERE enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                                       AND enxCPQ__Secondary_Product__c != null";
+
+        const relatedProducts = await Query.executeQuery(connection, queryRelationships, 'related products');
+
+        const relatedProductNames = relatedProducts.map((p) => {
+            return { name: p['enxCPQ__Secondary_Product__r']['Name'], id: p['enxCPQ__Secondary_Product__r']['enxCPQ__TECH_External_Id__c'] };
+        })
+
+        const queryBundleElements = "SELECT enxCPQ__TECH_External_Id__c, (SELECT enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.Name, enxCPQ__Product__r.RecordType.Name, \
+                                                                                 enxCPQ__Product__r.enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__Root_Product__r.Name \
+                                                                            FROM enxCPQ__BundleElementOptions__r) \
+                                      FROM enxCPQ__BundleElement__c \
+                                     WHERE enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+        
+        const bundleElements = await Query.executeQuery(connection, queryBundleElements, 'bundle elements');
+        
+        let bundleElementNames = [];
+        
+        bundleElements.forEach((element) => {
+            if (element['enxCPQ__BundleElementOptions__r'] !== undefined) {
+                element['enxCPQ__BundleElementOptions__r']['records'].forEach((elementOption) => {
+                    if (elementOption['enxCPQ__Product__r']['RecordType']['Name'] === 'Option') {
+                        bundleElementNames.push({ name: elementOption['enxCPQ__Product__r']['enxCPQ__Root_Product__r']['Name'], id: elementOption['enxCPQ__Product__r']['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c']});
+                    } else {
+                        bundleElementNames.push({ name: elementOption['enxCPQ__Product__r']['Name'], id: elementOption['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']});
+                    }
+                });
+            }
+        });
+
+        const result = [...relatedProductNames, ...bundleElementNames];
+        
+        return result;
+
+    }
+
     public async getProducts(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'product';
         const queryInject = this.settings[queryLabel] || [];

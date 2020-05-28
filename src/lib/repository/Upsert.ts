@@ -31,6 +31,8 @@ export class Upsert {
         await Util.hideSpinner(' done. Success: ' + successCount + ', errors: ' + errorCount);
 
         if (errorCount > 0) {
+            // @TO-DO it would be great if error message could somehow indicate record ID where the app failed
+            //          would be easier for debugging
             const errors = sobjectsResult.filter((elem) => {
                                             return elem.success === false;
                                         }).map((elem) => {
@@ -45,6 +47,8 @@ export class Upsert {
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
         const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
         const dataToImport = Util.sanitizeForBulkImport(records);
+
+        // @TO-DO - proposed by Łuki - it's a better implementation of handling callbacks
 
         // const someFunc = () => {
         //     return new Promise<String[]>((resolve: Function, reject: Function) => {

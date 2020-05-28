@@ -33,6 +33,8 @@ export default class Org extends SfdxCommand {
 
     Util.log('*** Begin exporting settings ***');
     
+    // @TO-DO documentation of this method in Knowledge Base
+
     const exporter = new SettingsExport(dir, conn);
     await exporter.export();
 

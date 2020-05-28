@@ -53,6 +53,11 @@ export class ProductExport {
         const allProducts = await this.getAllProducts(productSelector);
         this.setProductExportScope(productNames, allProducts);
 
+        if (exportRelationships) {
+            const relatedProductList = await productSelector.getAllRelatedProducts(this.connection, this.productIds);
+            this.extendProductExportScope(relatedProductList);
+        }
+
         this.fileManager.createDirectoriesForExport();
         
         // -- products export begin
@@ -271,6 +276,18 @@ export class ProductExport {
         }
     }
 
+    private extendProductExportScope(additionalProducts: Array<any>) {
+        let productNames = [];
+        additionalProducts.forEach((p) => {
+            if (!this.productIds.includes(p.id)) {
+                this.productIds.push(p.id);
+                productNames.push(p.name);
+            }
+        })
+
+        Util.log('-- Following related products will also be retrieved: ' + productNames);
+    }
+
     private wrapProducts(products:Array<any>) {
         this.products = new Array<Product>();
         products.forEach((p) => {
@@ -372,10 +389,10 @@ export class ProductExport {
                         }
                     }
                 }
-                if (product !== null) break;
+                if (product !== null && product !== undefined) break;
             }
 
-            if (product !== null) {
+            if (product !== null && product !== undefined) {
                 product.bundleElementOptions.push(bel);
             }
         });
