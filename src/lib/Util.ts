@@ -105,6 +105,7 @@ export class Util {
         return obj;
     }
 
+    // This method will clean SObject from all unnecessary fields, ID's and blank relationship fields
     public static sanitizeForUpsert(obj: any) {
         let isArray = obj instanceof Array;
         let isString = (typeof obj == 'string');
@@ -142,6 +143,7 @@ export class Util {
         return obj;
     }
 
+    // This method will clean SObject from all unnecessary fields, ID's and relationships to other objects
     public static sanitizeDeepForUpsert(objParam: any) {
         
         let obj:any;
@@ -175,10 +177,19 @@ export class Util {
                     continue;
                 }
 
-                if (prop.indexOf('__r') !== -1) {
+                if (prop.indexOf('__r') !== -1 && prop !== 'enxCPQ__Multiplier_Attribute__r') {
+                    // 20/05/28 - MASIM - Product2 -> Multiplier Attribute and Charge Reference 
+                    //                     must be present because otherwise validation rule will kick in
                     // delete obj[prop];
                     continue;
                 } 
+
+                if (prop === 'enxCPQ__Pricing_Method__c') {
+                    // 20/05/28 - MASIM - Product2 -> Pricing Method must be removed 
+                    //                     because otherwise validation rule will kick in
+                    // delete obj[prop];
+                    continue;
+                }
 
                 if (typeof(obj[prop]) === 'object') {
                     for (let innerProp in obj[prop]) {
