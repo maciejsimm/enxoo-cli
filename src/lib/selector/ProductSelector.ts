@@ -116,7 +116,8 @@ export class ProductSelector {
     public async getCharges(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'charge';
         const query = "SELECT Name, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, \
-                              enxCPQ__Pricing_Method__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Type__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
+                              enxCPQ__Pricing_Method__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Type__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c, RecordType.DeveloperName, \
+                              enxCPQ__Dimension_1__c, enxCPQ__Dimension_2__c, enxCPQ__Dimension_3__c, enxCPQ__Dimension_4__c, enxCPQ__Dimension_5__c \
                          FROM Product2 \
                         WHERE enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                           AND RecordType.Name = 'Charge' \
