@@ -104,7 +104,7 @@ export class ProductSelector {
         const queryLabel = 'productOption';
         const queryInject = this.settings[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.Product2), ...queryInject];
-        const query = "SELECT " + queryFields.join(',') + ", enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
+        const query = "SELECT " + queryFields.join(',') + ", enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM Product2 \
                         WHERE enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                           AND RecordType.Name = 'Option' \
