@@ -121,37 +121,31 @@ export class Util {
             obj = {};
             for (let prop in objParam) {
                 if (prop === 'attributes') {
-                    // delete obj[prop];
                     continue;
                 }
                 if (prop === 'Id') {
-                    // delete obj[prop];
                     continue;
                 }
 
-                if (prop.indexOf('__r') !== -1 && obj[prop] == null) {
-                    // delete obj[prop];
+                if (prop.indexOf('__r') !== -1 && objParam[prop] == null) {
                     continue;
                 }
 
-                if (prop.indexOf('__r') !== -1 && prop !== 'enxCPQ__Multiplier_Attribute__r') {
-                    // 20/05/28 - MASIM - Product2 -> Multiplier Attribute and Charge Reference 
-                    //                     must be present because otherwise validation rule will kick in
-                    // delete obj[prop];
-                    continue;
+                if (prop.indexOf('__r') !== -1) {
+                    // 20/05/28 - MASIM - Product2 -> Multiplier Attribute must be present because otherwise validation rule will kick in
+                    if (prop !== 'enxCPQ__Multiplier_Attribute__r') {
+                        continue;
+                    }
                 } 
 
                 if (prop === 'enxCPQ__Pricing_Method__c') {
-                    // 20/05/28 - MASIM - Product2 -> Pricing Method must be removed 
-                    //                     because otherwise validation rule will kick in
-                    // delete obj[prop];
+                    // 20/05/28 - MASIM - Product2 -> Pricing Method must be removed because otherwise validation rule will kick in
                     continue;
                 }
 
-                if (typeof(obj[prop]) === 'object') {
-                    for (let innerProp in obj[prop]) {
+                if (typeof(objParam[prop]) === 'object') {
+                    for (let innerProp in objParam[prop]) {
                         if (innerProp === 'attributes') {
-                            // delete obj[prop][innerProp];
                             continue;
                         } 
                     }

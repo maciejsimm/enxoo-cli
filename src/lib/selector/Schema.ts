@@ -49,6 +49,7 @@ export class Schema {
         'enxCPQ__Dimension_5_Numeric__c',
         'enxCPQ__Dimension_5_Value__c',
         'enxCPQ__Dimension_5__c',
+        'enxCPQ__Hide_for_User_Context__c',
         'enxCPQ__Hide_in_Product_Catalogue__c',
         'enxCPQ__Ignore_Inventory_Management__c',
         'enxCPQ__Ignore_Option_Requirement__c',
@@ -76,8 +77,7 @@ export class Schema {
         'enxCPQ__TECH_Option_JSON__c',
         'enxCPQ__Unit_of_Measure__c',
         'enxCPQ__Value_From__c',
-        'enxCPQ__Value_To__c',
-        'enxCPQ__Hide_for_User_Context__c'
+        'enxCPQ__Value_To__c'
     ]
 
     public static ProductAttribute:Array<string> = [
@@ -211,7 +211,9 @@ export class Schema {
         'Description', 
         'enxCPQ__Global_Partner_Price_Book__c', 
         'enxCPQ__Master__c', 
-        'enxCPQ__Opportunity_Assignment_Criteria__c', 
+        'enxCPQ__Opportunity_Assignment_Criteria__c',
+        // @TO-DO - handle field that were added during app lifecycle, below field was added in 7.0 and may crash with older versions
+        'enxCPQ__Cart_Assignment_Criteria__c', 
         'enxCPQ__Order_Assignment_Criteria__c', 
         'enxCPQ__Order__c', 
         'enxCPQ__Reference_Master_field__c', 
