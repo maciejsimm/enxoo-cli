@@ -1,0 +1,33 @@
+TO-DO LIST
+
+High
+========
+- test in real life scenario 
+--- MTN
+--- Tele2 - interesting use cases for add-ons 
+--- HGC - product GEPL 
+- test when changing products
+- flag -r (related products) for import
+- flag -c (currencies) for export & import
+- documentation
+--- enxoo:cpq:config:init
+--- enxoo:cpq:settings:retrieve
+--- enxoo:cpq:settings:import
+
+
+Medium
+========
+- IMAGE - good task to start
+- LOCATIONS - enxoo:cpq:location:retrieve, enxoo:cpq:location:import (lokalizacje z popami)
+- enxoo:cpq:config:describe
+- fix async upsert for bulk api
+- large volume use cases (bulk api) > 10.000 (product GEPL -> HGC)
+- destructive changes
+- think how importer can be used when "merging" products from different projects
+- @TO-DO - handle field that were added during app lifecycle, below field was added in 7.0 and may crash with older versions
+
+
+Low
+========
+- migrate repo to enxoo github account & npm account (to be created)
+- diff command

@@ -213,7 +213,7 @@ export class Schema {
         'enxCPQ__Master__c', 
         'enxCPQ__Opportunity_Assignment_Criteria__c',
         // @TO-DO - handle field that were added during app lifecycle, below field was added in 7.0 and may crash with older versions
-        'enxCPQ__Cart_Assignment_Criteria__c', 
+        // 'enxCPQ__Cart_Assignment_Criteria__c', 
         'enxCPQ__Order_Assignment_Criteria__c', 
         'enxCPQ__Order__c', 
         'enxCPQ__Reference_Master_field__c', 
