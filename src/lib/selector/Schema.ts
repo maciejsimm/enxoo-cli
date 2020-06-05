@@ -22,7 +22,6 @@ export class Schema {
         'enxCPQ__Column_Dimension__c',
         'enxCPQ__Column_Numeric__c',
         'enxCPQ__Column_Value__c',
-        'enxCPQ__Configuration_Method__c',
         'enxCPQ__Cover_Image_URL__c',
         'enxCPQ__Current_Inventory__c',
         'enxCPQ__Current_Lead_Time__c',

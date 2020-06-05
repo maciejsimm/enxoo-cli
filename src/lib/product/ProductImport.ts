@@ -144,8 +144,10 @@ export class ProductImport {
 
             let allChargeItems = [];
             this.charges.forEach((charge) => { allChargeItems = [...allChargeItems, ...charge.chargeElements, ...charge.chargeTiers] });
-            const allChargeItemsRTfix = Util.fixRecordTypes(allChargeItems, recordTypes, 'Product2');
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allChargeItemsRTfix), 'Product2');
+            if (allChargeItems.length > 0) {
+                const allChargeItemsRTfix = Util.fixRecordTypes(allChargeItems, recordTypes, 'Product2');
+                await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allChargeItemsRTfix), 'Product2');
+            }
         }
 
 
