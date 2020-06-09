@@ -120,8 +120,6 @@ export class Schema {
     public static AttributeRule:Array<string> = [
         'CurrencyIsoCode', 
         'enxCPQ__Active__c', 
-        'enxCPQ__Attribute_Update_Logic__c', 
-        'enxCPQ__Criteria__c', 
         'enxCPQ__Error_Message__c', 
         'enxCPQ__Order__c', 
         'enxCPQ__Regexp__c', 

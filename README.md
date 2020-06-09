@@ -22,7 +22,7 @@ $ npm install -g enxoo
 $ enxoo COMMAND
 running command...
 $ enxoo (-v|--version|version)
-enxoo/0.1.20 darwin-x64 node-v8.12.0
+enxoo/0.1.21 darwin-x64 node-v8.12.0
 $ enxoo --help [COMMAND]
 USAGE
   $ enxoo COMMAND
@@ -66,7 +66,7 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/enxoo/cpq/config/init.ts](https://github.com/maciejsimm/enxoo-cli/blob/v0.1.20/src/commands/enxoo/cpq/config/init.ts)_
+_See code: [src/commands/enxoo/cpq/config/init.ts](https://github.com/maciejsimm/enxoo-cli/blob/v0.1.21/src/commands/enxoo/cpq/config/init.ts)_
 
 ## `enxoo enxoo:cpq:prd:describe -d <string> [-b] [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -100,7 +100,7 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/enxoo/cpq/prd/describe.ts](https://github.com/maciejsimm/enxoo-cli/blob/v0.1.20/src/commands/enxoo/cpq/prd/describe.ts)_
+_See code: [src/commands/enxoo/cpq/prd/describe.ts](https://github.com/maciejsimm/enxoo-cli/blob/v0.1.21/src/commands/enxoo/cpq/prd/describe.ts)_
 
 ## `enxoo enxoo:cpq:prd:import -p <array> -d <string> [-b] [-r] [-c <array>] [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -148,7 +148,7 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/enxoo/cpq/prd/import.ts](https://github.com/maciejsimm/enxoo-cli/blob/v0.1.20/src/commands/enxoo/cpq/prd/import.ts)_
+_See code: [src/commands/enxoo/cpq/prd/import.ts](https://github.com/maciejsimm/enxoo-cli/blob/v0.1.21/src/commands/enxoo/cpq/prd/import.ts)_
 
 ## `enxoo enxoo:cpq:prd:retrieve -p <array> -d <string> [-b] [-r] [-c <array>] [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -196,7 +196,7 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/enxoo/cpq/prd/retrieve.ts](https://github.com/maciejsimm/enxoo-cli/blob/v0.1.20/src/commands/enxoo/cpq/prd/retrieve.ts)_
+_See code: [src/commands/enxoo/cpq/prd/retrieve.ts](https://github.com/maciejsimm/enxoo-cli/blob/v0.1.21/src/commands/enxoo/cpq/prd/retrieve.ts)_
 
 ## `enxoo enxoo:cpq:settings:import -d <string> [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -227,7 +227,7 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/enxoo/cpq/settings/import.ts](https://github.com/maciejsimm/enxoo-cli/blob/v0.1.20/src/commands/enxoo/cpq/settings/import.ts)_
+_See code: [src/commands/enxoo/cpq/settings/import.ts](https://github.com/maciejsimm/enxoo-cli/blob/v0.1.21/src/commands/enxoo/cpq/settings/import.ts)_
 
 ## `enxoo enxoo:cpq:settings:retrieve -d <string> [-v <string>] [-u <string>] [--apiversion <string>] [--json] [--loglevel trace|debug|info|warn|error|fatal|TRACE|DEBUG|INFO|WARN|ERROR|FATAL]`
 
@@ -258,7 +258,7 @@ OPTIONS
                                                                                     this command invocation
 ```
 
-_See code: [src/commands/enxoo/cpq/settings/retrieve.ts](https://github.com/maciejsimm/enxoo-cli/blob/v0.1.20/src/commands/enxoo/cpq/settings/retrieve.ts)_
+_See code: [src/commands/enxoo/cpq/settings/retrieve.ts](https://github.com/maciejsimm/enxoo-cli/blob/v0.1.21/src/commands/enxoo/cpq/settings/retrieve.ts)_
 <!-- commandsstop -->
 <!-- debugging-your-plugin -->
 # Debugging your plugin
