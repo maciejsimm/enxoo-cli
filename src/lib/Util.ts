@@ -175,6 +175,7 @@ export class Util {
         for(let obj of objs){
  
             for(let prop in obj){
+                // Bulk API import doesn't handle objects, nested properties need to be converted into one string, e.g. 'Product2.enxCPQ__TECH_External_Id__c'
                 if(typeof obj[prop] == 'object'){
                     let newProp;
                     for(let innerProp in obj[prop]){
@@ -182,6 +183,10 @@ export class Util {
                         obj[newProp] = obj[prop][innerProp] != null ? obj[prop][innerProp] : "";
                     }
                     delete obj[prop];
+                }
+                // Bulk API import doesn't need special care to handle null values. From SF docs "To set a field value to null, use a field value of #N/A."
+                if (obj[prop] === null) {
+                    obj[prop] = '#N/A';
                 }
            }
         }

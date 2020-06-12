@@ -36,6 +36,7 @@ export class Query {
     }
 
     private static fixIdsForBulk(record:any) {
+        // Bulk API query doesn't return objects, nested properties are one string
         if (record.hasOwnProperty('Product2.enxCPQ__TECH_External_Id__c')) {
             record['Product2'] = {};
             record['Product2']['enxCPQ__TECH_External_Id__c'] = record['Product2.enxCPQ__TECH_External_Id__c'];
@@ -45,6 +46,12 @@ export class Query {
             record['Pricebook2'] = {};
             record['Pricebook2']['enxCPQ__TECH_External_Id__c'] = record['Pricebook2.enxCPQ__TECH_External_Id__c'];
             delete record['Pricebook2.enxCPQ__TECH_External_Id__c'];
+        }
+        // Bulk API query doesn't return null values, it returns empty string instead
+        for(let prop in record) {
+            if (record[prop] === '') {
+                record[prop] = null;
+            }
         }
         return record;
     }
