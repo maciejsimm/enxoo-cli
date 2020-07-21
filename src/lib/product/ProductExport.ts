@@ -494,10 +494,12 @@ export class ProductExport {
         })
     }
 
-    private wrapPricebooks(pricebooks:Array<any>) {
-        pricebooks.forEach((pbook) => {
+    private wrapPricebooks(paramPricebooks:Array<any>) {
+        paramPricebooks.forEach((pbook) => {
             let pricebook = this.pricebooks.find(p => p.record['enxCPQ__TECH_External_Id__c'] === pbook['enxCPQ__TECH_External_Id__c']);
-            if (pricebook === undefined) pricebook = this.pricebooks.find(p => p.record['IsStandard'] === pbook['IsStandard']);
+            if (pricebook === undefined) {
+                pricebook = this.pricebooks.find(p => p.record['IsStandard'] === pbook['IsStandard'] && p.record['IsStandard'] === true);
+            }
             if (pricebook !== undefined) {
                 pricebook.record = pbook;
             } else {
