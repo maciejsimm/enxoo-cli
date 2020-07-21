@@ -1,0 +1,24 @@
+{
+   "record": {
+      "Name": "Wait for Link Testing [OSS]",
+      "CurrencyIsoCode": "EUR",
+      "enxB2B__Apex_handler_reference__c": "PRV_ScheduledQueryHandler",
+      "enxB2B__Automated_Task_Type__c": "Apex",
+      "enxB2B__Description__c": null,
+      "enxB2B__Order__c": null,
+      "enxB2B__Status__c": null,
+      "enxB2B__TECH_External_Id__c": "PTS00IBF72OCNX7",
+      "enxB2B__Type__c": "Manual",
+      "Content_Type__c": "application/json;charset=UTF-8",
+      "Endpoint_URL__c": "/api/v1/links/{{enxB2B__Order_Item__r.Service_UUID__c}}?exchange=POC",
+      "HTTP_Method__c": "GET",
+      "Payload__c": null,
+      "Response_Field_Mapping__c": null,
+      "Success_codes__c": "200",
+      "Scheduled_Request__c": true,
+      "Completion_Condition__c": "status = configured",
+      "RecordType": {
+         "DeveloperName": "Automatic"
+      }
+   }
+}

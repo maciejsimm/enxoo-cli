@@ -1,0 +1,24 @@
+{
+   "record": {
+      "Name": "Create Customer [OSS]",
+      "CurrencyIsoCode": "EUR",
+      "enxB2B__Apex_handler_reference__c": "PRV_UniversalHandler",
+      "enxB2B__Automated_Task_Type__c": "Apex",
+      "enxB2B__Description__c": null,
+      "enxB2B__Order__c": null,
+      "enxB2B__Status__c": null,
+      "enxB2B__TECH_External_Id__c": "PTS00V7RG2T0Z5X",
+      "enxB2B__Type__c": "Automatic",
+      "Content_Type__c": "application/json;charset=UTF-8",
+      "Endpoint_URL__c": "/api/v1/contracts?exchange=POC",
+      "HTTP_Method__c": "POST",
+      "Payload__c": "{\"erp_customer_identifier\" : \"{{enxB2B__Order_Item__r.Order.Account.enxCPQ__TECH_External_Id__c}}\"}",
+      "Response_Field_Mapping__c": null,
+      "Success_codes__c": "201,422",
+      "Scheduled_Request__c": false,
+      "Completion_Condition__c": null,
+      "RecordType": {
+         "DeveloperName": "Automatic"
+      }
+   }
+}

@@ -1,0 +1,1134 @@
+{
+   "record": {
+      "Name": "Standard Price Book",
+      "CurrencyIsoCode": "EUR",
+      "IsActive": false,
+      "Description": "Product and Prices 2013",
+      "enxCPQ__Global_Partner_Price_Book__c": false,
+      "enxCPQ__Master__c": false,
+      "enxCPQ__Opportunity_Assignment_Criteria__c": null,
+      "enxCPQ__Order_Assignment_Criteria__c": null,
+      "enxCPQ__Order__c": null,
+      "enxCPQ__Reference_Master_field__c": null,
+      "enxCPQ__TECH_External_Id__c": "PRBAMSIXSTANDARD",
+      "enxCPQ__Use_UnitPrice__c": false,
+      "enxCPQ__Valid_From__c": null,
+      "enxCPQ__Valid_To__c": null,
+      "enxCPQ__Cart_Assignment_Criteria__c": null,
+      "IsStandard": true
+   },
+   "stdPricebookEntries": {
+      "PRD00BNFBSBP2EA": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00BNFBSBP2EA"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00BNFBSBP2EA"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00BNFBSBP2EA"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00BNFBSBP2EA"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00BNFBSBP2EA"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00BNFBSBP2EA"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00BNFBSBP2EA"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00BNFBSBP2EA"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRD005YMYBCLNRR": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD005YMYBCLNRR"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD005YMYBCLNRR"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD005YMYBCLNRR"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD005YMYBCLNRR"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD005YMYBCLNRR"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD005YMYBCLNRR"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD005YMYBCLNRR"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD005YMYBCLNRR"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRD00DXNCWZ5SVZ": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00DXNCWZ5SVZ"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00DXNCWZ5SVZ"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00DXNCWZ5SVZ"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00DXNCWZ5SVZ"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00DXNCWZ5SVZ"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00DXNCWZ5SVZ"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00DXNCWZ5SVZ"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00DXNCWZ5SVZ"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRD002TTYDC9OQO": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD002TTYDC9OQO"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD002TTYDC9OQO"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD002TTYDC9OQO"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD002TTYDC9OQO"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD002TTYDC9OQO"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD002TTYDC9OQO"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD002TTYDC9OQO"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD002TTYDC9OQO"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRD009R2BNRM7AL": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD009R2BNRM7AL"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD009R2BNRM7AL"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD009R2BNRM7AL"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD009R2BNRM7AL"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD009R2BNRM7AL"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD009R2BNRM7AL"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD009R2BNRM7AL"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD009R2BNRM7AL"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRD00HB0AI592AR": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00HB0AI592AR"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00HB0AI592AR"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00HB0AI592AR"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00HB0AI592AR"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00HB0AI592AR"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00HB0AI592AR"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00HB0AI592AR"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00HB0AI592AR"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRD008V2Q6QV9WC": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD008V2Q6QV9WC"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD008V2Q6QV9WC"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD008V2Q6QV9WC"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD008V2Q6QV9WC"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD008V2Q6QV9WC"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD008V2Q6QV9WC"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD008V2Q6QV9WC"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD008V2Q6QV9WC"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRDACCESSCONNECTION": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDACCESSCONNECTION"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDACCESSCONNECTION"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDACCESSCONNECTION"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDACCESSCONNECTION"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDACCESSCONNECTION"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDACCESSCONNECTION"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDACCESSCONNECTION"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDACCESSCONNECTION"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRDPUBLICPEERING": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDPUBLICPEERING"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDPUBLICPEERING"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDPUBLICPEERING"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDPUBLICPEERING"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDPUBLICPEERING"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDPUBLICPEERING"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDPUBLICPEERING"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRDPUBLICPEERING"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRD00UI6E899218": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00UI6E899218"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00UI6E899218"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00UI6E899218"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00UI6E899218"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00UI6E899218"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00UI6E899218"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00UI6E899218"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00UI6E899218"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRD00LVP7PB52HY": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00LVP7PB52HY"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00LVP7PB52HY"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00LVP7PB52HY"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00LVP7PB52HY"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00LVP7PB52HY"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00LVP7PB52HY"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00LVP7PB52HY"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00LVP7PB52HY"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRD0064MOR8WHVI": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD0064MOR8WHVI"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD0064MOR8WHVI"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD0064MOR8WHVI"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD0064MOR8WHVI"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD0064MOR8WHVI"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD0064MOR8WHVI"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD0064MOR8WHVI"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD0064MOR8WHVI"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRD001B8CR1WX3L": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD001B8CR1WX3L"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD001B8CR1WX3L"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD001B8CR1WX3L"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD001B8CR1WX3L"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD001B8CR1WX3L"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD001B8CR1WX3L"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD001B8CR1WX3L"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD001B8CR1WX3L"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRD007CLRTSC65B": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD007CLRTSC65B"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD007CLRTSC65B"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD007CLRTSC65B"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD007CLRTSC65B"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD007CLRTSC65B"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD007CLRTSC65B"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD007CLRTSC65B"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD007CLRTSC65B"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ],
+      "PRD00N4KR9TA6ZO": [
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00N4KR9TA6ZO"
+            },
+            "CurrencyIsoCode": "ANG"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00N4KR9TA6ZO"
+            },
+            "CurrencyIsoCode": "AUD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00N4KR9TA6ZO"
+            },
+            "CurrencyIsoCode": "CAD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00N4KR9TA6ZO"
+            },
+            "CurrencyIsoCode": "EUR"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00N4KR9TA6ZO"
+            },
+            "CurrencyIsoCode": "GBP"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00N4KR9TA6ZO"
+            },
+            "CurrencyIsoCode": "HKD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00N4KR9TA6ZO"
+            },
+            "CurrencyIsoCode": "SGD"
+         },
+         {
+            "UnitPrice": 0,
+            "IsActive": true,
+            "UseStandardPrice": false,
+            "Product2": {
+               "enxCPQ__TECH_External_Id__c": "PRD00N4KR9TA6ZO"
+            },
+            "CurrencyIsoCode": "USD"
+         }
+      ]
+   },
+   "pricebookEntries": {},
+   "isStandard": true
+}

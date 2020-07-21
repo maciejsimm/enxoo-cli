@@ -1,0 +1,10 @@
+{
+   "record": {
+      "Name": "Peering",
+      "CurrencyIsoCode": "EUR",
+      "enxCPQ__TECH_Definition_Id__c": "CAT_PEERING_",
+      "enxCPQ__TECH_External_Id__c": "CATPEERING",
+      "enxCPQ__Parameter_Attribute_Set__r": null,
+      "enxCPQ__Parent_Category__r": null
+   }
+}
