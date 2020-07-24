@@ -522,7 +522,6 @@ export class ProductImport {
             pricebookJSONs.forEach((pbook) => {
                 const pbookObj:Pricebook = new Pricebook(null);
                 pbookObj.fillFromJSON(pbook);
-
                 this.pricebooks.push(pbookObj);
             });
         });
@@ -611,7 +610,9 @@ export class ProductImport {
             };
         
         source.forEach((sourceElement) => {
-            const targetElementIndex = target.findIndex(e => { return e['Product2Id'] === sourceElement['Product2Id'] && e['CurrencyIsoCode'] === sourceElement['CurrencyIsoCode']; });
+            const targetElementIndex = target.findIndex(e => { return e['Product2Id'] === sourceElement['Product2Id'] && 
+                                                                      e['CurrencyIsoCode'] === sourceElement['CurrencyIsoCode'] && 
+                                                                      e['Pricebook2Id'] === sourceElement['Pricebook2Id']; });
             if (targetElementIndex !== -1) {
                 const targetElement = target.splice(targetElementIndex, 1)[0];
                 sourceElement['Id'] = targetElement['Id'];

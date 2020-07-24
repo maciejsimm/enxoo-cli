@@ -56,10 +56,10 @@ export class Pricebook extends Serializable {
         if (this.pricebookEntries) {
             const productKeys = Object.keys(this.pricebookEntries);
             productKeys.forEach(key => {
-                const product = product2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] === key);
+                let product = product2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] === key);
                 if (product !== undefined) {
-                    const productId = product.Id;
-                    const pricebook2Id = pricebook2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] === this.getPricebookId()).Id;
+                    let productId = product.Id;
+                    let pricebook2Id = pricebook2Ids.find(elem => elem['enxCPQ__TECH_External_Id__c'] === this.getPricebookId()).Id;
                     let pbes:Array<any> = this.pricebookEntries[key];
                     pbes.forEach((pbe) => {
                         pbe.Product2Id = productId;

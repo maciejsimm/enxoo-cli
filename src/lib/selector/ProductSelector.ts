@@ -376,7 +376,7 @@ export class ProductSelector {
 
     public async getChargeTiers(connection: Connection, chargeIds:Array<String>) {
         const queryLabel = 'charge tier';
-        const query = "SELECT Name, enxCPQ__TECH_External_Id__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c, \
+        const query = "SELECT Name, enxCPQ__TECH_External_Id__c, enxCPQ__Value_From__c, enxCPQ__Value_To__c, IsActive, \
                               enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName  \
                          FROM Product2 \
                         WHERE enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c IN ('" + chargeIds.join('\',\'') + "') \
@@ -428,7 +428,7 @@ export class ProductSelector {
 
     public async getStandardPricebookEntryIds(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'std pbe ids';
-        const query = "SELECT Id, Product2Id, CurrencyIsoCode \
+        const query = "SELECT Id, Product2Id, Pricebook2Id, CurrencyIsoCode \
                          FROM PricebookEntry \
                          WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                            AND Pricebook2.IsStandard = true";
@@ -452,7 +452,7 @@ export class ProductSelector {
 
     public async getPricebookEntryIds(connection: Connection, productIds:Array<String>) {
         const queryLabel = 'pbe ids';
-        const query = "SELECT Id, Product2Id, CurrencyIsoCode \
+        const query = "SELECT Id, Product2Id, Pricebook2Id, CurrencyIsoCode \
                          FROM PricebookEntry \
                          WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                            AND Pricebook2.IsStandard = false";
