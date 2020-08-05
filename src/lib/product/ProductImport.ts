@@ -96,10 +96,12 @@ export class ProductImport {
             let allProducts = [];
             this.products.forEach(product => { allProducts = [...allProducts, ... product.getProducts()] });
             const allProductsRTfix = Util.fixRecordTypes(allProducts, recordTypes, 'Product2');
-            const allProductsWithouthRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
+            const allProductsWithoutRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
 
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithouthRelationships), 'Product2');
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithoutRelationships), 'Product2');
+            //05.08.2020 SZILN - ECPQ-4615 - As the data are now upserted again in case of failure, 
+            //the second upsert of not-deeply-sanitized data is commented out.
+            //await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2');
         }
         // -- products import end
 
@@ -613,6 +615,7 @@ export class ProductImport {
             const targetElementIndex = target.findIndex(e => { return e['Product2Id'] === sourceElement['Product2Id'] && 
                                                                       e['CurrencyIsoCode'] === sourceElement['CurrencyIsoCode'] && 
                                                                       e['Pricebook2Id'] === sourceElement['Pricebook2Id']; });
+
             if (targetElementIndex !== -1) {
                 const targetElement = target.splice(targetElementIndex, 1)[0];
                 sourceElement['Id'] = targetElement['Id'];
