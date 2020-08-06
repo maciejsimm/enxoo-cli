@@ -1,6 +1,7 @@
 import { Connection } from "@salesforce/core";
 import { Util } from './../Util';
 import { RecordResult } from 'jsforce';
+import { string } from "@oclif/command/lib/flags";
 
 export class Upsert {
     public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string) {
@@ -31,6 +32,7 @@ export class Upsert {
 
             failedResults = sobjectsResult.filter(e => e.success === false);
             if (failedResults.length > 0) {
+                //@TO-DO : filter only the records that were failed - after the failed IDs are added to reports
                 failedRecords.push(...records);
             }
 
@@ -124,6 +126,7 @@ export class Upsert {
 
         failedResults = sobjectsResult.filter(e => e.success === false);
         if (failedResults.length > 0) {
+            //@TO-DO : filter only the records that were failed
             failedRecords.push(...records);
         }
 
@@ -142,9 +145,24 @@ export class Upsert {
                                             return {"error": elem['errors']};
                                         });
 
-            await Util.warn(JSON.stringify(errors, null, 2));
+            const pricebookErrors = errors.map(e => {
+                return e.error;
+            }).map(el => {
+                return el[0].message;
+            }).filter(elem => elem.includes("This price definition already exists in this price book"));
 
-            if (failedRecords.length > 0) {
+            const reducedErrors = errors.filter(val => {
+                let error = val.error.some(({message}) => !message.includes("This price definition already exists in this price book"))
+                return error
+            });
+            
+            if (pricebookErrors && pricebookErrors.length > 0){
+                await Util.log(`${pricebookErrors.length} pricebook entries are already loaded into the org and cannot be further inserted nor upserted.`);
+            } 
+
+            if (reducedErrors.length > 0) {
+
+                await Util.warn(JSON.stringify(reducedErrors, null, 2));
                 //05.08.2020 SZILN - ECPQ-4615 - after any failure on upsert or insert, the importer now 
                 //tries to repeat the operation.
                 Util.showSpinner('-- Second attempt at inserting ' + sObjectName);
