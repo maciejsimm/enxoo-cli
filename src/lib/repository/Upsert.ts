@@ -4,13 +4,16 @@ import { RecordResult } from 'jsforce';
 
 export class Upsert {
     public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string) {
-        Util.showSpinner('-- Upserting ' + sObjectName);
+        const messageString = '-- Upserting ' + sObjectName;
+        Util.showSpinner(messageString);
         
         const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
 
         let failedResults: Array<RecordResult> = new Array<RecordResult>();
         let failedRecords: Array<any> = new Array<any>();
+        
+        let warnings: Array<any> = new Array<any>();
 
         if (records.length < 200) {
             // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
@@ -37,23 +40,28 @@ export class Upsert {
 
         }
 
-        const successCount = sobjectsResult.map((r):number => {return (r.success ? 1 : 0)})
-                                            .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        const successCount = sobjectsResult.map((r): number => { return (r.success ? 1 : 0) })
+            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
 
-        const errorCount = sobjectsResult.map((r):number => {return (r.success ? 0 : 1)})
-                                            .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        const errorCount = sobjectsResult.map((r): number => { return (r.success ? 0 : 1) })
+            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
 
-        await Util.hideSpinner(' done. Success: ' + successCount + ', errors: ' + errorCount);
 
+        const errors = sobjectsResult.filter((elem) => {
+            return elem.success === false;
+        }).map((elem) => {
+            return { "error": elem['errors'] };
+        });
+
+        const initialTabbing = (messageString.length > 21) ? (messageString.length > 29) ? (messageString.length > 37) ? (messageString.length > 45) ?  '\t' : '\t\t' : '\t\t\t' : '\t\t\t\t' : '\t\t\t\t\t';
+        
+        await Util.hideSpinner(' done.' + initialTabbing + 'Success: ' + successCount + '\t' + 'Errors: ' + errors.length + '\t' + 'Warnings: ' + warnings.length);
+        
         if (errorCount > 0) {
+
+            await Util.warn(JSON.stringify(errors, null, 2));
             // @TO-DO it would be great if error message could somehow indicate record ID where the app failed
             //          would be easier for debugging
-            const errors = sobjectsResult.filter((elem) => {
-                                            return elem.success === false;
-                                        }).map((elem) => {
-                                            return {"error": elem['errors']};
-                                        });
-            await Util.warn(JSON.stringify(errors, null, 2));
 
             Util.showSpinner('-- Second attempt at upserting ' + sObjectName);
 
@@ -112,15 +120,24 @@ export class Upsert {
     }
 
     public static async insertData(connection: Connection, records: Array<any>, sObjectName: string) {
-        Util.showSpinner('-- Inserting ' + sObjectName);
+        const messageString = '-- Inserting ' + sObjectName;
+        Util.showSpinner(messageString); 
+
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
 
         let failedResults: Array<RecordResult> = new Array<RecordResult>();
         let failedRecords: Array<any> = new Array<any>();
 
+        let warnings: Array<any> = new Array<any>();
+
         // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
-        sobjectsResult = await connection.sobject(sObjectName).insert(records, { allowRecursive: true }, (err, rets) => {
-            if (err) { Util.log(err); }
+        sobjectsResult = await connection.sobject(sObjectName).insert(records, { allowRecursive: true }, (err: any, rets: any) => {
+            if (err) { 
+                Util.log(err); 
+            }
+            if (rets) {
+                //debugger;
+            }
         });
 
         failedResults = sobjectsResult.filter(e => e.success === false);
@@ -129,40 +146,46 @@ export class Upsert {
             failedRecords.push(...records);
         }
 
-        const successCount = sobjectsResult.map((r):number => {return (r.success ? 1 : 0)})
-                                        .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        const errors = sobjectsResult.filter((elem) => {
+            return elem.success === false;
+        }).map((elem) => {
+            return { "error": elem['errors'] };
+        });
 
-        const errorCount = sobjectsResult.map((r):number => {return (r.success ? 0 : 1)})
-                                        .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        const pricebookWarnings = errors.map(e => {
+            return e.error;
+        }).map(el => {
+            return el[0].message;
+        }).filter(elem => elem.includes("This price definition already exists in this price book"));
 
-        await Util.hideSpinner(' done. Success: ' + successCount + ', errors: ' + errorCount);
+        warnings.push(...pricebookWarnings);
+
+        const reducedErrors = errors.filter(val => {
+            let error = val.error.some(({ message }) => !message.includes("This price definition already exists in this price book"))
+            return error
+        });
+
+        const successCount = sobjectsResult.map((r): number => { return (r.success ? 1 : 0) })
+            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
+
+        const errorCount = sobjectsResult.map((r): number => { return (r.success ? 0 : 1) })
+            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
+
+        const initialTabbing = (messageString.length > 21) ? (messageString.length > 29) ? (messageString.length > 37) ? (messageString.length > 45) ? '\t' : '\t\t' : '\t\t\t' : '\t\t\t\t' : '\t\t\t\t\t';
+
+        await Util.hideSpinner(' done.' + initialTabbing + 'Success: ' + successCount + '\t' + 'Errors: ' + reducedErrors.length + '\t' + 'Warnings: ' + warnings.length);
 
         if (errorCount > 0) {
-            const errors = sobjectsResult.filter((elem) => {
-                                            return elem.success === false;
-                                        }).map((elem) => {
-                                            return {"error": elem['errors']};
-                                        });
 
-            const pricebookErrors = errors.map(e => {
-                return e.error;
-            }).map(el => {
-                return el[0].message;
-            }).filter(elem => elem.includes("This price definition already exists in this price book"));
-
-            const reducedErrors = errors.filter(val => {
-                let error = val.error.some(({message}) => !message.includes("This price definition already exists in this price book"))
-                return error
-            });
-            
-            if (pricebookErrors && pricebookErrors.length > 0){
-                await Util.log(`${pricebookErrors.length} pricebook entries are already loaded into the org and cannot be further inserted nor upserted.`);
-            } 
+            if (pricebookWarnings && pricebookWarnings.length > 0) {
+                await Util.log(`${pricebookWarnings.length} pricebook entries are already loaded into the org and cannot be further inserted nor upserted.`);
+            }
 
             if (reducedErrors.length > 0) {
 
                 await Util.warn(JSON.stringify(reducedErrors, null, 2));
-                //05.08.2020 SZILN - ECPQ-4615 - after any failure on upsert or insert, the importer now 
+
+                //05.08.2020 SZILN - ECPQ-4615 - after any failure on upsert or insert, the importer now
                 //tries to repeat the operation.
                 Util.showSpinner('-- Second attempt at inserting ' + sObjectName);
 
@@ -182,7 +205,8 @@ export class Upsert {
     }
 
     public static async updateData(connection: Connection, records: Array<any>, sObjectName: string) {
-        Util.showSpinner('-- Updating ' + sObjectName);
+        const messageString = '-- Updating ' + sObjectName;
+        Util.showSpinner(messageString);
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
 
         // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
@@ -193,10 +217,12 @@ export class Upsert {
         const successCount = sobjectsResult.map((r):number => {return (r.success ? 1 : 0)})
                                         .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
 
-        const errorCount = sobjectsResult.map((r):number => {return (r.success ? 0 : 1)})
-                                        .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        const errorCount = sobjectsResult.map((r): number => { return (r.success ? 0 : 1) })
+            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
 
-        await Util.hideSpinner(' done. Success: ' + successCount + ', errors: ' + errorCount);
+        const initialTabbing = (messageString.length > 21) ? (messageString.length > 29) ? (messageString.length > 37) ? (messageString.length > 45) ? '\t' : '\t\t' : '\t\t\t' : '\t\t\t\t' : '\t\t\t\t\t';
+
+        await Util.hideSpinner(' done.' + initialTabbing + 'Success: ' + successCount + '\t' + 'Errors: ' + errorCount + '\t' + 'Warnings:');
 
         if (errorCount > 0) {
             const errors = sobjectsResult.filter((elem) => {
@@ -209,29 +235,35 @@ export class Upsert {
     }
 
     public static async deleteData(connection: Connection, records: Array<any>, sObjectName: string) {
-        Util.showSpinner('-- Deleting ' + sObjectName);
+        const messageString = '-- Deleting ' + sObjectName;
+        Util.showSpinner(messageString);
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
         const data = this.extractIds(records);
+
+        let warnings: Array<any> = new Array<any>();
 
         // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
         sobjectsResult = await connection.sobject(sObjectName).del(data, { allowRecursive: true }, (err, rets) => {
             if (err) { Util.log(err); }
         });
 
-        const successCount = sobjectsResult.map((r):number => {return (r.success ? 1 : 0)})
-                                        .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        const errors = sobjectsResult.filter((elem) => {
+            return elem.success === false;
+        }).map((elem) => {
+            return { "error": elem['errors'] };
+        });
 
-        const errorCount = sobjectsResult.map((r):number => {return (r.success ? 0 : 1)})
-                                        .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        const successCount = sobjectsResult.map((r): number => { return (r.success ? 1 : 0) })
+            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
 
-        await Util.hideSpinner(' done. Success: ' + successCount + ', errors: ' + errorCount);
+        const errorCount = sobjectsResult.map((r): number => { return (r.success ? 0 : 1) })
+            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
+
+        const initialTabbing = (messageString.length > 21) ? (messageString.length > 29) ? (messageString.length > 37) ? (messageString.length > 45) ? '\t' : '\t\t' : '\t\t\t' : '\t\t\t\t' : '\t\t\t\t\t';
+
+        await Util.hideSpinner(' done.' + initialTabbing + 'Success: ' + successCount + '\t' + 'Errors: ' + errors.length + '\t' + 'Warnings: ' + warnings.length);
 
         if (errorCount > 0) {
-            const errors = sobjectsResult.filter((elem) => {
-                                            return elem.success === false;
-                                        }).map((elem) => {
-                                            return {"error": elem['errors']};
-                                        });
             await Util.warn(JSON.stringify(errors, null, 2));
         }
     }
@@ -292,3 +324,11 @@ export class Upsert {
         return targetArr;
       } 
 }
+
+module recordId {
+    export class recordId {
+        salesforceId:string;
+        enxooId:string;
+    }
+        
+    }
