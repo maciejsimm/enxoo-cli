@@ -99,9 +99,7 @@ export class ProductImport {
             const allProductsWithoutRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
 
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithoutRelationships), 'Product2');
-            //05.08.2020 SZILN - ECPQ-4615 - As the data are now upserted again in case of failure, 
-            //the second upsert of not-deeply-sanitized data is commented out.
-            //await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2');
         }
         // -- products import end
 

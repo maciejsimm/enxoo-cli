@@ -7,8 +7,6 @@ export class Upsert {
     public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string) {
         const messageString = '-- Upserting ' + sObjectName;
         Util.showSpinner(messageString);
-
-        const debugIgnoredFields =  this.loadIgnoredFiles('%%%%%debug');
         
         const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
@@ -22,7 +20,6 @@ export class Upsert {
             // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
             sobjectsResult = await connection.sobject(sObjectName).upsert(records, externalIdString, {}, (err, rets:RecordResult[]) => {
                 if (err) { 
-                    console.log(externalIdString);
                     Util.log(err); 
                 }
             });
