@@ -1,24 +1,28 @@
 import { Connection } from "@salesforce/core";
 import { Util } from './../Util';
 import { RecordResult } from 'jsforce';
+import * as fs from 'fs';
 
 export class Upsert {
     public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string) {
         const messageString = '-- Upserting ' + sObjectName;
         Util.showSpinner(messageString);
+
+        const debugIgnoredFields =  this.loadIgnoredFiles('%%%%%debug');
         
         const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
 
         let failedResults: Array<RecordResult> = new Array<RecordResult>();
         let failedRecords: Array<any> = new Array<any>();
-        
+
         let warnings: Array<any> = new Array<any>();
 
         if (records.length < 200) {
             // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
             sobjectsResult = await connection.sobject(sObjectName).upsert(records, externalIdString, {}, (err, rets:RecordResult[]) => {
                 if (err) { 
+                    console.log(externalIdString);
                     Util.log(err); 
                 }
             });
@@ -52,10 +56,8 @@ export class Upsert {
         }).map((elem) => {
             return { "error": elem['errors'] };
         });
-
-        const initialTabbing = (messageString.length > 21) ? (messageString.length > 29) ? (messageString.length > 37) ? (messageString.length > 45) ?  '\t' : '\t\t' : '\t\t\t' : '\t\t\t\t' : '\t\t\t\t\t';
         
-        await Util.hideSpinner(' done.' + initialTabbing + 'Success: ' + successCount + '\t' + 'Errors: ' + errors.length + '\t' + 'Warnings: ' + warnings.length);
+        await Util.hideSpinner(' done.' + Util.prettifyUpsertMessage(messageString, 21) + 'Success: ' + successCount + '\t' + 'Errors: ' + errors.length + '\t' + 'Warnings: ' + warnings.length);
         
         if (errorCount > 0) {
 
@@ -171,9 +173,7 @@ export class Upsert {
         const errorCount = sobjectsResult.map((r): number => { return (r.success ? 0 : 1) })
             .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
 
-        const initialTabbing = (messageString.length > 21) ? (messageString.length > 29) ? (messageString.length > 37) ? (messageString.length > 45) ? '\t' : '\t\t' : '\t\t\t' : '\t\t\t\t' : '\t\t\t\t\t';
-
-        await Util.hideSpinner(' done.' + initialTabbing + 'Success: ' + successCount + '\t' + 'Errors: ' + reducedErrors.length + '\t' + 'Warnings: ' + warnings.length);
+        await Util.hideSpinner(' done.' + Util.prettifyUpsertMessage(messageString, 21) + 'Success: ' + successCount + '\t' + 'Errors: ' + reducedErrors.length + '\t' + 'Warnings: ' + warnings.length);
 
         if (errorCount > 0) {
 
@@ -220,9 +220,7 @@ export class Upsert {
         const errorCount = sobjectsResult.map((r): number => { return (r.success ? 0 : 1) })
             .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
 
-        const initialTabbing = (messageString.length > 21) ? (messageString.length > 29) ? (messageString.length > 37) ? (messageString.length > 45) ? '\t' : '\t\t' : '\t\t\t' : '\t\t\t\t' : '\t\t\t\t\t';
-
-        await Util.hideSpinner(' done.' + initialTabbing + 'Success: ' + successCount + '\t' + 'Errors: ' + errorCount + '\t' + 'Warnings:');
+        await Util.hideSpinner(' done.' + Util.prettifyUpsertMessage(messageString, 21) + 'Success: ' + successCount + '\t' + 'Errors: ' + errorCount + '\t' + 'Warnings:');
 
         if (errorCount > 0) {
             const errors = sobjectsResult.filter((elem) => {
@@ -259,9 +257,7 @@ export class Upsert {
         const errorCount = sobjectsResult.map((r): number => { return (r.success ? 0 : 1) })
             .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
 
-        const initialTabbing = (messageString.length > 21) ? (messageString.length > 29) ? (messageString.length > 37) ? (messageString.length > 45) ? '\t' : '\t\t' : '\t\t\t' : '\t\t\t\t' : '\t\t\t\t\t';
-
-        await Util.hideSpinner(' done.' + initialTabbing + 'Success: ' + successCount + '\t' + 'Errors: ' + errors.length + '\t' + 'Warnings: ' + warnings.length);
+        await Util.hideSpinner(' done.' + Util.prettifyUpsertMessage(messageString, 21) + 'Success: ' + successCount + '\t' + 'Errors: ' + errors.length + '\t' + 'Warnings: ' + warnings.length);
 
         if (errorCount > 0) {
             await Util.warn(JSON.stringify(errors, null, 2));
@@ -323,12 +319,23 @@ export class Upsert {
         }
         return targetArr;
       } 
+
+    private static async loadIgnoredFiles(queryDir: string) {
+        return new Promise<String>((resolve: Function, reject: Function) => {
+            let content;
+            fs.readFile('./' + queryDir + '/fieldsToIgnroe.json', function read(err, data) {
+                if (err) {
+                    if (err.code == 'ENOENT') {
+                        resolve({});
+                    }
+                    reject(err);
+                } else {
+                    content = data.toString('utf8');
+                    resolve(JSON.parse(content));
+                }
+            });
+        });
+    }
+
 }
 
-module recordId {
-    export class recordId {
-        salesforceId:string;
-        enxooId:string;
-    }
-        
-    }
