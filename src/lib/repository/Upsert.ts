@@ -2,19 +2,15 @@ import { Connection } from "@salesforce/core";
 import { Util } from './../Util';
 import { RecordResult } from 'jsforce';
 import * as fs from 'fs';
+import { MessageHandler as MsgHandler } from './../MessageHandler';
 
 export class Upsert {
     public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string) {
         const messageString = '-- Upserting ' + sObjectName;
-        Util.showSpinner(messageString);
+        MsgHandler.showSpinner(messageString);
         
         const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
-
-        let failedResults: Array<RecordResult> = new Array<RecordResult>();
-        let failedRecords: Array<any> = new Array<any>();
-
-        let warnings: Array<any> = new Array<any>();
 
         if (records.length < 200) {
             // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
@@ -24,63 +20,37 @@ export class Upsert {
                 }
             });
 
-            failedResults = sobjectsResult.filter(e => e.success === false);
-            if (failedResults.length > 0) {
-                failedRecords.push(...records);
-            }
-
         } else {
             // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
             sobjectsResult = await this.upsertBulkData(connection, records, sObjectName);
 
-            failedResults = sobjectsResult.filter(e => e.success === false);
-            if (failedResults.length > 0) {
-                //@TO-DO : filter only the records that were failed - after the failed IDs are added to reports
-                failedRecords.push(...records);
-            }
-
         }
 
-        const successCount = sobjectsResult.map((r): number => { return (r.success ? 1 : 0) })
-            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
-
-        const errorCount = sobjectsResult.map((r): number => { return (r.success ? 0 : 1) })
-            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
-
-
-        const errors = sobjectsResult.filter((elem) => {
-            return elem.success === false;
-        }).map((elem) => {
-            return { "error": elem['errors'] };
-        });
+        const errors = MsgHandler.getErrors(sobjectsResult);
         
-        await Util.hideSpinner(' done.' + Util.prettifyUpsertMessage(messageString, 21) + 'Success: ' + successCount + '\t' + 'Errors: ' + errors.length + '\t' + 'Warnings: ' + warnings.length);
+        await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
         
-        if (errorCount > 0) {
+        if (errors.length > 0) {
 
             await Util.warn(JSON.stringify(errors, null, 2));
             // @TO-DO it would be great if error message could somehow indicate record ID where the app failed
             //          would be easier for debugging
 
-            Util.showSpinner('-- Second attempt at upserting ' + sObjectName);
+            MsgHandler.showSpinner('-- Second attempt at upserting ' + sObjectName);
 
-            if (failedRecords.length > 0) {
+            //if (failedRecords.length > 0) {
                 //05.08.2020 SZILN - ECPQ-4615 - after any failure on upsert or insert, the importer now 
                 //tries to repeat the operation.
+                // @TO-DO: after getting the failed record IDs, only the failed records should be queried again
                 sobjectsResult = await connection.sobject(sObjectName).upsert(records, externalIdString, {}, (err, rets: RecordResult[]) => {
                     if (err) {
                         Util.log(err);
                     }
                 });
-            }
+            //}
 
-            const successCount = sobjectsResult.map((r): number => { return (r.success ? 1 : 0) })
-                .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
+            await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
 
-            const errorCount = sobjectsResult.map((r): number => { return (r.success ? 0 : 1) })
-                .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
-
-            await Util.hideSpinner(' done. Success: ' + successCount + ', errors: ' + errorCount);
         }
 
     }
@@ -120,62 +90,29 @@ export class Upsert {
 
     public static async insertData(connection: Connection, records: Array<any>, sObjectName: string) {
         const messageString = '-- Inserting ' + sObjectName;
-        Util.showSpinner(messageString); 
+        MsgHandler.showSpinner(messageString); 
 
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
-
-        let failedResults: Array<RecordResult> = new Array<RecordResult>();
-        let failedRecords: Array<any> = new Array<any>();
-
-        let warnings: Array<any> = new Array<any>();
 
         // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
         sobjectsResult = await connection.sobject(sObjectName).insert(records, { allowRecursive: true }, (err: any, rets: any) => {
             if (err) { 
                 Util.log(err); 
             }
-            if (rets) {
-                //debugger;
-            }
         });
 
-        failedResults = sobjectsResult.filter(e => e.success === false);
-        if (failedResults.length > 0) {
-            //@TO-DO : filter only the records that were failed
-            failedRecords.push(...records);
-        }
+        const errors = MsgHandler.getErrors(sobjectsResult);
 
-        const errors = sobjectsResult.filter((elem) => {
-            return elem.success === false;
-        }).map((elem) => {
-            return { "error": elem['errors'] };
-        });
+        const warnings = MsgHandler.getWarningsFromErrors(errors);
 
-        const pricebookWarnings = errors.map(e => {
-            return e.error;
-        }).map(el => {
-            return el[0].message;
-        }).filter(elem => elem.includes("This price definition already exists in this price book"));
+        const reducedErrors = MsgHandler.reduceErrors(errors);
 
-        warnings.push(...pricebookWarnings);
+        await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
 
-        const reducedErrors = errors.filter(val => {
-            let error = val.error.some(({ message }) => !message.includes("This price definition already exists in this price book"))
-            return error
-        });
+        if (errors.length > 0) {
 
-        const successCount = sobjectsResult.map((r): number => { return (r.success ? 1 : 0) })
-            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
-
-        const errorCount = sobjectsResult.map((r): number => { return (r.success ? 0 : 1) })
-            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
-
-        await Util.hideSpinner(' done.' + Util.prettifyUpsertMessage(messageString, 21) + 'Success: ' + successCount + '\t' + 'Errors: ' + reducedErrors.length + '\t' + 'Warnings: ' + warnings.length);
-
-        if (errorCount > 0) {
-
-            if (pricebookWarnings && pricebookWarnings.length > 0) {
-                await Util.log(`${pricebookWarnings.length} pricebook entries are already loaded into the org and cannot be further inserted nor upserted.`);
+            if (warnings && warnings.length > 0) {
+                await Util.log(`${warnings.length} pricebook entries are already loaded into the org and cannot be further inserted nor upserted.`);
             }
 
             if (reducedErrors.length > 0) {
@@ -190,13 +127,7 @@ export class Upsert {
                     if (err) { Util.log(err); }
                 });
 
-                const successCount = sobjectsResult.map((r): number => { return (r.success ? 1 : 0) })
-                    .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
-
-                const errorCount = sobjectsResult.map((r): number => { return (r.success ? 0 : 1) })
-                    .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
-
-                await Util.hideSpinner(' done. Success: ' + successCount + ', errors: ' + errorCount);
+                MsgHandler.displayStatusMessage(sobjectsResult, messageString);
             }
         }
     }
@@ -211,20 +142,11 @@ export class Upsert {
             if (err) { Util.log(err); }
         });
 
-        const successCount = sobjectsResult.map((r):number => {return (r.success ? 1 : 0)})
-                                        .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        const errors = MsgHandler.getErrors(sobjectsResult);
 
-        const errorCount = sobjectsResult.map((r): number => { return (r.success ? 0 : 1) })
-            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
+        await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
 
-        await Util.hideSpinner(' done.' + Util.prettifyUpsertMessage(messageString, 21) + 'Success: ' + successCount + '\t' + 'Errors: ' + errorCount + '\t' + 'Warnings:');
-
-        if (errorCount > 0) {
-            const errors = sobjectsResult.filter((elem) => {
-                                            return elem.success === false;
-                                        }).map((elem) => {
-                                            return {"error": elem['errors']};
-                                        });
+        if (errors.length > 0) {
             await Util.warn(JSON.stringify(errors, null, 2));
         }
     }
@@ -242,21 +164,11 @@ export class Upsert {
             if (err) { Util.log(err); }
         });
 
-        const errors = sobjectsResult.filter((elem) => {
-            return elem.success === false;
-        }).map((elem) => {
-            return { "error": elem['errors'] };
-        });
+        const errors = MsgHandler.getErrors(sobjectsResult);
 
-        const successCount = sobjectsResult.map((r): number => { return (r.success ? 1 : 0) })
-            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
+        await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
 
-        const errorCount = sobjectsResult.map((r): number => { return (r.success ? 0 : 1) })
-            .reduce((prevVal: number, nextVal: number) => { return prevVal + nextVal });
-
-        await Util.hideSpinner(' done.' + Util.prettifyUpsertMessage(messageString, 21) + 'Success: ' + successCount + '\t' + 'Errors: ' + errors.length + '\t' + 'Warnings: ' + warnings.length);
-
-        if (errorCount > 0) {
+        if (errors.length > 0) {
             await Util.warn(JSON.stringify(errors, null, 2));
         }
     }
