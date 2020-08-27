@@ -8,6 +8,7 @@ export class Upsert {
     public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string) {
         const messageString = '-- Upserting ' + sObjectName;
         MsgHandler.showSpinner(messageString);
+        //@TO-DO: Check the Pricebook Entries matcher - when querying before inserting. 
         
         const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
@@ -123,6 +124,7 @@ export class Upsert {
                 //tries to repeat the operation.
                 Util.showSpinner('-- Second attempt at inserting ' + sObjectName);
 
+                // @ts-ignore
                 sobjectsResult = await connection.sobject(sObjectName).insert(records, { allowRecursive: true }, (err, rets) => {
                     if (err) { Util.log(err); }
                 });

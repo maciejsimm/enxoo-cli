@@ -5,6 +5,9 @@ import { RecordResult } from 'jsforce';
 export class MessageHandler {
 
     //@TO-DO: Consider removing showSpinner from Utils class
+    //@TO-DO: Consider changing the class name to logHandler
+    //@TO-DO: Change the logging system to a separate file
+
     public static async showSpinner(msg: any) {
         UX.create()
             .then((ux) => {

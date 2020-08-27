@@ -1,16 +1,16 @@
 import { Connection } from "@salesforce/core";
 import { Util } from './../Util';
 import { resolve } from "dns";
+import { MessageHandler as MsgHandler } from './../MessageHandler';
 
 export class Query {
 
     public static async executeQuery(connection: Connection, query: string, logLabel: string, recordsCount?: number) {
         if (recordsCount === undefined || recordsCount < 200) {
             const messageString = '-- Querying ' + logLabel;
-            Util.showSpinner(messageString);
-            const initialTabbing = (messageString.length > 22) ? (messageString.length > 30) ? (messageString.length > 38) ? (messageString.length > 46) ? '\t\t' : '\t\t\t' : '\t\t\t\t' : '\t\t\t\t\t' : '\t\t\t\t\t';
+            MsgHandler.showSpinner(messageString);
             const recordResults = (await connection.autoFetchQuery(query)).records;
-            Util.hideSpinner(initialTabbing + 'Retrieved: ' + recordResults.length);
+            MsgHandler.hideSpinner(MsgHandler.prettifyUpsertMessage(messageString, 3) + 'Retrieved: ' + recordResults.length);
             return recordResults;
         } else {
             return this.executeBulkQuery(connection, query, logLabel);
