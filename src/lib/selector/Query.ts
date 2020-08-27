@@ -20,7 +20,7 @@ export class Query {
     public static async executeBulkQuery(connection: Connection, query: string, logLabel: string) {
         return new Promise<String[]>(async (resolve: Function, reject: Function) => {
             const messageString = '-- Querying bulk ' + logLabel;
-            Util.showSpinner(messageString);
+            MsgHandler.showSpinner(messageString);
             const initialTabbing = (messageString.length > 24) ? (messageString.length > 32) ? (messageString.length > 40) ? (messageString.length > 48) ? '\t' : '\t\t' : '\t\t\t' : '\t\t\t\t' : '\t\t\t\t\t';
             let records = []; 
             connection.bulk.pollTimeout = 250000;
@@ -32,7 +32,7 @@ export class Query {
                                     console.log(error); 
                                 })
                                 .on('end', info => {
-                                    Util.hideSpinner(initialTabbing + 'Retrieved: ' + records.length);
+                                    MsgHandler.hideSpinner(MsgHandler.prettifyUpsertMessage(messageString, 3) + 'Retrieved: ' + records.length);
                                     resolve(records);
                                 })
         });

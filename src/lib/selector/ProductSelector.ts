@@ -308,7 +308,7 @@ export class ProductSelector {
         const query = "SELECT " + queryFields.join(',') + " \
                          FROM enxCPQ__Attribute__c \
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "')";
-        const attributes = await Query.executeQuery(connection, query, queryLabel);
+        const attributes = await Query.executeQuery(connection, query, queryLabel, attributeIds.length);
         return attributes;
     }
 
