@@ -194,6 +194,18 @@ export class Util {
         return this.fillMissingProperties(objs);
     }
 
+    public static prettifyUpsertMessage(message:String, initialTextShift:number){
+        return (message.length > initialTextShift) ? 
+        (message.length > (initialTextShift + 8)) ? 
+        (message.length > (initialTextShift + 16)) ? 
+        (message.length > (initialTextShift + 24)) ?  
+        '\t' : 
+        '\t\t' : 
+        '\t\t\t' : 
+        '\t\t\t\t' : 
+        '\t\t\t\t\t';
+    }
+
     private static fillMissingProperties(objs){
         const template = objs.reduce((template, current) => {
                     

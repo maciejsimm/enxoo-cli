@@ -1,10 +1,14 @@
 import { Connection } from "@salesforce/core";
 import { Util } from './../Util';
 import { RecordResult } from 'jsforce';
+import * as fs from 'fs';
+import { MessageHandler as MsgHandler } from './../MessageHandler';
 
 export class Upsert {
     public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string) {
-        Util.showSpinner('-- Upserting ' + sObjectName);
+        const messageString = '-- Upserting ' + sObjectName;
+        MsgHandler.showSpinner(messageString);
+        //@TO-DO: Check the Pricebook Entries matcher - when querying before inserting. 
         
         const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
@@ -16,29 +20,38 @@ export class Upsert {
                     Util.log(err); 
                 }
             });
+
         } else {
             // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
             sobjectsResult = await this.upsertBulkData(connection, records, sObjectName);
+
         }
 
-        const successCount = sobjectsResult.map((r):number => {return (r.success ? 1 : 0)})
-                                            .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
-
-        const errorCount = sobjectsResult.map((r):number => {return (r.success ? 0 : 1)})
-                                            .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
-
+        const errors = MsgHandler.getErrors(sobjectsResult);
         
-        await Util.hideSpinner(' done. Success: ' + successCount + ', errors: ' + errorCount);
+        await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
+        
+        if (errors.length > 0) {
 
-        if (errorCount > 0) {
+            await Util.warn(JSON.stringify(errors, null, 2));
             // @TO-DO it would be great if error message could somehow indicate record ID where the app failed
             //          would be easier for debugging
-            const errors = sobjectsResult.filter((elem) => {
-                                            return elem.success === false;
-                                        }).map((elem) => {
-                                            return {"error": elem['errors']};
-                                        });
-            await Util.warn(JSON.stringify(errors, null, 2));
+
+            MsgHandler.showSpinner('-- Second attempt at upserting ' + sObjectName);
+
+            //if (failedRecords.length > 0) {
+                //05.08.2020 SZILN - ECPQ-4615 - after any failure on upsert or insert, the importer now 
+                //tries to repeat the operation.
+                // @TO-DO: after getting the failed record IDs, only the failed records should be queried again
+                sobjectsResult = await connection.sobject(sObjectName).upsert(records, externalIdString, {}, (err, rets: RecordResult[]) => {
+                    if (err) {
+                        Util.log(err);
+                    }
+                });
+            //}
+
+            await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
+
         }
 
     }
@@ -77,34 +90,53 @@ export class Upsert {
     }
 
     public static async insertData(connection: Connection, records: Array<any>, sObjectName: string) {
-        Util.showSpinner('-- Inserting ' + sObjectName);
+        const messageString = '-- Inserting ' + sObjectName;
+        MsgHandler.showSpinner(messageString); 
+
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
 
         // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
-        sobjectsResult = await connection.sobject(sObjectName).insert(records, { allowRecursive: true }, (err, rets) => {
-            if (err) { Util.log(err); }
+        sobjectsResult = await connection.sobject(sObjectName).insert(records, { allowRecursive: true }, (err: any, rets: any) => {
+            if (err) { 
+                Util.log(err); 
+            }
         });
 
-        const successCount = sobjectsResult.map((r):number => {return (r.success ? 1 : 0)})
-                                        .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        const errors = MsgHandler.getErrors(sobjectsResult);
 
-        const errorCount = sobjectsResult.map((r):number => {return (r.success ? 0 : 1)})
-                                        .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        const warnings = MsgHandler.getWarningsFromErrors(errors);
 
-        await Util.hideSpinner(' done. Success: ' + successCount + ', errors: ' + errorCount);
+        const reducedErrors = MsgHandler.reduceErrors(errors);
 
-        if (errorCount > 0) {
-            const errors = sobjectsResult.filter((elem) => {
-                                            return elem.success === false;
-                                        }).map((elem) => {
-                                            return {"error": elem['errors']};
-                                        });
-            await Util.warn(JSON.stringify(errors, null, 2));
+        await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
+
+        if (errors.length > 0) {
+
+            if (warnings && warnings.length > 0) {
+                await Util.log(`${warnings.length} pricebook entries are already loaded into the org and cannot be further inserted nor upserted.`);
+            }
+
+            if (reducedErrors.length > 0) {
+
+                await Util.warn(JSON.stringify(reducedErrors, null, 2));
+
+                //05.08.2020 SZILN - ECPQ-4615 - after any failure on upsert or insert, the importer now
+                //tries to repeat the operation.
+                Util.showSpinner('-- Second attempt at inserting ' + sObjectName);
+
+                // @ts-ignore
+                sobjectsResult = await connection.sobject(sObjectName).insert(records, { allowRecursive: true }, (err, rets) => {
+                    if (err) { Util.log(err); }
+                });
+
+                MsgHandler.displayStatusMessage(sobjectsResult, messageString);
+            }
         }
     }
 
     public static async updateData(connection: Connection, records: Array<any>, sObjectName: string) {
-        Util.showSpinner('-- Updating ' + sObjectName);
+        const messageString = '-- Updating ' + sObjectName;
+        Util.showSpinner(messageString);
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
 
         // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
@@ -112,48 +144,33 @@ export class Upsert {
             if (err) { Util.log(err); }
         });
 
-        const successCount = sobjectsResult.map((r):number => {return (r.success ? 1 : 0)})
-                                        .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        const errors = MsgHandler.getErrors(sobjectsResult);
 
-        const errorCount = sobjectsResult.map((r):number => {return (r.success ? 0 : 1)})
-                                        .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
 
-        await Util.hideSpinner(' done. Success: ' + successCount + ', errors: ' + errorCount);
-
-        if (errorCount > 0) {
-            const errors = sobjectsResult.filter((elem) => {
-                                            return elem.success === false;
-                                        }).map((elem) => {
-                                            return {"error": elem['errors']};
-                                        });
+        if (errors.length > 0) {
             await Util.warn(JSON.stringify(errors, null, 2));
         }
     }
 
     public static async deleteData(connection: Connection, records: Array<any>, sObjectName: string) {
-        Util.showSpinner('-- Deleting ' + sObjectName);
+        const messageString = '-- Deleting ' + sObjectName;
+        Util.showSpinner(messageString);
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
         const data = this.extractIds(records);
+
+        let warnings: Array<any> = new Array<any>();
 
         // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
         sobjectsResult = await connection.sobject(sObjectName).del(data, { allowRecursive: true }, (err, rets) => {
             if (err) { Util.log(err); }
         });
 
-        const successCount = sobjectsResult.map((r):number => {return (r.success ? 1 : 0)})
-                                        .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        const errors = MsgHandler.getErrors(sobjectsResult);
 
-        const errorCount = sobjectsResult.map((r):number => {return (r.success ? 0 : 1)})
-                                        .reduce((prevVal:number, nextVal:number) => {return prevVal+nextVal});
+        await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
 
-        await Util.hideSpinner(' done. Success: ' + successCount + ', errors: ' + errorCount);
-
-        if (errorCount > 0) {
-            const errors = sobjectsResult.filter((elem) => {
-                                            return elem.success === false;
-                                        }).map((elem) => {
-                                            return {"error": elem['errors']};
-                                        });
+        if (errors.length > 0) {
             await Util.warn(JSON.stringify(errors, null, 2));
         }
     }
@@ -213,4 +230,23 @@ export class Upsert {
         }
         return targetArr;
       } 
+
+    private static async loadIgnoredFiles(queryDir: string) {
+        return new Promise<String>((resolve: Function, reject: Function) => {
+            let content;
+            fs.readFile('./' + queryDir + '/fieldsToIgnroe.json', function read(err, data) {
+                if (err) {
+                    if (err.code == 'ENOENT') {
+                        resolve({});
+                    }
+                    reject(err);
+                } else {
+                    content = data.toString('utf8');
+                    resolve(JSON.parse(content));
+                }
+            });
+        });
+    }
+
 }
+

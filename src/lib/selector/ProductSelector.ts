@@ -308,7 +308,7 @@ export class ProductSelector {
         const query = "SELECT " + queryFields.join(',') + " \
                          FROM enxCPQ__Attribute__c \
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "')";
-        const attributes = await Query.executeQuery(connection, query, queryLabel);
+        const attributes = await Query.executeQuery(connection, query, queryLabel, attributeIds.length);
         return attributes;
     }
 
@@ -431,8 +431,8 @@ export class ProductSelector {
         const query = "SELECT Id, Product2Id, Pricebook2Id, CurrencyIsoCode \
                          FROM PricebookEntry \
                          WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
-                           AND Pricebook2.IsStandard = true \
-                           AND Pricebook2.IsActive = true";
+                           AND Pricebook2.IsStandard = true";
+                        //    AND Pricebook2.IsActive = true";
         const pricebookEntries = await Query.executeQuery(connection, query, queryLabel, productIds.length);
         return pricebookEntries;
     }
@@ -456,8 +456,8 @@ export class ProductSelector {
         const query = "SELECT Id, Product2Id, Pricebook2Id, CurrencyIsoCode \
                          FROM PricebookEntry \
                          WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
-                           AND Pricebook2.IsStandard = false \
-                           AND Pricebook2.IsActive = true";
+                           AND Pricebook2.IsStandard = false";
+                           //AND Pricebook2.IsActive = true";
         const pricebookEntries = await Query.executeQuery(connection, query, queryLabel, productIds.length);
         return pricebookEntries;
     }
