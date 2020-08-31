@@ -1,16 +1,16 @@
 import { Connection } from "@salesforce/core";
 import { Util } from './../Util';
 import { resolve } from "dns";
-import { MessageHandler as MsgHandler } from './../MessageHandler';
+import { LogHandler as Logs } from './../LogHandler';
 
 export class Query {
 
     public static async executeQuery(connection: Connection, query: string, logLabel: string, recordsCount?: number) {
         if (recordsCount === undefined || recordsCount < 200) {
             const messageString = '-- Querying ' + logLabel;
-            MsgHandler.showSpinner(messageString);
+            Logs.showSpinner(messageString);
             const recordResults = (await connection.autoFetchQuery(query)).records;
-            MsgHandler.hideSpinner(MsgHandler.prettifyUpsertMessage(messageString, 3) + 'Retrieved: ' + recordResults.length);
+            Logs.hideSpinner(Logs.prettifyUpsertMessage(messageString, 3) + 'Retrieved: ' + recordResults.length);
             return recordResults;
         } else {
             return this.executeBulkQuery(connection, query, logLabel);
@@ -20,19 +20,21 @@ export class Query {
     public static async executeBulkQuery(connection: Connection, query: string, logLabel: string) {
         return new Promise<String[]>(async (resolve: Function, reject: Function) => {
             const messageString = '-- Querying bulk ' + logLabel;
-            MsgHandler.showSpinner(messageString);
-            const initialTabbing = (messageString.length > 24) ? (messageString.length > 32) ? (messageString.length > 40) ? (messageString.length > 48) ? '\t' : '\t\t' : '\t\t\t' : '\t\t\t\t' : '\t\t\t\t\t';
+            Logs.showSpinner(messageString);
             let records = []; 
             connection.bulk.pollTimeout = 250000;
+            const debug = query;
+            const debug2 = logLabel;
             await connection.bulk.query(query)
                                 .on('record', record => {
                                     records.push(this.fixIdsForBulk(record));
                                 })
                                 .on('error', error => {
+                                    debugger;
                                     console.log(error); 
                                 })
                                 .on('end', info => {
-                                    MsgHandler.hideSpinner(MsgHandler.prettifyUpsertMessage(messageString, 3) + 'Retrieved: ' + records.length);
+                                    Logs.hideSpinner(Logs.prettifyUpsertMessage(messageString, 3) + 'Retrieved: ' + records.length);
                                     resolve(records);
                                 })
         });
@@ -55,6 +57,9 @@ export class Query {
             if (record[prop] === '') {
                 record[prop] = null;
             }
+        }
+        if (record.enxCPQ__TECH_External_Id__c === undefined){
+            const debug = record;
         }
         return record;
     }

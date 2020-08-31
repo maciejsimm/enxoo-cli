@@ -2,12 +2,12 @@ import { Connection } from "@salesforce/core";
 import { Util } from './../Util';
 import { RecordResult } from 'jsforce';
 import * as fs from 'fs';
-import { MessageHandler as MsgHandler } from './../MessageHandler';
+import { LogHandler as Logs } from './../LogHandler';
 
 export class Upsert {
     public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string) {
         const messageString = '-- Upserting ' + sObjectName;
-        MsgHandler.showSpinner(messageString);
+        Logs.showSpinner(messageString);
         //@TO-DO: Check the Pricebook Entries matcher - when querying before inserting. 
         
         const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
@@ -27,9 +27,9 @@ export class Upsert {
 
         }
 
-        const errors = MsgHandler.getErrors(sobjectsResult);
+        const errors = Logs.getErrors(sobjectsResult);
         
-        await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
+        await Logs.displayStatusMessage(sobjectsResult, messageString);
         
         if (errors.length > 0) {
 
@@ -37,7 +37,7 @@ export class Upsert {
             // @TO-DO it would be great if error message could somehow indicate record ID where the app failed
             //          would be easier for debugging
 
-            MsgHandler.showSpinner('-- Second attempt at upserting ' + sObjectName);
+            Logs.showSpinner('-- Second attempt at upserting ' + sObjectName);
 
             //if (failedRecords.length > 0) {
                 //05.08.2020 SZILN - ECPQ-4615 - after any failure on upsert or insert, the importer now 
@@ -50,7 +50,7 @@ export class Upsert {
                 });
             //}
 
-            await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
+            await Logs.displayStatusMessage(sobjectsResult, messageString);
 
         }
 
@@ -91,7 +91,7 @@ export class Upsert {
 
     public static async insertData(connection: Connection, records: Array<any>, sObjectName: string) {
         const messageString = '-- Inserting ' + sObjectName;
-        MsgHandler.showSpinner(messageString); 
+        Logs.showSpinner(messageString); 
 
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
 
@@ -102,13 +102,13 @@ export class Upsert {
             }
         });
 
-        const errors = MsgHandler.getErrors(sobjectsResult);
+        const errors = Logs.getErrors(sobjectsResult);
 
-        const warnings = MsgHandler.getWarningsFromErrors(errors);
+        const warnings = Logs.getWarningsFromErrors(errors);
 
-        const reducedErrors = MsgHandler.reduceErrors(errors);
+        const reducedErrors = Logs.reduceErrors(errors);
 
-        await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
+        await Logs.displayStatusMessage(sobjectsResult, messageString);
 
         if (errors.length > 0) {
 
@@ -129,7 +129,7 @@ export class Upsert {
                     if (err) { Util.log(err); }
                 });
 
-                MsgHandler.displayStatusMessage(sobjectsResult, messageString);
+                Logs.displayStatusMessage(sobjectsResult, messageString);
             }
         }
     }
@@ -144,9 +144,9 @@ export class Upsert {
             if (err) { Util.log(err); }
         });
 
-        const errors = MsgHandler.getErrors(sobjectsResult);
+        const errors = Logs.getErrors(sobjectsResult);
 
-        await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
+        await Logs.displayStatusMessage(sobjectsResult, messageString);
 
         if (errors.length > 0) {
             await Util.warn(JSON.stringify(errors, null, 2));
@@ -166,9 +166,9 @@ export class Upsert {
             if (err) { Util.log(err); }
         });
 
-        const errors = MsgHandler.getErrors(sobjectsResult);
+        const errors = Logs.getErrors(sobjectsResult);
 
-        await MsgHandler.displayStatusMessage(sobjectsResult, messageString);
+        await Logs.displayStatusMessage(sobjectsResult, messageString);
 
         if (errors.length > 0) {
             await Util.warn(JSON.stringify(errors, null, 2));

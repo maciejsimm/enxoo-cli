@@ -183,7 +183,7 @@ export class ProductSelector {
                          FROM enxCPQ__AttributeValue__c \
                         WHERE enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                      ORDER BY enxCPQ__Order__c";
-        const attributeValues = await Query.executeQuery(connection, query, queryLabel);
+        const attributeValues = await Query.executeQuery(connection, query, queryLabel, productIds.length);
         return attributeValues;
     }
 
@@ -370,7 +370,7 @@ export class ProductSelector {
                         WHERE enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c IN ('" + chargeIds.join('\',\'') + "') \
                           AND RecordType.Name = 'Charge Element' \
                      ORDER BY enxCPQ__TECH_External_Id__c";
-        const chargeElements = await Query.executeQuery(connection, query, queryLabel);
+        const chargeElements = await Query.executeQuery(connection, query, queryLabel, chargeIds.length);
         return chargeElements;
     }
 
