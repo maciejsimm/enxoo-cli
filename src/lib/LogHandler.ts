@@ -57,7 +57,7 @@ export class LogHandler {
         }).map(el => {
             return el[0].message;
             //@TO-DO: prepare a list of messages by which the warnings are separated from errors.
-        }).filter(elem => elem.includes("This price definition already exists in this price book")));
+        }).filter(elem => elem && elem.includes("This price definition already exists in this price book")));
     }
 
     public static async displayStatusMessage (sobjectsResult: Array<RecordResult>, messageString: String) {
@@ -70,7 +70,7 @@ export class LogHandler {
     public static reduceErrors(errors: Array<any>) {
         return (errors.filter(val => {
                         //@TO-DO: prepare a list of messages by which the warnings are separated from errors.
-            let error = val.error.some(({ message }) => !message.includes("This price definition already exists in this price book"))
+            let error = val.error.some(({ message }) => message && !message.includes("This price definition already exists in this price book"))
             return error
         }));
     }
