@@ -1,7 +1,7 @@
 {
   "name": "enxoo",
   "description": "enxoo sfdx cli extensions",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "author": "Maciej Simm @maciejsimm-enxoo",
   "bugs": "https://github.com/maciejsimm/enxoo-cli/issues",
   "dependencies": {
@@ -10,6 +10,7 @@
     "@oclif/errors": "1",
     "@salesforce/command": "^3.0.0",
     "@salesforce/core": "^2.3.0",
+    "jsforce": "^1.10.0",
     "salesforce": "^0.1.2",
     "tslib": "^1.11.1"
   },

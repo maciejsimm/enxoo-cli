@@ -1,5 +1,5 @@
-import {core, flags, SfdxCommand} from '@salesforce/command';
-import {AnyJson} from '@salesforce/ts-types';
+import { core, flags, SfdxCommand } from '@salesforce/command';
+import { AnyJson } from '@salesforce/ts-types';
 import { Util } from '../../../../lib/Util';
 import { FileManager } from '../../../../lib/file/FileManager';
 
@@ -16,8 +16,8 @@ export default class Org extends SfdxCommand {
 
   protected static flagsConfig = {
     // flag with a value (-p, --product=VALUE)
-    b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('b2bFlagDescription')}),
-    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')})
+    b2b: flags.boolean({ char: 'b', required: false, description: messages.getMessage('b2bFlagDescription') }),
+    dir: flags.string({ char: 'd', required: true, description: messages.getMessage('dirFlagDescription') })
   };
 
   // Comment this out if your command does not require an org username
@@ -41,7 +41,7 @@ export default class Org extends SfdxCommand {
     // @TO-DO 1. include comment in a file
     // @TO-DO 2. documentation of this method in Knowledge Base
     fileManager.writeFile('', 'queryConfiguration.json', this.configurationObject);
-    
+
     Util.hideSpinner(' done');
     Util.log('*** Finished ***');
 
@@ -50,8 +50,8 @@ export default class Org extends SfdxCommand {
 
     // @TO-DO 1. include comment in a file
     // @TO-DO 2. documentation of this method in Knowledge Base
-    fileManager.writeFile('', 'fieldsToIgnore.json', this.configurationObject);
-    
+    // fileManager.writeFile('', 'fieldsToIgnore.json', this.configurationObject);
+
     Util.hideSpinner(' done');
     Util.log('*** Finished ***');
 
@@ -61,27 +61,51 @@ export default class Org extends SfdxCommand {
   private messageLine1 = '// In this file, for each object you can specify comma separated list of custom fields that will be injected in query:';
   private messageLine2 = '//    Example: product: [\'billing_label_1__c\', \'billing_label_2__c\']';
 
-  private configurationObject = { 
-    product: [], 
-    productOption: [], 
-    bundleElement: [], 
-    bundleElementOption: [], 
-    pricebook: [], 
-    pbe: [],
-    productAttr: [],
-    attrSetAttr: [],
-    attr: [],
-    attrValues: [],
-    attrDefaultValues: [],
-    productRelationships: [],
-    attrValueDependecy: [],
-    attrRules: [],
-    category: [],
-    attrSet: [],
-    prvPlanAssignment: [],
-    prvTask: [],
-    prvPlan: [],
-    prvTaskAssignment: []
- };
+  private configurationObject = {
+    customFields: {
+      product: [],
+      productOption: [],
+      bundleElement: [],
+      bundleElementOption: [],
+      pricebook: [],
+      pbe: [],
+      productAttr: [],
+      attrSetAttr: [],
+      attr: [],
+      attrValues: [],
+      attrDefaultValues: [],
+      productRelationships: [],
+      attrValueDependecy: [],
+      attrRules: [],
+      category: [],
+      attrSet: [],
+      prvPlanAssignment: [],
+      prvTask: [],
+      prvPlan: [],
+      prvTaskAssignment: []
+    },
+    fieldsToIgnore: {
+      product: [],
+      productOption: [],
+      bundleElement: [],
+      bundleElementOption: [],
+      pricebook: [],
+      pbe: [],
+      productAttr: [],
+      attrSetAttr: [],
+      attr: [],
+      attrValues: [],
+      attrDefaultValues: [],
+      productRelationships: [],
+      attrValueDependecy: [],
+      attrRules: [],
+      category: [],
+      attrSet: [],
+      prvPlanAssignment: [],
+      prvTask: [],
+      prvPlan: [],
+      prvTaskAssignment: []
+    }
+  };
 
 }
