@@ -29,7 +29,6 @@ export class Query {
                     records.push(this.fixIdsForBulk(record));
                 })
                 .on('error', error => {
-                    //debugger;
                     console.log(error);
                 })
                 .on('end', info => {

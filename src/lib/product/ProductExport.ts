@@ -457,7 +457,6 @@ export class ProductExport {
         globalAttributeValues.forEach((ava) => {
             const attribute = this.attributes.find((e) => {
                 if (e.record){
-                    const debug = ava;
                     e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c'];
                 }
             });
