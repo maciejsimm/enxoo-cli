@@ -61,6 +61,17 @@ export class FileManager {
         });
     }
 
+    //Search for file with the same Tech External ID and delete it if record has different name
+    public async deleteOldFilesWithDifferentName(fileDirectory:String, fileName:String, recordId:String){
+        const path = './' + this.directory + '/' + fileDirectory+'/';
+        let files = fs.readdirSync(path).filter(fn => fn.endsWith('_' + recordId + '.json'));
+        if(files){
+            files.forEach(function (value){
+                fs.unlinkSync(path + value);
+            });
+        }
+    }
+
     public createDirectoriesForExport() {
         let directories = ['products', 
                            'categories', 

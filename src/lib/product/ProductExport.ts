@@ -215,35 +215,43 @@ export class ProductExport {
 
         // -- saving files begin
         await this.products.forEach((product) => {
+            this.fileManager.deleteOldFilesWithDifferentName('products', product.getFileName(), product.getProductId());
             this.fileManager.writeFile('products', product.getFileName(), product);
         });
 
         await this.attributes.forEach((attribute) => {
+            this.fileManager.deleteOldFilesWithDifferentName('attributes', attribute.getFileName(), attribute.getRecordId());
             this.fileManager.writeFile('attributes', attribute.getFileName(), attribute);
         });
 
         await this.charges.forEach((charge) => {
+            this.fileManager.deleteOldFilesWithDifferentName('charges', charge.getFileName(), charge.getRecordId());
             this.fileManager.writeFile('charges', charge.getFileName(), charge);
         });
 
         await this.categories.forEach((category) => {
+            this.fileManager.deleteOldFilesWithDifferentName('categories', category.getFileName(), category.getRecordId());
             this.fileManager.writeFile('categories', category.getFileName(), category);
         });
 
         await this.attributeSets.forEach((attributeSet) => {
+            this.fileManager.deleteOldFilesWithDifferentName('attributeSets', attributeSet.getFileName(), attributeSet.getRecordId());
             this.fileManager.writeFile('attributeSets', attributeSet.getFileName(), attributeSet);
         });
 
         await this.pricebooks.forEach((pbook) => {
+            this.fileManager.deleteOldFilesWithDifferentName('priceBooks', pbook.getFileName(), pbook.getPricebookId());
             this.fileManager.writeFile('priceBooks', pbook.getFileName(), pbook);
         });
 
         if (this.exportB2BObjects) {
             await this.provisioningPlans.forEach((plan) => {
+                this.fileManager.deleteOldFilesWithDifferentName('provisioningPlans', plan.getFileName(), plan.getRecordId());
                 this.fileManager.writeFile('provisioningPlans', plan.getFileName(), plan);
             });
 
             await this.provisioningTasks.forEach((task) => {
+                this.fileManager.deleteOldFilesWithDifferentName('provisioningTasks', task.getFileName(), task.getRecordId());
                 this.fileManager.writeFile('provisioningTasks', task.getFileName(), task);
             });
         }
