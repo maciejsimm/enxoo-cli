@@ -10,6 +10,7 @@
     "@oclif/errors": "1",
     "@salesforce/command": "^3.0.0",
     "@salesforce/core": "^2.3.0",
+    "jsforce": "^1.10.0",
     "salesforce": "^0.1.2",
     "tslib": "^1.11.1"
   },

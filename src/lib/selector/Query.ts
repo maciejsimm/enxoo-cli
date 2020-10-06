@@ -1,7 +1,6 @@
 import { Connection } from "@salesforce/core";
-import { Util } from './../Util';
-import { resolve } from "dns";
 import { LogHandler as Logs } from './../LogHandler';
+import { ExecuteOptions } from 'jsforce/query'
 
 export class Query {
 
@@ -9,7 +8,9 @@ export class Query {
         if (recordsCount === undefined || recordsCount < 200) {
             const messageString = '-- Querying ' + logLabel;
             Logs.showSpinner(messageString);
-            const recordResults = (await connection.autoFetchQuery(query)).records;
+            //todo: the maxFetch query option could be set to higher values only when prompted instead of always
+            let queryOptions: ExecuteOptions = { maxFetch: 50000 };
+            const recordResults = (await connection.autoFetchQuery(query, queryOptions)).records;
             Logs.hideSpinner(Logs.prettifyUpsertMessage(messageString, 3) + 'Retrieved: ' + recordResults.length);
             return recordResults;
         } else {
@@ -21,26 +22,23 @@ export class Query {
         return new Promise<String[]>(async (resolve: Function, reject: Function) => {
             const messageString = '-- Querying bulk ' + logLabel;
             Logs.showSpinner(messageString);
-            let records = []; 
+            let records = [];
             connection.bulk.pollTimeout = 250000;
-            const debug = query;
-            const debug2 = logLabel;
             await connection.bulk.query(query)
-                                .on('record', record => {
-                                    records.push(this.fixIdsForBulk(record));
-                                })
-                                .on('error', error => {
-                                    debugger;
-                                    console.log(error); 
-                                })
-                                .on('end', info => {
-                                    Logs.hideSpinner(Logs.prettifyUpsertMessage(messageString, 3) + 'Retrieved: ' + records.length);
-                                    resolve(records);
-                                })
+                .on('record', record => {
+                    records.push(this.fixIdsForBulk(record));
+                })
+                .on('error', error => {
+                    console.log(error);
+                })
+                .on('end', info => {
+                    Logs.hideSpinner(Logs.prettifyUpsertMessage(messageString, 3) + 'Retrieved: ' + records.length);
+                    resolve(records);
+                })
         });
     }
 
-    private static fixIdsForBulk(record:any) {
+    private static fixIdsForBulk(record: any) {
         // Bulk API query doesn't return objects, nested properties are one string
         if (record.hasOwnProperty('Product2.enxCPQ__TECH_External_Id__c')) {
             record['Product2'] = {};
@@ -53,12 +51,12 @@ export class Query {
             delete record['Pricebook2.enxCPQ__TECH_External_Id__c'];
         }
         // Bulk API query doesn't return null values, it returns empty string instead
-        for(let prop in record) {
+        for (let prop in record) {
             if (record[prop] === '') {
                 record[prop] = null;
             }
         }
-        if (record.enxCPQ__TECH_External_Id__c === undefined){
+        if (record.enxCPQ__TECH_External_Id__c === undefined) {
             const debug = record;
         }
         return record;

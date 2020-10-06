@@ -455,7 +455,11 @@ export class ProductExport {
 
     private wrapGlobalAttributeValues(globalAttributeValues:Array<any>) {
         globalAttributeValues.forEach((ava) => {
-            const attribute = this.attributes.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c']);
+            const attribute = this.attributes.find((e) => {
+                if (e.record){
+                    e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c'];
+                }
+            });
             if (attribute !== undefined) {
                 attribute.attributeValues.push(ava);
             }
