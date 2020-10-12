@@ -15,6 +15,10 @@ export class ProvisioningPlan extends Serializable {
         return this.record['Name'] +'_' + this.record['enxB2B__TECH_External_Id__c']+ '.json'
     }
 
+    public getRecordId(){
+        return this.record['enxCPQ__TECH_External_Id__c'];
+    }
+    
     public getProvisioningTaskIds() {
         return this.provisioningTasks.map((task) => {
             return task['enxB2B__Provisioning_Task__r']['enxB2B__TECH_External_Id__c'];

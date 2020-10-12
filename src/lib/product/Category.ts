@@ -13,6 +13,10 @@ export class Category extends Serializable {
         return this.record['Name'] +'_' + this.record['enxCPQ__TECH_External_Id__c']+ '.json'
     }
 
+    public getRecordId(){
+        return this.record['enxCPQ__TECH_External_Id__c'];
+    }
+
     public getParentCategory() {
         if (this.record['enxCPQ__Parent_Category__r'] !== null) {
             return this.record['enxCPQ__Parent_Category__r']['enxCPQ__TECH_External_Id__c'];
