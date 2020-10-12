@@ -9,8 +9,8 @@ export class ProductSelector {
     private exportB2BObjects: boolean;
 
     constructor(querySettings: any, exportB2BObjects: boolean) {
-        this.additionalFields = querySettings ? querySettings.customFields : [];
-        this.fieldsToIgnore = querySettings ? querySettings.fieldsToIgnore : [];
+        this.additionalFields = querySettings ? querySettings.customFields ? querySettings.customFields : [] : [];
+        this.fieldsToIgnore = querySettings ? querySettings.fieldsToIgnore ? querySettings.fieldsToIgnore : [] : [];
         this.exportB2BObjects = exportB2BObjects;
     }
 
