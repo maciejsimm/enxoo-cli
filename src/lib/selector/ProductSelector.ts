@@ -85,9 +85,9 @@ export class ProductSelector {
         const queryLabel = 'product';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.Product2), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); 
+        }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + ", enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM Product2 \
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
@@ -109,9 +109,9 @@ export class ProductSelector {
         const queryLabel = 'productOption';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.Product2), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        });
+        }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + ", enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM Product2 \
                         WHERE enxCPQ__Parent_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
@@ -141,9 +141,9 @@ export class ProductSelector {
         const queryLabel = 'bundleElement';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.BundleElement), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); 
+        }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__BundleElement__c \
                         WHERE enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
@@ -156,9 +156,9 @@ export class ProductSelector {
         const queryLabel = 'bundleElementOption';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.BundleElementOption), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); 
+        }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__BundleElementOption__c \
                         WHERE enxCPQ__Bundle_Element__r.enxCPQ__TECH_External_Id__c IN ('" + bundleElementIds.join('\',\'') + "') \
@@ -171,9 +171,10 @@ export class ProductSelector {
         const queryLabel = 'productAttr';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.ProductAttribute), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, \
+        }) : queryFields; 
+        const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c, \
                               enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Value_Attribute__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__ProductAttribute__c \
                         WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
@@ -195,9 +196,9 @@ export class ProductSelector {
         const queryLabel = 'attrValues';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.AttributeValue), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); 
+        }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeValue__c \
                         WHERE enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
@@ -210,9 +211,9 @@ export class ProductSelector {
         const queryLabel = 'attrRules';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.AttributeRule), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); 
+        }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM enxCPQ__AttributeRule__c \
                         WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
@@ -225,9 +226,10 @@ export class ProductSelector {
         const queryLabel = 'productRelationships';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.ProductRelationship), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Secondary_Product__r.enxCPQ__TECH_External_Id__c \
+        }) : queryFields; 
+        const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Secondary_Product__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__ProductRelationship__c \
                         WHERE enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                      ORDER BY enxCPQ__TECH_External_Id__c";
@@ -239,9 +241,9 @@ export class ProductSelector {
         const queryLabel = 'attrDefaultValues';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.AttributeDefaultValue), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); 
+        }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeDefaultValue__c \
                         WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
@@ -254,9 +256,10 @@ export class ProductSelector {
         const queryLabel = 'attrValueDependecy';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.AttributeValueDependency), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, \
+        }) : queryFields;  
+        const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Master_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, \
                                                   enxCPQ__Master_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Dependent_Attribute__r.enxCPQ__TECH_External_Id__c, \
                                                   enxCPQ__Master_Value__r.enxCPQ__TECH_External_Id__c, enxCPQ__Dependent_Value__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeValueDependency__c \
@@ -270,9 +273,9 @@ export class ProductSelector {
         const queryLabel = 'prvPlanAssignment';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.ProvisioningPlanAssignment), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); 
+        }) : queryFields;  
         const query = "SELECT " + queryFieldsReduced.join(',') + " , enxB2B__Product__r.enxCPQ__TECH_External_Id__c, enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c \
                          FROM enxB2B__ProvisioningPlanAssignment__c \
                         WHERE enxB2B__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
@@ -294,9 +297,9 @@ export class ProductSelector {
         const queryLabel = 'prvPlan';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.ProvisioningPlan), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); 
+        }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + " \
                          FROM enxB2B__ProvisioningPlan__c \
                         WHERE enxB2B__TECH_External_Id__c IN ('" + planIds.join('\',\'') + "')";
@@ -308,9 +311,9 @@ export class ProductSelector {
         const queryLabel = 'prvTaskAssignment';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.ProvisioningTaskAssignment), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); 
+        }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + " , enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c, enxB2B__Provisioning_Task__r.enxB2B__TECH_External_Id__c \
                          FROM enxB2B__ProvisioningTaskAssignment__c \
                         WHERE enxB2B__Provisioning_Plan__r.enxB2B__TECH_External_Id__c IN ('" + planIds.join('\',\'') + "') \
@@ -332,9 +335,9 @@ export class ProductSelector {
         const queryLabel = 'prvTask';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.ProvisioningTask), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); 
+        }) : queryFields;  
         const query = "SELECT " + queryFieldsReduced.join(',') + ", RecordType.DeveloperName \
                          FROM enxB2B__ProvisioningTask__c \
                         WHERE enxB2B__TECH_External_Id__c IN ('" + taskIds.join('\',\'') + "')";
@@ -346,9 +349,10 @@ export class ProductSelector {
         const queryLabel = 'attr';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.Attribute), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); const query = "SELECT " + queryFieldsReduced.join(',') + " \
+        }) : queryFields; 
+        const query = "SELECT " + queryFieldsReduced.join(',') + " \
                          FROM enxCPQ__Attribute__c \
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "')";
         const attributes = await Query.executeQuery(connection, query, queryLabel, attributeIds.length);
@@ -359,9 +363,9 @@ export class ProductSelector {
         const queryLabel = 'attrValues';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.AttributeValue), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); 
+        }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeValue__c \
                         WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "') \
@@ -375,9 +379,10 @@ export class ProductSelector {
         const queryLabel = 'attrSet';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.AttributeSet), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); const query = "SELECT " + queryFieldsReduced.join(',') + " \
+        }) : queryFields; 
+        const query = "SELECT " + queryFieldsReduced.join(',') + " \
                          FROM enxCPQ__AttributeSet__c \
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + attributeSetIds.join('\',\'') + "')";
         const attributeSets = await Query.executeQuery(connection, query, queryLabel);
@@ -388,9 +393,9 @@ export class ProductSelector {
         const queryLabel = 'attrSetAttr';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.AttributeSetAttribute), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); 
+        }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + ", enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeSetAttribute__c \
                         WHERE enxCPQ__Attribute_Set__r.enxCPQ__TECH_External_Id__c IN ('" + attributeSetIds.join('\',\'') + "') \
@@ -404,9 +409,9 @@ export class ProductSelector {
         const queryLabel = 'product';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.Product2), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); 
+        }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + ", enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, \
                                                  enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM Product2 \
@@ -444,9 +449,10 @@ export class ProductSelector {
         const queryLabel = 'category';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.Category), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c \
+        }) : queryFields; 
+        const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Parameter_Attribute_Set__r.enxCPQ__TECH_External_Id__c, enxCPQ__Parent_Category__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__Category__c \
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + categoryIds.join('\',\'') + "')";
         const categories = await Query.executeQuery(connection, query, queryLabel);
@@ -457,10 +463,9 @@ export class ProductSelector {
         const queryLabel = 'pricebook';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.Pricebook), ...queryInject];
-        const debug = this.fieldsToIgnore[queryLabel];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        });
+        }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + ", IsStandard \
                          FROM Pricebook2";
         const pricebooks = await Query.executeQuery(connection, query, queryLabel, 300);
@@ -501,9 +506,10 @@ export class ProductSelector {
         const queryLabel = 'pbe';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.PricebookEntry), ...queryInject];
-        const queryFieldsReduced = queryFields.filter(e => {
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e);
-        }); const query = "SELECT " + queryFieldsReduced.join(',') + ", Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode \
+        }) : queryFields; 
+        const query = "SELECT " + queryFieldsReduced.join(',') + ", Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode \
                          FROM PricebookEntry \
                          WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                            AND Pricebook2.enxCPQ__TECH_External_Id__c IN ('" + pricebookIds.join('\',\'') + "') \
