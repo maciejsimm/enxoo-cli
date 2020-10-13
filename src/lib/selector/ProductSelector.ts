@@ -468,7 +468,7 @@ export class ProductSelector {
         }) : queryFields; 
         const query = "SELECT " + queryFieldsReduced.join(',') + ", IsStandard \
                          FROM Pricebook2";
-        const pricebooks = await Query.executeQuery(connection, query, queryLabel, 300);
+        const pricebooks = await Query.executeQuery(connection, query, queryLabel);
         return pricebooks;
     }
 
