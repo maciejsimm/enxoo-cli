@@ -98,8 +98,8 @@ export class ProductImport {
             const allProductsRTfix = Util.fixRecordTypes(allProducts, recordTypes, 'Product2');
             const allProductsWithoutRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
 
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithoutRelationships), 'Product2');
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithoutRelationships), 'Product2', 'Products with no relationship');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2', 'Products with relationship');
         }
         // -- products import end
 
@@ -140,16 +140,27 @@ export class ProductImport {
         if (this.chargeIds.length > 0) {
             const allCharges = this.charges.map((c) => {return c.record});
             const allChargesRTfix = Util.fixRecordTypes(allCharges, recordTypes, 'Product2');
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allChargesRTfix), 'Product2');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allChargesRTfix), 'Product2', 'Charge products');
 
             let allChargeItems = [];
             this.charges.forEach((charge) => { allChargeItems = [...allChargeItems, ...charge.chargeElements, ...charge.chargeTiers] });
             if (allChargeItems.length > 0) {
                 const allChargeItemsRTfix = Util.fixRecordTypes(allChargeItems, recordTypes, 'Product2');
-                await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allChargeItemsRTfix), 'Product2');
+                await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allChargeItemsRTfix), 'Product2', 'Charge products');
             }
         }
 
+        // -- products import after charges begin
+        if (this.productIds.length > 0 && Upsert.reimportProduct2AfterCharges) {
+            let allProducts = [];
+            this.products.forEach(product => { allProducts = [...allProducts, ...product.getProducts()] });
+            const allProductsRTfix = Util.fixRecordTypes(allProducts, recordTypes, 'Product2');
+            const allProductsWithoutRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
+
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithoutRelationships), 'Product2', 'Products again after charges');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2', 'Products again after charges');
+        }
+        // -- products import after charges begin
 
         // -- pricebooks import begin
         const allPricebooks = this.pricebooks.filter((p) => { return p.isStandard !== true; })

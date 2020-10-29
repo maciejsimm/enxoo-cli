@@ -5,8 +5,12 @@ import * as fs from 'fs';
 import { LogHandler as Logs } from './../LogHandler';
 
 export class Upsert {
-    public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string) {
-        const messageString = '-- Upserting ' + sObjectName;
+    public static reimportProduct2AfterCharges:Boolean;
+
+
+    public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string, sObjectLabel?: string) {
+        const displayedObjectName = sObjectLabel || sObjectName;
+        const messageString = '-- Upserting ' + displayedObjectName;
         Logs.showSpinner(messageString);
         //@TO-DO: Check the Pricebook Entries matcher - when querying before inserting. 
         
@@ -33,11 +37,16 @@ export class Upsert {
         
         if (errors.length > 0) {
 
+            if (sObjectName.includes("Product2")) {
+                await Logs.showSpinner('-- Some errors were present during Product2 import. The import will repeat after charges are also imported.');
+                Upsert.reimportProduct2AfterCharges = true;
+            }
+
             await Util.warn(JSON.stringify(errors, null, 2));
             // @TO-DO it would be great if error message could somehow indicate record ID where the app failed
             //          would be easier for debugging
 
-            Logs.showSpinner('-- Second attempt at upserting ' + sObjectName);
+            await Logs.showSpinner('-- Second attempt at upserting ' + sObjectName);
 
             //if (failedRecords.length > 0) {
                 //05.08.2020 SZILN - ECPQ-4615 - after any failure on upsert or insert, the importer now 
@@ -194,6 +203,7 @@ export class Upsert {
                 }
             
             Util.hideSpinner(' done. Setting ID: ' + rets['id']);
+            //@ts-ignore
             resolve();
             });
         });      
@@ -206,6 +216,7 @@ export class Upsert {
             connection.query("SELECT Id FROM enxCPQ__CPQ_Settings__c WHERE Name = 'G_CPQ_DISABLE_TRIGGERS_99'", {}, (err, res) => {
                 if (res.records.length == 0) {
                     if (log) Util.hideSpinner(' done.');
+                    //@ts-ignore
                     resolve();
                 }
 
@@ -217,6 +228,7 @@ export class Upsert {
                     
                     // @TO-DO check with Łuki, cause it's printed after '*** Finished ***'
                     if (log) Util.hideSpinner(' done.');
+                    //@ts-ignore
                     resolve();
                 }); 
             });
