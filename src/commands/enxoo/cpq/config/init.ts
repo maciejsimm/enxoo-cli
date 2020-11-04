@@ -42,12 +42,6 @@ export default class Org extends SfdxCommand {
     // @TO-DO 2. documentation of this method in Knowledge Base
     fileManager.writeFile('', 'queryConfiguration.json', this.configurationObject);
 
-    Util.hideSpinner(' done');
-    Util.log('*** Finished ***');
-
-    Util.log('*** Initializing ignored fields file for ' + (b2b ? 'B2B + CPQ' : 'CPQ') + ' setup ***');
-    Util.showSpinner('-- Writing fieldIgnore.json file ');
-
     // @TO-DO 1. include comment in a file
     // @TO-DO 2. documentation of this method in Knowledge Base
     // fileManager.writeFile('', 'fieldsToIgnore.json', this.configurationObject);
