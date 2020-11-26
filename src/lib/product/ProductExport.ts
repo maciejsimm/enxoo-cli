@@ -14,29 +14,29 @@ import * as fs from 'fs';
 
 export class ProductExport {
 
-    private productIds:Array<String>;
-    private attributeIds:Array<String>;
-    private categoryIds:Array<String>;
-    private attributeSetIds:Array<String>;
-    private provisioningPlanIds:Array<String>;
-    private provisioningTaskIds:Array<String>;
-    private chargeIds:Array<String>;
+    private productIds: Array<String>;
+    private attributeIds: Array<String>;
+    private categoryIds: Array<String>;
+    private attributeSetIds: Array<String>;
+    private provisioningPlanIds: Array<String>;
+    private provisioningTaskIds: Array<String>;
+    private chargeIds: Array<String>;
 
-    private products:Array<Product>;
-    private attributes:Array<Attribute>;
-    private attributeSets:Array<AttributeSet>;
-    private provisioningPlans:Array<ProvisioningPlan>;
-    private provisioningTasks:Array<ProvisioningTask>;
-    private charges:Array<Charge>;
-    private categories:Array<Category>;
-    private pricebooks:Array<Pricebook>;
+    private products: Array<Product>;
+    private attributes: Array<Attribute>;
+    private attributeSets: Array<AttributeSet>;
+    private provisioningPlans: Array<ProvisioningPlan>;
+    private provisioningTasks: Array<ProvisioningTask>;
+    private charges: Array<Charge>;
+    private categories: Array<Category>;
+    private pricebooks: Array<Pricebook>;
 
-    private targetDirectory:string;
-    private exportB2BObjects:boolean;
-    private connection:Connection;
-    private fileManager:FileManager;
+    private targetDirectory: string;
+    private exportB2BObjects: boolean;
+    private connection: Connection;
+    private fileManager: FileManager;
 
-    constructor(targetDirectory:string, connection: Connection, exportB2BObjects: boolean) {
+    constructor(targetDirectory: string, connection: Connection, exportB2BObjects: boolean) {
         this.targetDirectory = targetDirectory;
         this.exportB2BObjects = exportB2BObjects;
         this.fileManager = new FileManager(targetDirectory, exportB2BObjects);
@@ -44,12 +44,12 @@ export class ProductExport {
     }
 
     public async export(productNames: Array<string>,
-                        exportRelationships: Boolean,
-                        currencyNames: Set<String>) {
-        
+        exportRelationships: Boolean,
+        currencyNames: Set<String>) {
+
         const querySettings = await this.loadQueryConfiguration(this.targetDirectory);
         const productSelector = new ProductSelector(querySettings, this.exportB2BObjects);
-        
+
         const allProducts = await this.getAllProducts(productSelector);
         this.setProductExportScope(productNames, allProducts);
 
@@ -59,7 +59,7 @@ export class ProductExport {
         }
 
         this.fileManager.createDirectoriesForExport();
-        
+
         // -- products export begin
         const products = await productSelector.getProducts(this.connection, this.productIds);
         this.wrapProducts(products);
@@ -72,7 +72,7 @@ export class ProductExport {
 
         const productAttributes = await productSelector.getProductAttributes(this.connection, this.productIds);
         this.wrapProductAttributes(productAttributes);
-                            
+
         const localAttributeValues = await productSelector.getLocalAttributeValues(this.connection, this.productIds);
         this.wrapAttributeValues(localAttributeValues);
 
@@ -178,18 +178,30 @@ export class ProductExport {
         this.wrapPricebooks(pricebooks);
 
         let pricebooksIds = [];
-        this.pricebooks.forEach(pbook => { pricebooksIds = [... pricebooksIds, pbook.getPricebookId()] })
+        this.pricebooks.forEach(pbook => { pricebooksIds = [...pricebooksIds, pbook.getPricebookId()] })
 
         let pricebookEntryProductIds = [];
-        this.products.forEach(product => { pricebookEntryProductIds = [... pricebookEntryProductIds, ...product.getAllProductIds()] });
-        this.charges.forEach(charge => { pricebookEntryProductIds = [... pricebookEntryProductIds, ...charge.getAllProductIds()] });
+        this.products.forEach(product => { pricebookEntryProductIds = [...pricebookEntryProductIds, ...product.getAllProductIds()] });
+        this.charges.forEach(charge => { pricebookEntryProductIds = [...pricebookEntryProductIds, ...charge.getAllProductIds()] });
 
         // @TO-DO bulk query should be made here
-        const standardPricebookEntries = await productSelector.getStandardPricebookEntries(this.connection, pricebookEntryProductIds);
-        this.wrapStandardPricebookEntries(standardPricebookEntries);
+        let allEntries = [];
+        const iterator = Math.ceil(pricebookEntryProductIds.length / 5000) * 5000;
+        // console.log(iterator);
+        for (let i = 0; i < iterator; i = i + 5000) {
+            // console.log(i);
+            const temp = pricebookEntryProductIds.slice(i, i + 4999);
+            const standardPricebookEntries = await productSelector.getStandardPricebookEntries(this.connection, temp);
+            allEntries.push(...standardPricebookEntries);
+            // console.log(i);
+            // console.log(pricebookEntryProductIds.length);
+        }
+        const debug = allEntries;
+        // const standardPricebookEntries = await productSelector.getStandardPricebookEntries(this.connection, allEntries);
+        this.wrapStandardPricebookEntries(allEntries);
 
-        const allPricebookEntries = await productSelector.getPricebookEntries(this.connection, pricebookEntryProductIds, pricebooksIds);
-        this.wrapPricebookEntries(allPricebookEntries);
+        // const allPricebookEntries = await productSelector.getPricebookEntries(this.connection, pricebookEntryProductIds, pricebooksIds);
+        // this.wrapPricebookEntries(allPricebookEntries);
         // -- pricebooks end
 
 
@@ -205,7 +217,7 @@ export class ProductExport {
             this.wrapProvisioningTaskAssignments(provisioningTaskAssignments);
 
             this.provisioningTaskIds = [];
-            this.provisioningPlans.forEach(plan => { this.provisioningTaskIds = [...this.provisioningTaskIds, ... new Set(plan.getProvisioningTaskIds())]});
+            this.provisioningPlans.forEach(plan => { this.provisioningTaskIds = [...this.provisioningTaskIds, ... new Set(plan.getProvisioningTaskIds())] });
 
             const provisioningTasks = await productSelector.getProvisioningTasks(this.connection, this.provisioningTaskIds);
             this.wrapProvisioningTasks(provisioningTasks);
@@ -258,14 +270,14 @@ export class ProductExport {
         // -- end saving files
     }
 
-    private async getAllProducts(selector:ProductSelector) {
+    private async getAllProducts(selector: ProductSelector) {
         const productList = await selector.getAllProducts(this.connection);
         const productNames = [...productList];
         return productNames;
-    }   
+    }
 
     private setProductExportScope(productToExportNames: Array<string>, allProducts: Array<any>) {
-        if (productToExportNames[0] === '*ALL') { 
+        if (productToExportNames[0] === '*ALL') {
             this.productIds = allProducts.map((p) => { return p.id; });
         } else {
             this.productIds = [];
@@ -296,14 +308,14 @@ export class ProductExport {
         Util.log('-- Following related products will also be retrieved: ' + productNames);
     }
 
-    private wrapProducts(products:Array<any>) {
+    private wrapProducts(products: Array<any>) {
         this.products = new Array<Product>();
         products.forEach((p) => {
             this.products.push(new Product(p));
         })
     }
 
-    private wrapProductOptions(productOptions:Array<any>) {
+    private wrapProductOptions(productOptions: Array<any>) {
         productOptions.forEach((option) => {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === option['enxCPQ__Parent_Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
@@ -312,7 +324,7 @@ export class ProductExport {
         });
     }
 
-    private wrapProductCharges(productCharges:Array<any>) {
+    private wrapProductCharges(productCharges: Array<any>) {
         productCharges.forEach((charge) => {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
@@ -321,7 +333,7 @@ export class ProductExport {
         });
     }
 
-    private wrapProductAttributes(productAttributes:Array<any>) {
+    private wrapProductAttributes(productAttributes: Array<any>) {
         productAttributes.forEach((attr) => {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === attr['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
@@ -330,7 +342,7 @@ export class ProductExport {
         });
     }
 
-    private wrapAttributeValues(productAttributeValues:Array<any>) {
+    private wrapAttributeValues(productAttributeValues: Array<any>) {
         productAttributeValues.forEach((ava) => {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
@@ -339,7 +351,7 @@ export class ProductExport {
         });
     }
 
-    private wrapAttributeRules(attributeRules:Array<any>) {
+    private wrapAttributeRules(attributeRules: Array<any>) {
         attributeRules.forEach((arl) => {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === arl['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
@@ -348,7 +360,7 @@ export class ProductExport {
         });
     }
 
-    private wrapProductRelationships(productRelationships:Array<any>) {
+    private wrapProductRelationships(productRelationships: Array<any>) {
         productRelationships.forEach((arl) => {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === arl['enxCPQ__Primary_Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
@@ -357,7 +369,7 @@ export class ProductExport {
         });
     }
 
-    private wrapAttributeDefaultValues(attributeDefaultValues:Array<any>) {
+    private wrapAttributeDefaultValues(attributeDefaultValues: Array<any>) {
         attributeDefaultValues.forEach((adv) => {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === adv['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
@@ -366,7 +378,7 @@ export class ProductExport {
         });
     }
 
-    private wrapAttributeValueDependencies(attributeValueDependencies:Array<any>) {
+    private wrapAttributeValueDependencies(attributeValueDependencies: Array<any>) {
         attributeValueDependencies.forEach((avd) => {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === avd['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
@@ -375,7 +387,7 @@ export class ProductExport {
         });
     }
 
-    private wrapBundleElements(bundleElements:Array<any>) {
+    private wrapBundleElements(bundleElements: Array<any>) {
         bundleElements.forEach((bel) => {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === bel['enxCPQ__Bundle__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
@@ -384,7 +396,7 @@ export class ProductExport {
         });
     }
 
-    private wrapBundleElementOptions(bundleElementOptions:Array<any>) {
+    private wrapBundleElementOptions(bundleElementOptions: Array<any>) {
         bundleElementOptions.forEach((bel) => {
             let product;
             for (let i = 0; i < this.products.length; i++) {
@@ -406,7 +418,7 @@ export class ProductExport {
         });
     }
 
-    private wrapProductProvisioningPlans(provisioningPlans:Array<any>) {
+    private wrapProductProvisioningPlans(provisioningPlans: Array<any>) {
         provisioningPlans.forEach((ppl) => {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ppl['enxB2B__Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
@@ -415,14 +427,14 @@ export class ProductExport {
         });
     }
 
-    private wrapProvisioningPlans(plans:Array<any>) {
+    private wrapProvisioningPlans(plans: Array<any>) {
         this.provisioningPlans = new Array<ProvisioningPlan>();
         plans.forEach((plan) => {
             this.provisioningPlans.push(new ProvisioningPlan(plan));
         })
     }
 
-    private wrapProvisioningTaskAssignments(provisioningTaskAssignments:Array<any>) {
+    private wrapProvisioningTaskAssignments(provisioningTaskAssignments: Array<any>) {
         provisioningTaskAssignments.forEach((pta) => {
             const provisioningPlan = this.provisioningPlans.find(e => e.record['enxB2B__TECH_External_Id__c'] === pta['enxB2B__Provisioning_Plan__r']['enxB2B__TECH_External_Id__c']);
             if (provisioningPlan !== undefined) {
@@ -431,28 +443,28 @@ export class ProductExport {
         });
     }
 
-    private wrapProvisioningTasks(tasks:Array<any>) {
+    private wrapProvisioningTasks(tasks: Array<any>) {
         this.provisioningTasks = new Array<ProvisioningTask>();
         tasks.forEach((task) => {
             this.provisioningTasks.push(new ProvisioningTask(task));
         })
     }
 
-    private wrapAttributes(attributes:Array<any>) {
+    private wrapAttributes(attributes: Array<any>) {
         this.attributes = new Array<Attribute>();
         attributes.forEach((a) => {
             this.attributes.push(new Attribute(a));
         })
     }
 
-    private wrapAttributeSets(attributeSets:Array<any>) {
+    private wrapAttributeSets(attributeSets: Array<any>) {
         this.attributeSets = new Array<AttributeSet>();
         attributeSets.forEach((a) => {
             this.attributeSets.push(new AttributeSet(a));
         })
     }
 
-    private wrapAttributeSetAttributes(attributeSetAttributes:Array<any>) {
+    private wrapAttributeSetAttributes(attributeSetAttributes: Array<any>) {
         attributeSetAttributes.forEach((asa) => {
             const attributeSet = this.attributeSets.find(e => e.record['enxCPQ__TECH_External_Id__c'] === asa['enxCPQ__Attribute_Set__r']['enxCPQ__TECH_External_Id__c']);
             if (attributeSet !== undefined) {
@@ -461,7 +473,7 @@ export class ProductExport {
         });
     }
 
-    private wrapGlobalAttributeValues(globalAttributeValues:Array<any>) {
+    private wrapGlobalAttributeValues(globalAttributeValues: Array<any>) {
         globalAttributeValues.forEach((ava) => {
             const attribute = this.attributes.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c']);
             if (attribute !== undefined) {
@@ -470,14 +482,14 @@ export class ProductExport {
         });
     }
 
-    private wrapChargeDefinitions(chargeDefinitions:Array<any>) {
+    private wrapChargeDefinitions(chargeDefinitions: Array<any>) {
         this.charges = new Array<Charge>();
         chargeDefinitions.forEach((c) => {
             this.charges.push(new Charge(c));
         })
     }
 
-    private wrapChargeElements(elements:Array<any>) {
+    private wrapChargeElements(elements: Array<any>) {
         elements.forEach((elem) => {
             const charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c']);
             if (charge !== undefined) {
@@ -486,7 +498,7 @@ export class ProductExport {
         });
     }
 
-    private wrapChargeTiers(tiers:Array<any>) {
+    private wrapChargeTiers(tiers: Array<any>) {
         tiers.forEach((tier) => {
             const charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === tier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c']);
             if (charge !== undefined) {
@@ -495,14 +507,14 @@ export class ProductExport {
         });
     }
 
-    private wrapCategories(categories:Array<any>) {
+    private wrapCategories(categories: Array<any>) {
         if (!this.categories) this.categories = new Array<Category>();
         categories.forEach((c) => {
             this.categories.push(new Category(c));
         })
     }
 
-    private wrapPricebooks(paramPricebooks:Array<any>) {
+    private wrapPricebooks(paramPricebooks: Array<any>) {
         paramPricebooks.forEach((pbook) => {
             let pricebook = this.pricebooks.find(p => p.record['enxCPQ__TECH_External_Id__c'] === pbook['enxCPQ__TECH_External_Id__c']);
             if (pricebook === undefined) {
@@ -516,7 +528,7 @@ export class ProductExport {
         })
     }
 
-    private wrapStandardPricebookEntries(pricebookEntries:Array<any>) {
+    private wrapStandardPricebookEntries(pricebookEntries: Array<any>) {
         pricebookEntries.forEach((pbe) => {
             const pricebook = this.pricebooks.find(e => e.isStandard);
             if (pricebook !== undefined) {
@@ -524,7 +536,7 @@ export class ProductExport {
                 let currencyCode = pbe['CurrencyIsoCode'];
                 if (pricebook.stdPricebookEntries.hasOwnProperty(productTechId)) {
                     const entriesArray = pricebook.stdPricebookEntries[productTechId];
-                    const elementIndex = entriesArray.findIndex(elem => {return elem['Product2']['enxCPQ__TECH_External_Id__c'] === productTechId && elem['CurrencyIsoCode'] === currencyCode});
+                    const elementIndex = entriesArray.findIndex(elem => { return elem['Product2']['enxCPQ__TECH_External_Id__c'] === productTechId && elem['CurrencyIsoCode'] === currencyCode });
                     if (elementIndex !== -1) {
                         pricebook.stdPricebookEntries[productTechId].splice(elementIndex, 1);
                         pricebook.stdPricebookEntries[productTechId] = [...pricebook.stdPricebookEntries[productTechId], pbe];
@@ -539,7 +551,7 @@ export class ProductExport {
         });
     }
 
-    private wrapPricebookEntries(pricebookEntries:Array<any>) {
+    private wrapPricebookEntries(pricebookEntries: Array<any>) {
         pricebookEntries.forEach((pbe) => {
             const pricebook = this.pricebooks.find(e => e.record['enxCPQ__TECH_External_Id__c'] === pbe['Pricebook2']['enxCPQ__TECH_External_Id__c']);
             if (pricebook !== undefined) {
@@ -547,7 +559,7 @@ export class ProductExport {
                 let currencyCode = pbe['CurrencyIsoCode'];
                 if (pricebook.pricebookEntries.hasOwnProperty(productTechId)) {
                     const entriesArray = pricebook.pricebookEntries[productTechId];
-                    const elementIndex = entriesArray.findIndex(elem => {return elem['Product2']['enxCPQ__TECH_External_Id__c'] === productTechId && elem['CurrencyIsoCode'] === currencyCode});
+                    const elementIndex = entriesArray.findIndex(elem => { return elem['Product2']['enxCPQ__TECH_External_Id__c'] === productTechId && elem['CurrencyIsoCode'] === currencyCode });
                     if (elementIndex !== -1) {
                         pricebook.pricebookEntries[productTechId].splice(elementIndex, 1);
                         pricebook.pricebookEntries[productTechId] = [...pricebook.pricebookEntries[productTechId], pbe];
@@ -577,7 +589,7 @@ export class ProductExport {
             const pricebookJSONs = values;
 
             pricebookJSONs.forEach((pbook) => {
-                const pbookObj:Pricebook = new Pricebook(null);
+                const pbookObj: Pricebook = new Pricebook(null);
                 pbookObj.fillFromJSON(pbook);
 
                 this.pricebooks.push(pbookObj);
