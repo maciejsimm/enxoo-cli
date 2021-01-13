@@ -185,11 +185,23 @@ export class ProductExport {
         this.charges.forEach(charge => { pricebookEntryProductIds = [... pricebookEntryProductIds, ...charge.getAllProductIds()] });
 
         // @TO-DO bulk query should be made here
-        const standardPricebookEntries = await productSelector.getStandardPricebookEntries(this.connection, pricebookEntryProductIds);
-        this.wrapStandardPricebookEntries(standardPricebookEntries);
+        let allStandardEntries = [];
+        let iterator = Math.ceil(pricebookEntryProductIds.length / 5000) * 5000;
+        for (let i = 0; i < iterator; i = i + 5000) {
+            const temp = pricebookEntryProductIds.slice(i, i + 4999);
+            const standardPricebookEntries = await productSelector.getStandardPricebookEntries(this.connection, temp);
+            allStandardEntries.push(...standardPricebookEntries);
+        }
+        this.wrapStandardPricebookEntries(allStandardEntries);
 
-        const allPricebookEntries = await productSelector.getPricebookEntries(this.connection, pricebookEntryProductIds, pricebooksIds);
-        this.wrapPricebookEntries(allPricebookEntries);
+        let allNonStandardPricebookEntries = [];
+        iterator = Math.ceil(pricebookEntryProductIds.length / 5000) * 5000;
+        for (let i = 0; i < iterator; i = i + 5000) {
+            const temp = pricebookEntryProductIds.slice(i, i + 4999);
+            const nonStandardPricebookEntries = await productSelector.getPricebookEntries(this.connection, temp, pricebooksIds);
+            allNonStandardPricebookEntries.push(...nonStandardPricebookEntries);
+        }
+        this.wrapPricebookEntries(allNonStandardPricebookEntries);
         // -- pricebooks end
 
 
@@ -463,7 +475,7 @@ export class ProductExport {
 
     private wrapGlobalAttributeValues(globalAttributeValues:Array<any>) {
         globalAttributeValues.forEach((ava) => {
-            const attribute = this.attributes.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c']);
+            const attribute = this.attributes.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c']);
             if (attribute !== undefined) {
                 attribute.attributeValues.push(ava);
             }
@@ -479,7 +491,7 @@ export class ProductExport {
 
     private wrapChargeElements(elements:Array<any>) {
         elements.forEach((elem) => {
-            const charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c']);
+            const charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c']);
             if (charge !== undefined) {
                 charge.chargeElements.push(elem);
             }

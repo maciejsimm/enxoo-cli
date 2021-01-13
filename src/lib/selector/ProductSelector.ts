@@ -371,7 +371,7 @@ export class ProductSelector {
                         WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "') \
                           AND enxCPQ__Exclusive_for_Product__c = null \
                      ORDER BY enxCPQ__Order__c";
-        const attributeValues = await Query.executeQuery(connection, query, queryLabel);
+        const attributeValues = await Query.executeQuery(connection, query, queryLabel, attributeIds.length);
         return attributeValues;
     }
 

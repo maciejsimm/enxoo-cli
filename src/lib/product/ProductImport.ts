@@ -73,7 +73,7 @@ export class ProductImport {
 
         
         // -- categories import begin
-        if (this.categoryIds.length > 0) {
+        if (this.categoryIds.length > 0 && this.categories.length > 0) {
             const allCategories =  this.categories.map((c) => {return c.record});
             const allCategoriesWithouthRelationships = Util.sanitizeDeepForUpsert(allCategories);
 
@@ -381,19 +381,18 @@ export class ProductImport {
         });
 
         const allCategoryFileNames = await this.fileManager.readAllFileNames('categories');
-
-        const categoryFileNames = allCategoryFileNames.filter((elem) => {
-            const fileNameId = elem.substring(elem.indexOf('_CAT')+1, elem.indexOf('.json'));
-            return this.categoryIds.includes(fileNameId);
-        });
-
-        let categoryJSONArray = [];
-        categoryFileNames.forEach((fileName) => {
+        if (allCategoryFileNames && allCategoryFileNames.length > 0) {
+            const categoryFileNames = allCategoryFileNames.filter((elem) => {
+                const fileNameId = elem.substring(elem.indexOf('_CAT')+1, elem.indexOf('.json'));
+                return this.categoryIds.includes(fileNameId);
+            });
+            let categoryJSONArray = [];
+            categoryFileNames.forEach((fileName) => {
             const categoryInputReader = this.fileManager.readFile('categories', fileName);
             categoryJSONArray.push(categoryInputReader);
-        });
 
-        return Promise.all(categoryJSONArray).then((values) => {
+            return Promise.all(categoryJSONArray)
+                .then((values) => {
             const categoryJSONs = values;
 
             categoryJSONs.forEach((cat) => {
@@ -402,7 +401,12 @@ export class ProductImport {
 
                 this.categories.push(catObj);
             });
-        });
+            })
+                .catch(function(error){
+                console.log('%%%%%' + error);
+            });
+            });
+        }
     }
 
     private async setParentCategoryImportScope() {
@@ -433,15 +437,21 @@ export class ProductImport {
                 categoryJSONArray.push(categoryInputReader);
             });
     
-            await Promise.all(categoryJSONArray).then((values) => {
+            await Promise.all(categoryJSONArray)
+            .then((values) => {
                 const categoryJSONs = values;
     
-                categoryJSONs.forEach((cat) => {
-                    const catObj:Category = new Category(null);
-                    catObj.fillFromJSON(cat);
-    
-                    this.categories.push(catObj);
-                });
+                if(categoryJSONs.length > 0){
+                    categoryJSONs.forEach((cat) => {
+                        const catObj:Category = new Category(null);
+                        catObj.fillFromJSON(cat);
+        
+                        this.categories.push(catObj);
+                    });
+                }
+            })
+            .catch(function(error){
+                console.log('%%%%%' + error);
             });
         }
     }
