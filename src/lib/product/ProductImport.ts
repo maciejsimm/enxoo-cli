@@ -1,4 +1,5 @@
 import { ProductSelector } from './../selector/ProductSelector';
+import { Resource } from './Resource';
 import { Product } from './Product';
 import { Attribute } from './Attribute';
 import { AttributeSet } from './AttributeSet';
@@ -15,6 +16,7 @@ import { Util } from './../Util';
 export class ProductImport {
 
     private productIds:Array<String>;
+    private resourceIds:Array<String>;
     private attributeIds:Array<String>;
     private categoryIds:Array<String>;
     private attributeSetIds:Array<String>;
@@ -23,6 +25,7 @@ export class ProductImport {
     private chargeIds:Array<String>;
 
     private products:Array<Product>;
+    private resources:Array<Resource>;
     private attributes:Array<Attribute>;
     private attributeSets:Array<AttributeSet>;
     private provisioningPlans:Array<ProvisioningPlan>;
@@ -47,6 +50,7 @@ export class ProductImport {
                         currencyNames: Set<String>) {
 
         await this.setProductImportScope(productNames);
+        await this.setResourceImportScope();
         await this.setAttributeSetImportScope();
         await this.setCategoryImportScope();
         await this.setAttributeImportScope();
@@ -89,6 +93,13 @@ export class ProductImport {
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributes), 'enxCPQ__Attribute__c');
         }
         // -- attributes import end
+
+        // -- resources import begin
+        if (this.resources.length > 0) {
+            const allResources = this.resources.map((a) => {return a.record});
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allResources), 'Product2');
+        }
+        // -- resources import end
 
 
         // -- products import begin
@@ -336,6 +347,42 @@ export class ProductImport {
             }
         })
     }
+
+    private async setResourceImportScope() {
+        this.resourceIds = [];
+        this.resources = [];
+
+        this.products.forEach(product => {
+            this.resourceIds = [...this.resourceIds, ...new Set(product.getProductResourceIds())];
+        });
+
+        if (this.resourceIds.length > 0) {
+            const allResourceFileNames = await this.fileManager.readAllFileNames('resources');
+
+            const resourceFileNames = allResourceFileNames.filter((elem) => {
+                const fileNameId = elem.substring(elem.indexOf('_PRD')+1, elem.indexOf('.json'));
+                return this.resourceIds.includes(fileNameId);
+            });
+
+            let resourceJSONArray = [];
+            resourceFileNames.forEach((fileName) => {
+                const attributeInputReader = this.fileManager.readFile('resources', fileName);
+                resourceJSONArray.push(attributeInputReader);
+            });
+
+            return Promise.all(resourceJSONArray).then((values) => {
+                const resourceJSONs = values;
+
+                resourceJSONs.forEach((atr) => {
+                    const atrObj:Resource = new Resource(null);
+                    atrObj.fillFromJSON(atr);
+    
+                    this.resources.push(atrObj);
+                });
+            });
+        }
+    }
+
 
     private async setAttributeSetImportScope() {
         this.attributeSetIds = [];

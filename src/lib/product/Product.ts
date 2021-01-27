@@ -13,6 +13,7 @@ export class Product extends Serializable {
     public bundleElements:Array<any>;
     public bundleElementOptions:Array<any>;
     public provisioningPlans:Array<any>;
+    public resources:Array<any>;
     
     constructor(product:any) {
         super();
@@ -28,6 +29,7 @@ export class Product extends Serializable {
         this.bundleElements = [];
         this.bundleElementOptions = [];
         this.provisioningPlans = [];
+        this.resources = [];
     }
 
     public getProductId() {
@@ -41,6 +43,12 @@ export class Product extends Serializable {
     public getAttributeIds() {
         return this.productAttributes.map((attr) => {
             return attr['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'];
+        });
+    }
+
+    public getProductResourceIds(){
+        return this.resources.map((res) => {
+            return res['enxCPQ__Resource__r']['enxCPQ__TECH_External_Id__c'];
         });
     }
 
@@ -92,6 +100,6 @@ export class Product extends Serializable {
     }
 
     public getProducts() {
-        return [this.record, ...this.options, ...this.charges];
+        return [this.record, ...this.options, ...this.charges, ...this.resources];
     }
 }

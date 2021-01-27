@@ -74,6 +74,7 @@ export class FileManager {
 
     public createDirectoriesForExport() {
         let directories = ['products', 
+                           'resources',
                            'categories', 
                            'attributes', 
                            'attributeSets', 

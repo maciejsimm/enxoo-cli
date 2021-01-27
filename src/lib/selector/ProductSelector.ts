@@ -47,7 +47,7 @@ export class ProductSelector {
                                      WHERE enxCPQ__Primary_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                                        AND enxCPQ__Secondary_Product__c != null";
 
-        const relatedProducts = await Query.executeQuery(connection, queryRelationships, 'related products');
+        const relatedProducts = await Query.executeQuery(connection, queryRelationships, 'Related Products');
 
         const relatedProductNames = relatedProducts.map((p) => {
             return { name: p['enxCPQ__Secondary_Product__r']['Name'], id: p['enxCPQ__Secondary_Product__r']['enxCPQ__TECH_External_Id__c'] };
@@ -59,7 +59,7 @@ export class ProductSelector {
                                       FROM enxCPQ__BundleElement__c \
                                      WHERE enxCPQ__Bundle__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
 
-        const bundleElements = await Query.executeQuery(connection, queryBundleElements, 'bundle elements');
+        const bundleElements = await Query.executeQuery(connection, queryBundleElements, 'Bundle Elements');
 
         let bundleElementNames = [];
 
@@ -82,7 +82,7 @@ export class ProductSelector {
     }
 
     public async getProducts(connection: Connection, productIds: Array<String>) {
-        const queryLabel = 'product';
+        const queryLabel = 'Product';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.Product2), ...queryInject];
         const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
@@ -97,7 +97,7 @@ export class ProductSelector {
     }
 
     public async getProductIds(connection: Connection, productIds: Array<String>) {
-        const queryLabel = 'product Ids';
+        const queryLabel = 'Product Ids';
         const query = "SELECT Id, enxCPQ__TECH_External_Id__c \
                          FROM Product2 \
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
@@ -106,7 +106,7 @@ export class ProductSelector {
     }
 
     public async getProductOptions(connection: Connection, productIds: Array<String>) {
-        const queryLabel = 'productOption';
+        const queryLabel = 'Product Option';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.Product2), ...queryInject];
         const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
@@ -119,6 +119,50 @@ export class ProductSelector {
                      ORDER BY enxCPQ__TECH_External_Id__c";
         const products = await Query.executeQuery(connection, query, queryLabel);
         return products;
+    }
+
+    public async getResourceJunctionObjects(connection: Connection, productIds: Array<String>) {
+        const productResourcequery = "SELECT Name, enxCPQ__Resource__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, enxCPQ__Product__c, enxCPQ__TECH_External_Id__c, enxCPQ__Resource__c \
+                                        FROM enxCPQ__ProductResource__c\
+                                       WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+
+        const productResources = await Query.executeQuery(connection, productResourcequery, 'productResource');
+         
+        return productResources;
+
+    }
+
+    public async getProductResources(connection: Connection, productIds: Array<String>, productResource: Array<any>) {
+
+        const queryLabel = 'productResources';
+
+        let resourceRecordsSFIDs = new Set();
+
+        productResource.forEach((element) => {
+            resourceRecordsSFIDs.add(element.enxCPQ__Resource__c);
+            if(element['enxCPQ__Resource__c']) {
+                delete element['enxCPQ__Resource__c'];
+            }
+            if(element['enxCPQ__Product__c']) {
+                delete element['enxCPQ__Product__c'];
+            }
+        });
+
+        const resRecSFIDs = Array.from(resourceRecordsSFIDs.values());
+
+        const queryInject = this.additionalFields[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.Resource), ...queryInject];
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
+            return !this.fieldsToIgnore[queryLabel].includes(e);
+        }) : queryFields;
+
+        const queryProductResources = "SELECT " + queryFieldsReduced.join(',') + " \
+                                         FROM Product2 \
+                                        WHERE Id IN ('" + resRecSFIDs.join('\',\'') + "')";
+
+        let resources = await Query.executeQuery(connection, queryProductResources, 'Resources');
+
+        return resources;
     }
 
     public async getCharges(connection: Connection, productIds: Array<String>) {
@@ -203,7 +247,7 @@ export class ProductSelector {
                          FROM enxCPQ__AttributeValue__c \
                         WHERE enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                      ORDER BY enxCPQ__Order__c";
-        const attributeValues = await Query.executeQuery(connection, query, queryLabel, productIds.length);
+        const attributeValues = await Query.executeQuery(connection, query, 'Local ' + queryLabel, productIds.length);
         return attributeValues;
     }
 
@@ -371,7 +415,7 @@ export class ProductSelector {
                         WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "') \
                           AND enxCPQ__Exclusive_for_Product__c = null \
                      ORDER BY enxCPQ__Order__c";
-        const attributeValues = await Query.executeQuery(connection, query, queryLabel);
+        const attributeValues = await Query.executeQuery(connection, query, 'Global ' + queryLabel, attributeIds.length);
         return attributeValues;
     }
 
