@@ -301,7 +301,7 @@ export class ProductExport {
         additionalProducts.forEach((p) => {
             if (!this.productIds.includes(p.id)) {
                 this.productIds.push(p.id);
-                productNames.push(p.name);
+                productNames.push(`\n` + p.name);
             }
         })
 
@@ -475,7 +475,11 @@ export class ProductExport {
 
     private wrapGlobalAttributeValues(globalAttributeValues:Array<any>) {
         globalAttributeValues.forEach((ava) => {
-            const attribute = this.attributes.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c']);
+            const attribute = this.attributes.find(e => {
+                ava['enxCPQ__Attribute__r'] ? 
+                e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] : 
+                e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c'];
+            });
             if (attribute !== undefined) {
                 attribute.attributeValues.push(ava);
             }
@@ -491,8 +495,12 @@ export class ProductExport {
 
     private wrapChargeElements(elements:Array<any>) {
         elements.forEach((elem) => {
-            const charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c']);
-            if (charge !== undefined) {
+            const charge = this.charges.find(e => {
+                elem['enxCPQ__Charge_Parent__r'] ?
+                e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] :
+                e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c'];
+            });
+                if (charge !== undefined) {
                 charge.chargeElements.push(elem);
             }
         });
