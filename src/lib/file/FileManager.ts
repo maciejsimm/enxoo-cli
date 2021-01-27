@@ -17,12 +17,21 @@ export class FileManager {
             let allFilePromiseArray = new Array<any>();
             fs.readdir(path, async(err, fileNames) => {
                 if (err) {
-                    throw err;
+                    if(err.message.includes('no such file or directory')){
+                        fs.mkdirSync(path, { recursive: true });
+                        await Promise.all(allFilePromiseArray).then((allFileNames) => {
+                            resolve(allFileNames);
+                        })
+                    } else {
+                        throw err;
+                    }
                 }
-                allFilePromiseArray = fileNames.filter(fileName => fileName.includes('.json'));
-                await Promise.all(allFilePromiseArray).then((allFileNames) => {
-                    resolve(allFileNames);
-                })
+                if (fileNames){
+                    allFilePromiseArray = fileNames.filter(fileName => fileName.includes('.json'));
+                    await Promise.all(allFilePromiseArray).then((allFileNames) => {
+                        resolve(allFileNames);
+                    })
+                }
             })
         })
     }
