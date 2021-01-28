@@ -23,6 +23,7 @@ export class ProductExport {
     private chargeIds:Array<String>;
 
     private products:Array<Product>;
+    private attributeLocalValues:Array<any>;
     private attributes:Array<Attribute>;
     private attributeSets:Array<AttributeSet>;
     private provisioningPlans:Array<ProvisioningPlan>;
@@ -343,6 +344,7 @@ export class ProductExport {
     }
 
     private wrapAttributeValues(productAttributeValues:Array<any>) {
+        this.attributeLocalValues = productAttributeValues;
         productAttributeValues.forEach((ava) => {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
@@ -453,8 +455,13 @@ export class ProductExport {
     private wrapAttributes(attributes:Array<any>) {
         this.attributes = new Array<Attribute>();
         attributes.forEach((a) => {
-            this.attributes.push(new Attribute(a));
-        })
+            let attributeTyped = new Attribute(a);
+            const attributesFiltered = this.attributeLocalValues.filter(e=>e['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] === a['enxCPQ__TECH_External_Id__c'])
+            if (attributesFiltered !== undefined && attributesFiltered.length > 0) {
+                attributeTyped.attributeValues.push(...attributesFiltered);
+            }
+            this.attributes.push(attributeTyped);
+        });
     }
 
     private wrapAttributeSets(attributeSets:Array<any>) {
@@ -475,11 +482,7 @@ export class ProductExport {
 
     private wrapGlobalAttributeValues(globalAttributeValues:Array<any>) {
         globalAttributeValues.forEach((ava) => {
-            const attribute = this.attributes.find(e => {
-                ava['enxCPQ__Attribute__r'] ? 
-                e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] : 
-                e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c'];
-            });
+            const attribute = this.attributes.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c']);
             if (attribute !== undefined) {
                 attribute.attributeValues.push(ava);
             }
@@ -495,12 +498,8 @@ export class ProductExport {
 
     private wrapChargeElements(elements:Array<any>) {
         elements.forEach((elem) => {
-            const charge = this.charges.find(e => {
-                elem['enxCPQ__Charge_Parent__r'] ?
-                e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] :
-                e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c'];
-            });
-                if (charge !== undefined) {
+            const charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c']);
+            if (charge !== undefined) {
                 charge.chargeElements.push(elem);
             }
         });
