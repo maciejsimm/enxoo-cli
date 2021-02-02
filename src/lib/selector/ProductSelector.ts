@@ -122,7 +122,7 @@ export class ProductSelector {
     }
 
     public async getResourceJunctionObjects(connection: Connection, productIds: Array<String>) {
-        const productResourcequery = "SELECT Name, enxCPQ__Resource__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, enxCPQ__Product__c, enxCPQ__TECH_External_Id__c, enxCPQ__Resource__c \
+        const productResourcequery = "SELECT enxCPQ__Resource__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, enxCPQ__Product__c, enxCPQ__TECH_External_Id__c, enxCPQ__Resource__c \
                                         FROM enxCPQ__ProductResource__c\
                                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
 

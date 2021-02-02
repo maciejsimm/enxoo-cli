@@ -95,12 +95,27 @@ export class ProductImport {
         // -- attributes import end
 
         // -- resources import begin
+        const recordTypeId = recordTypes.filter(e => e.Object === 'Product2').find(e => e.DeveloperName === 'Resource').id;
+        this.resources.forEach(res => {
+            res.record.RecordTypeId = recordTypeId;
+        })
         if (this.resources.length > 0) {
             const allResources = this.resources.map((a) => {return a.record});
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allResources), 'Product2');
+            const debug = this.resources;
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allResources), 'Product2', 'Resource Objects');
         }
         // -- resources import end
 
+        // -- Resource Products import begin
+        let allProductResources = [];
+        const debug3 = this.resources;
+        this.products.forEach((product) => {
+            if(product.resources.length > 0) allProductResources.push(...product.resources);
+        });    
+        // @TO-DO handle array > 200 items
+        if (allProductResources.length > 0)
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductResources), 'enxCPQ__ProductResource__c', 'Product Resource Objects');
+        // -- Resource Products import end
 
         // -- products import begin
         if (this.productIds.length > 0) {
@@ -110,6 +125,7 @@ export class ProductImport {
             const allProductsWithoutRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
 
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithoutRelationships), 'Product2', 'Products with no relationship');
+            const prodsWithResources = allProductsRTfix.filter(e=>e.enxCPQ__TECH_External_Id__c.includes('PRDTRIALBITSTREAMACCESS'));
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2', 'Products with relationship');
         }
         // -- products import end
@@ -360,7 +376,7 @@ export class ProductImport {
             const allResourceFileNames = await this.fileManager.readAllFileNames('resources');
 
             const resourceFileNames = allResourceFileNames.filter((elem) => {
-                const fileNameId = elem.substring(elem.indexOf('_PRD')+1, elem.indexOf('.json'));
+                const fileNameId = elem.substring(elem.indexOf('_PRD') + 1, elem.indexOf('.json'));
                 return this.resourceIds.includes(fileNameId);
             });
 

@@ -80,12 +80,12 @@ export class Schema {
     ]
 
     public static ProductResource:Array<string> = [
-       'enxB2B__Product__c',
-       'enxB2B__Product_Attribute__c',
-       'enxB2B__Product_Attribute_Value__c',
-       'enxB2B__Resource__c',
-       'enxB2B__Resource_Attribute__c',
-       'enxB2B__Resource_Attribute_Value__c'
+        'enxB2B__Product__c',
+        'enxB2B__Product_Attribute__c',
+        'enxB2B__Product_Attribute_Value__c',
+        'enxB2B__Resource__c',
+        'enxB2B__Resource_Attribute__c',
+        'enxB2B__Resource_Attribute_Value__c'
     ]
 
     public static Resource:Array<string> = [

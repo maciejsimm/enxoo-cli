@@ -2,10 +2,14 @@ import { Serializable } from "./Serializable";
 export class Resource extends Serializable {
 
     public record:any;
+    public RecordTypeId:any;
+    public productResources:Array<any>;
     
     constructor(resource:any) {
         super();
         this.record = resource;
+        this.productResources = [];
+        this.RecordTypeId = '';
     }
 
     public getFileName() {
