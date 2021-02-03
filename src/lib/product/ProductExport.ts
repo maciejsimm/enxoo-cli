@@ -26,6 +26,7 @@ export class ProductExport {
 
     private products:Array<Product>;
     private resources:Array<Resource>;
+    private attributeLocalValues:Array<any>;
     private attributes:Array<Attribute>;
     private attributeSets:Array<AttributeSet>;
     private provisioningPlans:Array<ProvisioningPlan>;
@@ -198,11 +199,23 @@ export class ProductExport {
         this.charges.forEach(charge => { pricebookEntryProductIds = [... pricebookEntryProductIds, ...charge.getAllProductIds()] });
 
         // @TO-DO bulk query should be made here
-        const standardPricebookEntries = await productSelector.getStandardPricebookEntries(this.connection, pricebookEntryProductIds);
-        this.wrapStandardPricebookEntries(standardPricebookEntries);
+        let allStandardEntries = [];
+        let iterator = Math.ceil(pricebookEntryProductIds.length / 5000) * 5000;
+        for (let i = 0; i < iterator; i = i + 5000) {
+            const temp = pricebookEntryProductIds.slice(i, i + 4999);
+            const standardPricebookEntries = await productSelector.getStandardPricebookEntries(this.connection, temp);
+            allStandardEntries.push(...standardPricebookEntries);
+        }
+        this.wrapStandardPricebookEntries(allStandardEntries);
 
-        const allPricebookEntries = await productSelector.getPricebookEntries(this.connection, pricebookEntryProductIds, pricebooksIds);
-        this.wrapPricebookEntries(allPricebookEntries);
+        let allNonStandardPricebookEntries = [];
+        iterator = Math.ceil(pricebookEntryProductIds.length / 5000) * 5000;
+        for (let i = 0; i < iterator; i = i + 5000) {
+            const temp = pricebookEntryProductIds.slice(i, i + 4999);
+            const nonStandardPricebookEntries = await productSelector.getPricebookEntries(this.connection, temp, pricebooksIds);
+            allNonStandardPricebookEntries.push(...nonStandardPricebookEntries);
+        }
+        this.wrapPricebookEntries(allNonStandardPricebookEntries);
         // -- pricebooks end
 
 
@@ -364,6 +377,7 @@ export class ProductExport {
     }
 
     private wrapAttributeValues(productAttributeValues:Array<any>) {
+        this.attributeLocalValues = productAttributeValues;
         productAttributeValues.forEach((ava) => {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
@@ -474,8 +488,13 @@ export class ProductExport {
     private wrapAttributes(attributes:Array<any>) {
         this.attributes = new Array<Attribute>();
         attributes.forEach((a) => {
-            this.attributes.push(new Attribute(a));
-        })
+            let attributeTyped = new Attribute(a);
+            const attributesFiltered = this.attributeLocalValues.filter(e=>e['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] === a['enxCPQ__TECH_External_Id__c'])
+            if (attributesFiltered !== undefined && attributesFiltered.length > 0) {
+                attributeTyped.attributeValues.push(...attributesFiltered);
+            }
+            this.attributes.push(attributeTyped);
+        });
     }
 
     private wrapAttributeSets(attributeSets:Array<any>) {
@@ -512,7 +531,7 @@ export class ProductExport {
 
     private wrapChargeElements(elements:Array<any>) {
         elements.forEach((elem) => {
-            const charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c']);
+            const charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c']);
             if (charge !== undefined) {
                 charge.chargeElements.push(elem);
             }
