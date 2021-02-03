@@ -1,6 +1,7 @@
 import { ProductSelector } from './../selector/ProductSelector';
 import { Product } from './Product';
 import { Attribute } from './Attribute';
+import { Resource } from './Resource';
 import { AttributeSet } from './AttributeSet';
 import { ProvisioningPlan } from './ProvisioningPlan';
 import { ProvisioningTask } from './ProvisioningTask';
@@ -21,8 +22,10 @@ export class ProductExport {
     private provisioningPlanIds:Array<String>;
     private provisioningTaskIds:Array<String>;
     private chargeIds:Array<String>;
+    private productsWithResourcesIds:Array<String>;
 
     private products:Array<Product>;
+    private resources:Array<Resource>;
     private attributeLocalValues:Array<any>;
     private attributes:Array<Attribute>;
     private attributeSets:Array<AttributeSet>;
@@ -68,7 +71,16 @@ export class ProductExport {
         const productOptions = await productSelector.getProductOptions(this.connection, this.productIds);
         this.wrapProductOptions(productOptions);
 
+        const productResourceJunctions =  await productSelector.getResourceJunctionObjects(this.connection, this.productIds);
+        const resourceProducts = await productSelector.getProductResources(this.connection, this.productIds, productResourceJunctions);
+        const debug = productResourceJunctions.filter(e => e['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM');
+        let debug2 = this.products.filter(e => e['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM' || e.record['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM');
+        let debug3 = this.products.filter(e => e['enxCPQ__TECH_External_Id__c'] === 'PRD00SDWAN' || e.record['enxCPQ__TECH_External_Id__c'] === 'PRD00SDWAN');
+        this.wrapProductResources(resourceProducts, productResourceJunctions);
+        debug2 = this.products.filter(e => e['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM' || e.record['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM');
+
         const charges = await productSelector.getCharges(this.connection, this.productIds);
+        debug2 = this.products;
         this.wrapProductCharges(charges);
 
         const productAttributes = await productSelector.getProductAttributes(this.connection, this.productIds);
@@ -90,6 +102,7 @@ export class ProductExport {
         this.wrapAttributeValueDependencies(attributeValueDependencies);
 
         const bundleElements = await productSelector.getBundleElements(this.connection, this.productIds);
+        debug2 = this.products;
         this.wrapBundleElements(bundleElements);
 
         let bundleElementIds = [];
@@ -232,6 +245,11 @@ export class ProductExport {
             this.fileManager.writeFile('products', product.getFileName(), product);
         });
 
+        await this.resources.forEach((resource) => {
+            this.fileManager.deleteOldFilesWithDifferentName('resources', resource.getFileName(), resource.getRecordId());
+            this.fileManager.writeFile('resources', resource.getFileName(), resource);
+        });
+
         await this.attributes.forEach((attribute) => {
             this.fileManager.deleteOldFilesWithDifferentName('attributes', attribute.getFileName(), attribute.getRecordId());
             this.fileManager.writeFile('attributes', attribute.getFileName(), attribute);
@@ -322,6 +340,21 @@ export class ProductExport {
             if (product !== undefined) {
                 product.options.push(option);
             }
+        });
+    }
+
+    private wrapProductResources(productResources:Array<any>, productResourceJunctions:Array<any>) {
+        this.resources = new Array<Resource>();
+
+        productResourceJunctions.forEach((resource) => {
+            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === resource['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
+            if (product !== undefined) {
+                product.resources.push(resource);
+            }
+        });
+
+        productResources.forEach((resource) => {
+            this.resources.push(new Resource(resource));
         });
     }
 

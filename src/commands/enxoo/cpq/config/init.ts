@@ -76,7 +76,8 @@ export default class Org extends SfdxCommand {
       prvPlanAssignment: [],
       prvTask: [],
       prvPlan: [],
-      prvTaskAssignment: []
+      prvTaskAssignment: [],
+      productResources: []
     },
     fieldsToIgnore: {
       product: [],
@@ -98,7 +99,8 @@ export default class Org extends SfdxCommand {
       prvPlanAssignment: [],
       prvTask: [],
       prvPlan: [],
-      prvTaskAssignment: []
+      prvTaskAssignment: [],
+      productResources: []
     }
   };
 
