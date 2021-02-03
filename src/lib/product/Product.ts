@@ -100,6 +100,6 @@ export class Product extends Serializable {
     }
 
     public getProducts() {
-        return [this.record, ...this.options, ...this.charges, ...this.resources];
+        return [this.record, ...this.options, ...this.charges];
     }
 }

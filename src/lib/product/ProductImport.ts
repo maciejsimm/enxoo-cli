@@ -102,7 +102,7 @@ export class ProductImport {
         if (this.resources.length > 0) {
             const allResources = this.resources.map((a) => {return a.record});
             const debug = this.resources;
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allResources), 'Product2', 'Resource Objects');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allResources), 'Product2', 'Resource Product2 Objects');
         }
         // -- resources import end
 
@@ -125,7 +125,7 @@ export class ProductImport {
             const allProductsWithoutRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
 
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithoutRelationships), 'Product2', 'Products with no relationship');
-            const prodsWithResources = allProductsRTfix.filter(e=>e.enxCPQ__TECH_External_Id__c.includes('PRDTRIALBITSTREAMACCESS'));
+            const debug = allProductsRTfix.filter(e=>e.Name === undefined);
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2', 'Products with relationship');
         }
         // -- products import end

@@ -86,12 +86,6 @@ export class Util {
                 if (prop === 'IsStandard') {
                     delete obj[prop];
                 }                
-                if (prop === 'enxCPQ__Resource__r') {
-                    delete obj[prop];
-                }
-                if (prop === 'enxCPQ__Product__r') {
-                    delete obj[prop];
-                }
 
                 if (prop.indexOf('__r') !== -1 && obj[prop] == null) delete obj[prop];
 

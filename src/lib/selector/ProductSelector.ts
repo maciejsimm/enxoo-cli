@@ -93,6 +93,7 @@ export class ProductSelector {
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                           AND (RecordType.Name = 'Product' OR RecordType.Name = 'Bundle')";
         const products = await Query.executeQuery(connection, query, queryLabel);
+        const debugPrd = products.filter(e=>e['enxCPQ__TECH_External_Id__c'] === 'PRD00SDWAN');
         return products;
     }
 
@@ -122,7 +123,8 @@ export class ProductSelector {
     }
 
     public async getResourceJunctionObjects(connection: Connection, productIds: Array<String>) {
-        const productResourcequery = "SELECT enxCPQ__Resource__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, enxCPQ__Product__c, enxCPQ__TECH_External_Id__c, enxCPQ__Resource__c \
+        //todo: add the productResource to schema class
+        const productResourcequery = "SELECT enxCPQ__Resource__r.enxCPQ__TECH_External_Id__c, enxCPQ__Criteria__c, enxCPQ__Applicable_Solution_Variants__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, enxCPQ__Product__c, enxCPQ__TECH_External_Id__c, enxCPQ__Resource__c \
                                         FROM enxCPQ__ProductResource__c\
                                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
 

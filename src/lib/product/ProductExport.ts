@@ -72,9 +72,14 @@ export class ProductExport {
 
         const productResourceJunctions =  await productSelector.getResourceJunctionObjects(this.connection, this.productIds);
         const resourceProducts = await productSelector.getProductResources(this.connection, this.productIds, productResourceJunctions);
+        const debug = productResourceJunctions.filter(e => e['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM');
+        let debug2 = this.products.filter(e => e['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM' || e.record['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM');
+        let debug3 = this.products.filter(e => e['enxCPQ__TECH_External_Id__c'] === 'PRD00SDWAN' || e.record['enxCPQ__TECH_External_Id__c'] === 'PRD00SDWAN');
         this.wrapProductResources(resourceProducts, productResourceJunctions);
+        debug2 = this.products.filter(e => e['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM' || e.record['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM');
 
         const charges = await productSelector.getCharges(this.connection, this.productIds);
+        debug2 = this.products;
         this.wrapProductCharges(charges);
 
         const productAttributes = await productSelector.getProductAttributes(this.connection, this.productIds);
@@ -96,6 +101,7 @@ export class ProductExport {
         this.wrapAttributeValueDependencies(attributeValueDependencies);
 
         const bundleElements = await productSelector.getBundleElements(this.connection, this.productIds);
+        debug2 = this.products;
         this.wrapBundleElements(bundleElements);
 
         let bundleElementIds = [];
@@ -490,11 +496,7 @@ export class ProductExport {
 
     private wrapGlobalAttributeValues(globalAttributeValues:Array<any>) {
         globalAttributeValues.forEach((ava) => {
-            const attribute = this.attributes.find(e => {
-                ava['enxCPQ__Attribute__r'] ? 
-                e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] : 
-                e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c'];
-            });
+            const attribute = this.attributes.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c']);
             if (attribute !== undefined) {
                 attribute.attributeValues.push(ava);
             }

@@ -12,6 +12,8 @@ export class Schema {
         'DisplayUrl',
         'QuantityUnitOfMeasure',
         'StockKeepingUnit',
+        'enxCPQ__Network_Availability_Strategy__c',
+        'enxCPQ__Product_Feasibility_Strategy__c',
         'enxCPQ__Billing_Frequency__c',
         'enxCPQ__Bundle_Configuration_Method__c',
         'enxCPQ__Charge_Criteria__c',
@@ -91,6 +93,8 @@ export class Schema {
     public static Resource:Array<string> = [
         'Id', 
         'Name', 
+        'enxCPQ__Resource_Category_Level_1__c',
+        'enxCPQ__Access_Medium__c',
         'enxCPQ__Resource_Category_Level_2__c', 
         'enxCPQ__Resource_Price_CAPEX__c',
         'enxCPQ__Resource_Price_MRE__c', 
