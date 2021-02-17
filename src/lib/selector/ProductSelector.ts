@@ -1,3 +1,4 @@
+import { option } from "@oclif/command/lib/flags";
 import { Connection } from "@salesforce/core";
 import { Query } from "./Query";
 import { Schema } from "./Schema"
@@ -7,6 +8,7 @@ export class ProductSelector {
     private additionalFields: any;
     private fieldsToIgnore: any;
     private exportB2BObjects: boolean;
+    private resourceRecordSFIDs: Array<any>;
 
     constructor(querySettings: any, exportB2BObjects: boolean) {
         this.additionalFields = querySettings ? querySettings.customFields ? querySettings.customFields : [] : [];
@@ -134,10 +136,7 @@ export class ProductSelector {
 
     }
 
-    public async getProductResources(connection: Connection, productIds: Array<String>, productResource: Array<any>) {
-
-        const queryLabel = 'productResources';
-
+    public getResourceSFIDs(productResource: Array<any>) {
         let resourceRecordsSFIDs = new Set();
 
         productResource.forEach((element) => {
@@ -150,7 +149,14 @@ export class ProductSelector {
             }
         });
 
-        const resRecSFIDs = Array.from(resourceRecordsSFIDs.values());
+        return Array.from(resourceRecordsSFIDs.values());
+    }
+
+    public async getProductResources(connection: Connection, productResource: Array<any>) {
+
+        const queryLabel = 'productResources';
+
+        this.resourceRecordSFIDs = this.getResourceSFIDs(productResource);
 
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.Resource), ...queryInject];
@@ -160,9 +166,35 @@ export class ProductSelector {
 
         const queryProductResources = "SELECT " + queryFieldsReduced.join(',') + " \
                                          FROM Product2 \
-                                        WHERE Id IN ('" + resRecSFIDs.join('\',\'') + "')";
+                                        WHERE Id IN ('" + this.resourceRecordSFIDs.join('\',\'') + "')";
 
         let resources = await Query.executeQuery(connection, queryProductResources, 'Resources');
+
+        // const queryUnrelatedResources = "SELECT " + queryFieldsReduced.join(',') + " \
+        //                                 FROM Product2 \
+        //                                 WHERE enxCPQ__Record_Type_Name__c = 'Resource' \
+        //                                 AND Id NOT IN ('" + resRecSFIDs.join('\',\'') + "')";
+
+        // let unrelatedResources = await Query.executeQuery(connection, queryUnrelatedResources, 'Unrelated Resources');
+
+        return resources;
+    }
+
+    public async getUnrelatedResources(connection: Connection, productResource: Array<any>) {
+        const queryLabel = 'unrelated Resources';
+
+        const queryInject = this.additionalFields[queryLabel] || [];
+        const queryFields = [...this.filterFields(Schema.Resource), ...queryInject];
+        const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
+            return !this.fieldsToIgnore[queryLabel].includes(e);
+        }) : queryFields;
+
+        const queryUnrelatedResources = "SELECT " + queryFieldsReduced.join(',') + " \
+                                        FROM Product2 \
+                                        WHERE enxCPQ__Record_Type_Name__c = 'Resource' \
+                                        AND Id NOT IN ('" + this.resourceRecordSFIDs.join('\',\'') + "')";
+
+        let resources = await Query.executeQuery(connection, queryUnrelatedResources, queryLabel);
 
         return resources;
     }

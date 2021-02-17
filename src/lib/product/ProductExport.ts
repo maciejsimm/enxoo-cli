@@ -16,13 +16,13 @@ import * as fs from 'fs';
 export class ProductExport {
 
     private productIds:Array<String>;
+    private optionIds:Array<String>;
     private attributeIds:Array<String>;
     private categoryIds:Array<String>;
     private attributeSetIds:Array<String>;
     private provisioningPlanIds:Array<String>;
     private provisioningTaskIds:Array<String>;
     private chargeIds:Array<String>;
-    private productsWithResourcesIds:Array<String>;
 
     private products:Array<Product>;
     private resources:Array<Resource>;
@@ -35,6 +35,7 @@ export class ProductExport {
     private categories:Array<Category>;
     private pricebooks:Array<Pricebook>;
 
+    private productNames:Array<string>;
     private targetDirectory:string;
     private exportB2BObjects:boolean;
     private connection:Connection;
@@ -52,6 +53,7 @@ export class ProductExport {
                         currencyNames: Set<String>) {
         
         const querySettings = await this.loadQueryConfiguration(this.targetDirectory);
+        this.productNames = productNames;
         const productSelector = new ProductSelector(querySettings, this.exportB2BObjects);
         
         const allProducts = await this.getAllProducts(productSelector);
@@ -71,16 +73,13 @@ export class ProductExport {
         const productOptions = await productSelector.getProductOptions(this.connection, this.productIds);
         this.wrapProductOptions(productOptions);
 
-        const productResourceJunctions =  await productSelector.getResourceJunctionObjects(this.connection, this.productIds);
-        const resourceProducts = await productSelector.getProductResources(this.connection, this.productIds, productResourceJunctions);
-        const debug = productResourceJunctions.filter(e => e['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM');
-        let debug2 = this.products.filter(e => e['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM' || e.record['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM');
-        let debug3 = this.products.filter(e => e['enxCPQ__TECH_External_Id__c'] === 'PRD00SDWAN' || e.record['enxCPQ__TECH_External_Id__c'] === 'PRD00SDWAN');
+        const allResourceProductIds = [...this.productIds, ...this.optionIds];
+        const productResourceJunctions =  await productSelector.getResourceJunctionObjects(this.connection, allResourceProductIds);
+        const resourceProducts = await productSelector.getProductResources(this.connection, productResourceJunctions);
+        const unrelatedResources = await productSelector.getUnrelatedResources(this.connection, productResourceJunctions);
         this.wrapProductResources(resourceProducts, productResourceJunctions);
-        debug2 = this.products.filter(e => e['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM' || e.record['enxCPQ__TECH_External_Id__c'] === 'PRE00SSBDW7GJWM');
-
+        this.wrapUnrelatedResources(unrelatedResources);
         const charges = await productSelector.getCharges(this.connection, this.productIds);
-        debug2 = this.products;
         this.wrapProductCharges(charges);
 
         const productAttributes = await productSelector.getProductAttributes(this.connection, this.productIds);
@@ -102,7 +101,6 @@ export class ProductExport {
         this.wrapAttributeValueDependencies(attributeValueDependencies);
 
         const bundleElements = await productSelector.getBundleElements(this.connection, this.productIds);
-        debug2 = this.products;
         this.wrapBundleElements(bundleElements);
 
         let bundleElementIds = [];
@@ -335,10 +333,12 @@ export class ProductExport {
     }
 
     private wrapProductOptions(productOptions:Array<any>) {
+        this.optionIds = [];
         productOptions.forEach((option) => {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === option['enxCPQ__Parent_Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
                 product.options.push(option);
+                this.optionIds.push(option.enxCPQ__TECH_External_Id__c);
             }
         });
     }
@@ -354,6 +354,16 @@ export class ProductExport {
         });
 
         productResources.forEach((resource) => {
+            this.resources.push(new Resource(resource));
+        });
+    }
+
+    private wrapUnrelatedResources(unrelatedResources:Array<any>) {
+        //In case of specific product, only the related resources are queried. In case of '*ALL', the unrelated resources are also queried.
+        if (this.productNames[0] !== '*ALL') { 
+            return;
+        }
+        unrelatedResources.forEach((resource) => {
             this.resources.push(new Resource(resource));
         });
     }
@@ -382,6 +392,9 @@ export class ProductExport {
             const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
             if (product !== undefined) {
                 product.attributeValues.push(ava);
+                product.attributeValues.sort((a, b) => (a.Name > b.Name) ? 1 : -1);
+                const debug = product.attributeValues;
+                const deb = [];
             }
         });
     }
@@ -495,6 +508,7 @@ export class ProductExport {
             }
             this.attributes.push(attributeTyped);
         });
+        this.attributes.sort((a, b) => (a.record.Name > b.record.Name) ? 1 : -1);
     }
 
     private wrapAttributeSets(attributeSets:Array<any>) {
@@ -523,6 +537,7 @@ export class ProductExport {
             }
             if (attribute !== undefined) {
                 attribute.attributeValues.push(ava);
+                attribute.attributeValues.sort((a, b) => (a.Name > b.Name) ? 1 : -1);
             }
         });
     }

@@ -19,6 +19,7 @@ export class Upsert {
 
         if (records.length < 200) {
             // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
+            const debug = [];
             sobjectsResult = await connection.sobject(sObjectName).upsert(records, externalIdString, {}, (err, rets:RecordResult[]) => {
                 if (err) { 
                     Util.log(err); 
@@ -87,6 +88,7 @@ export class Upsert {
             connection.bulk.load(sObjectName, "upsert", {"extIdField": externalIdString}, dataToImport, async (err:any, rets:RecordResult[]) => {
                 if (err) { 
                     Util.log(err); 
+                    rets = [];
                 }
 
                 await rets.forEach(async (ret) => {
