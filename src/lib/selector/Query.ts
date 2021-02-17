@@ -56,9 +56,6 @@ export class Query {
                 record[prop] = null;
             }
         }
-        if (record.enxCPQ__TECH_External_Id__c === undefined) {
-            const debug = record;
-        }
         return record;
     }
 

@@ -393,8 +393,6 @@ export class ProductExport {
             if (product !== undefined) {
                 product.attributeValues.push(ava);
                 product.attributeValues.sort((a, b) => (a.Name > b.Name) ? 1 : -1);
-                const debug = product.attributeValues;
-                const deb = [];
             }
         });
     }
