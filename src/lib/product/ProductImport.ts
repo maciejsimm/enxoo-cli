@@ -125,7 +125,6 @@ export class ProductImport {
             const allProductsWithoutRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
 
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithoutRelationships), 'Product2', 'Products with no relationship');
-            const debug = allProductsRTfix.filter(e=>e.Name === undefined);
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2', 'Products with relationship');
         }
         // -- products import end
@@ -444,31 +443,33 @@ export class ProductImport {
         });
 
         const allCategoryFileNames = await this.fileManager.readAllFileNames('categories');
-        if (allCategoryFileNames && allCategoryFileNames.length > 0) {
+
+        if(allCategoryFileNames && allCategoryFileNames.length > 0) {
             const categoryFileNames = allCategoryFileNames.filter((elem) => {
                 const fileNameId = elem.substring(elem.indexOf('_CAT')+1, elem.indexOf('.json'));
                 return this.categoryIds.includes(fileNameId);
             });
+    
             let categoryJSONArray = [];
             categoryFileNames.forEach((fileName) => {
-            const categoryInputReader = this.fileManager.readFile('categories', fileName);
-            categoryJSONArray.push(categoryInputReader);
-
+                const categoryInputReader = this.fileManager.readFile('categories', fileName);
+                categoryJSONArray.push(categoryInputReader);
+            });
+    
             return Promise.all(categoryJSONArray)
                 .then((values) => {
-            const categoryJSONs = values;
-
-            categoryJSONs.forEach((cat) => {
-                const catObj:Category = new Category(null);
-                catObj.fillFromJSON(cat);
-
-                this.categories.push(catObj);
-            });
-            })
-                .catch(function(error){
-                console.log('%%%%%' + error);
-            });
-            });
+                    const categoryJSONs = values;
+    
+                    categoryJSONs.forEach((cat) => {
+                        const catObj:Category = new Category(null);
+                        catObj.fillFromJSON(cat);
+    
+                        this.categories.push(catObj);
+                    });
+                })
+                .catch((function(error){
+                    Util.log(error);
+                }));
         }
     }
 
