@@ -95,7 +95,6 @@ export class ProductSelector {
                         WHERE enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                           AND (RecordType.Name = 'Product' OR RecordType.Name = 'Bundle')";
         const products = await Query.executeQuery(connection, query, queryLabel);
-        const debugPrd = products.filter(e=>e['enxCPQ__TECH_External_Id__c'] === 'PRD00SDWAN');
         return products;
     }
 

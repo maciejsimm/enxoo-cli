@@ -48,7 +48,9 @@ export class Product extends Serializable {
 
     public getProductResourceIds(){
         return this.resources.map((res) => {
-            return res['enxCPQ__Resource__r']['enxCPQ__TECH_External_Id__c'];
+            if (res['enxCPQ__Resource__r']) {
+                return res['enxCPQ__Resource__r']['enxCPQ__TECH_External_Id__c'];
+            }
         });
     }
 

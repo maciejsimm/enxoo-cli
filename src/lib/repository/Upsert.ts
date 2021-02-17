@@ -19,7 +19,6 @@ export class Upsert {
 
         if (records.length < 200) {
             // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
-            const debug = [];
             sobjectsResult = await connection.sobject(sObjectName).upsert(records, externalIdString, {}, (err, rets:RecordResult[]) => {
                 if (err) { 
                     Util.log(err); 
@@ -53,11 +52,11 @@ export class Upsert {
                 //05.08.2020 SZILN - ECPQ-4615 - after any failure on upsert or insert, the importer now 
                 //tries to repeat the operation.
                 // @TO-DO: after getting the failed record IDs, only the failed records should be queried again
-                sobjectsResult = await connection.sobject(sObjectName).upsert(records, externalIdString, {}, (err, rets: RecordResult[]) => {
-                    if (err) {
-                        Util.log(err);
-                    }
-                });
+                // sobjectsResult = await connection.sobject(sObjectName).upsert(records, externalIdString, {}, (err, rets: RecordResult[]) => {
+                //     if (err) {
+                //         Util.log(err);
+                //     }
+                // });
             //}
 
             await Logs.displayStatusMessage(sobjectsResult, messageString);

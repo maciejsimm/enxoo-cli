@@ -101,14 +101,12 @@ export class ProductImport {
         })
         if (this.resources.length > 0) {
             const allResources = this.resources.map((a) => {return a.record});
-            const debug = this.resources;
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allResources), 'Product2', 'Resource Product2 Objects');
         }
         // -- resources import end
 
         // -- Resource Products import begin
         let allProductResources = [];
-        const debug3 = this.resources;
         this.products.forEach((product) => {
             if(product.resources.length > 0) allProductResources.push(...product.resources);
         });    
@@ -135,8 +133,14 @@ export class ProductImport {
         this.attributes.forEach((attr) => { allAttributeValues = [...allAttributeValues, ...attr.attributeValues] });
         this.products.forEach((prod) => { allAttributeValues = [...allAttributeValues, ...prod.attributeValues] });
         // @TO-DO handle array > 200 items
-        if (allAttributeValues.length > 0)
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeValues), 'enxCPQ__AttributeValue__c');
+        if (allAttributeValues.length > 0) {
+            let currentlySentAttributes = [];
+            for (let i = 0; i < allAttributeValues.length; i += 150) {
+                currentlySentAttributes = [];
+                currentlySentAttributes = allAttributeValues.slice(i, i+149);
+                await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(currentlySentAttributes), 'enxCPQ__AttributeValue__c');
+            }
+        }
         // -- attributes values import end
 
 
