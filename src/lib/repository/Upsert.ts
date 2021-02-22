@@ -8,7 +8,7 @@ export class Upsert {
     public static reimportProduct2AfterCharges:Boolean;
 
 
-    public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string, sObjectLabel?: string) {
+    public static async upsertData(connection: Connection, records: Array<any>, sObjectName: string, sObjectLabel?: string, avoidBulk?: boolean) {
         const displayedObjectName = sObjectLabel || sObjectName;
         const messageString = '-- Upserting ' + displayedObjectName;
         Logs.showSpinner(messageString);
@@ -17,7 +17,7 @@ export class Upsert {
         const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
 
-        if (records.length < 200) {
+        if (records.length < 200 || avoidBulk) {
             // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
             sobjectsResult = await connection.sobject(sObjectName).upsert(records, externalIdString, {}, (err, rets:RecordResult[]) => {
                 if (err) { 

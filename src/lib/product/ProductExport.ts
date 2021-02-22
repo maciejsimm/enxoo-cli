@@ -528,13 +528,23 @@ export class ProductExport {
     private wrapGlobalAttributeValues(globalAttributeValues:Array<any>) {
         globalAttributeValues.forEach((ava) => {
             let attribute;
+            let isFileSystemBroken;
             try {
                 attribute = this.attributes.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c']);
+                isFileSystemBroken = false;
             } catch (error) {
                 attribute = this.attributes.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c']);
+                isFileSystemBroken = true;
             }
             if (attribute !== undefined) {
-                attribute.attributeValues.push(ava);
+                if (isFileSystemBroken) {
+                    ava.enxCPQ__Attribute__r = {};
+                    ava.enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c = ava['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c'];
+                    delete ava['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c'];
+                    attribute.attributeValues.push(ava);
+                } else {
+                    attribute.attributeValues.push(ava);
+                }
                 attribute.attributeValues.sort((a, b) => (a.Name > b.Name) ? 1 : -1);
             }
         });
@@ -550,13 +560,23 @@ export class ProductExport {
     private wrapChargeElements(elements:Array<any>) {
         elements.forEach((elem) => {
             let charge;
+            let isFileSystemBroken;
             try {
                 charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c']);
+                isFileSystemBroken = false;
             } catch (error) {
                 charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c']);
+                isFileSystemBroken = true;
             }
             if (charge !== undefined) {
-                charge.chargeElements.push(elem);
+                if (isFileSystemBroken) {
+                    elem.enxCPQ__Attribute__r = {};
+                    elem.enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c = elem['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c'];
+                    delete elem['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c'];
+                    charge.attributeValues.push(elem);
+                } else {
+                    charge.chargeElements.push(elem);
+                }
             }
         });
     }

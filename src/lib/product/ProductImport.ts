@@ -134,12 +134,29 @@ export class ProductImport {
         this.products.forEach((prod) => { allAttributeValues = [...allAttributeValues, ...prod.attributeValues] });
         // @TO-DO handle array > 200 items
         if (allAttributeValues.length > 0) {
-            let currentlySentAttributes = [];
-            for (let i = 0; i < allAttributeValues.length; i += 150) {
-                currentlySentAttributes = [];
-                currentlySentAttributes = allAttributeValues.slice(i, i+149);
-                await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(currentlySentAttributes), 'enxCPQ__AttributeValue__c');
-            }
+            const debug = allAttributeValues.filter(e=>e.enxCPQ__TECH_External_Id__c.toLowerCase() === 'atvatrtrialcoprdtrialet180');
+            const debug2 = allAttributeValues.filter(e=>e.enxCPQ__TECH_Definition_Id__c.toLowerCase() === 'atvatrtrialcoprdtrialet180');
+            const debug3 = allAttributeValues;
+            let attrUniqueValues = [];
+            allAttributeValues.forEach(attVal => {
+                const dupl = attrUniqueValues.filter(elem => {
+                    const jede = attVal.enxCPQ__TECH_External_Id__c;
+                    const dwa = elem.enxCPQ__TECH_External_Id__c;
+                    return elem.enxCPQ__TECH_External_Id__c === attVal.enxCPQ__TECH_External_Id__c;
+                });
+                if (dupl.length < 1) {
+                    attrUniqueValues.push(attVal);
+                } else {
+                    const debugg = [];
+                };
+                const debuugggg = attrUniqueValues;
+                const debugggg = dupl;
+                const debugggg1 = dupl;
+            });
+            const debug911 = attrUniqueValues.filter(e=>e.enxCPQ__TECH_External_Id__c.toLowerCase() === 'atvatrtrialcoprdtrialet180');
+            const debug922 = attrUniqueValues.filter(e=>e.enxCPQ__TECH_Definition_Id__c.toLowerCase() === 'atvatrtrialcoprdtrialet180');
+            const debug933 = attrUniqueValues;
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(attrUniqueValues), 'enxCPQ__AttributeValue__c', 'Attribute Values');
         }
         // -- attributes values import end
 
