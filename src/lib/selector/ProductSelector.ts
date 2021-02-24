@@ -169,13 +169,6 @@ export class ProductSelector {
 
         let resources = await Query.executeQuery(connection, queryProductResources, 'Resources');
 
-        // const queryUnrelatedResources = "SELECT " + queryFieldsReduced.join(',') + " \
-        //                                 FROM Product2 \
-        //                                 WHERE enxCPQ__Record_Type_Name__c = 'Resource' \
-        //                                 AND Id NOT IN ('" + resRecSFIDs.join('\',\'') + "')";
-
-        // let unrelatedResources = await Query.executeQuery(connection, queryUnrelatedResources, 'Unrelated Resources');
-
         return resources;
     }
 

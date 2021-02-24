@@ -104,6 +104,18 @@ export class ProductImport {
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allResources), 'Product2', 'Resource Product2 Objects');
         }
         // -- resources import end
+        
+        // -- products import begin
+        if (this.productIds.length > 0) {
+            let allProducts = [];
+            this.products.forEach(product => { allProducts = [...allProducts, ... product.getProducts()] });
+            const allProductsRTfix = Util.fixRecordTypes(allProducts, recordTypes, 'Product2');
+            const allProductsWithoutRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
+            
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithoutRelationships), 'Product2', 'Products with no relationship');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2', 'Products with relationship');
+        }
+        // -- products import end
 
         // -- Resource Products import begin
         let allProductResources = [];
@@ -114,19 +126,6 @@ export class ProductImport {
         if (allProductResources.length > 0)
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductResources), 'enxCPQ__ProductResource__c', 'Product Resource Objects');
         // -- Resource Products import end
-
-        // -- products import begin
-        if (this.productIds.length > 0) {
-            let allProducts = [];
-            this.products.forEach(product => { allProducts = [...allProducts, ... product.getProducts()] });
-            const allProductsRTfix = Util.fixRecordTypes(allProducts, recordTypes, 'Product2');
-            const allProductsWithoutRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
-
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithoutRelationships), 'Product2', 'Products with no relationship');
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2', 'Products with relationship');
-        }
-        // -- products import end
-
 
         // -- attributes values import begin
         let allAttributeValues = [];
