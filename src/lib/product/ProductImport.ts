@@ -133,9 +133,6 @@ export class ProductImport {
         this.products.forEach((prod) => { allAttributeValues = [...allAttributeValues, ...prod.attributeValues] });
         // @TO-DO handle array > 200 items
         if (allAttributeValues.length > 0) {
-            const debug = allAttributeValues.filter(e=>e.enxCPQ__TECH_External_Id__c.toLowerCase() === 'atvatrtrialcoprdtrialet180');
-            const debug2 = allAttributeValues.filter(e=>e.enxCPQ__TECH_Definition_Id__c.toLowerCase() === 'atvatrtrialcoprdtrialet180');
-            const debug3 = allAttributeValues;
             let attrUniqueValues = [];
             allAttributeValues.forEach(attVal => {
                 const dupl = attrUniqueValues.filter(elem => {
@@ -145,16 +142,8 @@ export class ProductImport {
                 });
                 if (dupl.length < 1) {
                     attrUniqueValues.push(attVal);
-                } else {
-                    const debugg = [];
-                };
-                const debuugggg = attrUniqueValues;
-                const debugggg = dupl;
-                const debugggg1 = dupl;
+                }
             });
-            const debug911 = attrUniqueValues.filter(e=>e.enxCPQ__TECH_External_Id__c.toLowerCase() === 'atvatrtrialcoprdtrialet180');
-            const debug922 = attrUniqueValues.filter(e=>e.enxCPQ__TECH_Definition_Id__c.toLowerCase() === 'atvatrtrialcoprdtrialet180');
-            const debug933 = attrUniqueValues;
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(attrUniqueValues), 'enxCPQ__AttributeValue__c', 'Attribute Values');
         }
         // -- attributes values import end
@@ -373,6 +362,13 @@ export class ProductImport {
                 const prodObj:Product = new Product(null);
                 prodObj.fillFromJSON(prd);
 
+                if(prodObj.options !== undefined && prodObj.options.length > 0){
+                    prodObj.options.forEach(option => {
+                        if(option.optionResources !== undefined && option.optionResources.length > 0){
+                            prodObj.resources.push(...option.optionResources);
+                        }
+                    });
+                }
                 this.products.push(prodObj);
                 this.productIds.push(prodObj.getProductId());
             });
@@ -535,7 +531,7 @@ export class ProductImport {
                 }
             })
             .catch(function(error){
-                console.log('%%%%%' + error);
+                console.log('Unexpected error in setParentCategoryImportScope():: ' + error);
             });
         }
     }

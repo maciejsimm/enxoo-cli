@@ -75,7 +75,7 @@ export class ProductExport {
 
         const allResourceProductIds = [...this.productIds, ...this.optionIds];
         const productResourceJunctions =  await productSelector.getResourceJunctionObjects(this.connection, allResourceProductIds);
-        const resourceProducts = await productSelector.getProductResources(this.connection, productResourceJunctions);
+        const resourceProducts = await productSelector.getProductsWithResourceRecordType(this.connection, productResourceJunctions);
         const unrelatedResources = await productSelector.getUnrelatedResources(this.connection, productResourceJunctions);
         this.wrapProductResources(resourceProducts, productResourceJunctions);
         this.wrapUnrelatedResources(unrelatedResources);
@@ -351,6 +351,16 @@ export class ProductExport {
             if (product !== undefined) {
                 product.resources.push(resource);
             }
+            const productsWithOption = this.products.filter(prd => prd.options !== undefined);
+            productsWithOption.forEach(prdWithOption => {
+                prdWithOption.options.forEach(option => {
+                    if (option['enxCPQ__TECH_External_Id__c'] === resource['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']){
+                        option.optionResources = [];
+                        option.optionResources.push(resource);
+                    }
+                })
+            });
+
         });
 
         productResources.forEach((resource) => {

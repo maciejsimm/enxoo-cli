@@ -127,7 +127,8 @@ export class ProductSelector {
         //todo: add the productResource to schema class
         const productResourcequery = "SELECT enxCPQ__Resource__r.enxCPQ__TECH_External_Id__c, enxCPQ__Criteria__c, enxCPQ__Applicable_Solution_Variants__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, enxCPQ__Product__c, enxCPQ__TECH_External_Id__c, enxCPQ__Resource__c \
                                         FROM enxCPQ__ProductResource__c\
-                                       WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
+                                       WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')\
+                                          OR enxCPQ__Product__r.RecordType.name = 'option'";
 
         const productResources = await Query.executeQuery(connection, productResourcequery, 'productResource');
          
@@ -151,7 +152,7 @@ export class ProductSelector {
         return Array.from(resourceRecordsSFIDs.values());
     }
 
-    public async getProductResources(connection: Connection, productResource: Array<any>) {
+    public async getProductsWithResourceRecordType(connection: Connection, productResource: Array<any>) {
 
         const queryLabel = 'productResources';
 

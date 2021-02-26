@@ -83,6 +83,9 @@ export class Util {
                 if (prop === 'Id') {
                     delete obj[prop];
                 }
+                if (prop === 'optionResources') {
+                    delete obj[prop];
+                }
                 if (prop === 'IsStandard') {
                     delete obj[prop];
                 }                
