@@ -1,4 +1,4 @@
-import { ProductSelector } from './../selector/ProductSelector';
+import { ProductSelector } from '../selector/ProductSelector';
 import { Resource } from './Resource';
 import { Product } from './Product';
 import { Attribute } from './Attribute';
@@ -8,10 +8,10 @@ import { ProvisioningTask } from './ProvisioningTask';
 import { Charge } from './Charge';
 import { Pricebook } from './Pricebook';
 import { Category } from './Category';
-import { FileManager } from './../file/FileManager';
+import { FileManager } from '../file/FileManager';
 import { Connection } from "@salesforce/core";
-import { Upsert } from './../repository/Upsert';
-import { Util } from './../Util';
+import { Upsert } from '../repository/Upsert';
+import { Util } from '../Util';
 
 export class ProductImport {
 
@@ -67,7 +67,7 @@ export class ProductImport {
         const recordTypes = await productSelector.getRecordTypes(this.connection);
 
         await Upsert.disableTriggers(this.connection);
-        
+
         // -- attribute sets import begin
         if (this.attributeSetIds.length > 0) {
             const allAttributeSets = this.attributeSets.map((a) => {return a.record});
@@ -75,7 +75,7 @@ export class ProductImport {
         }
         // -- attribute sets import end
 
-        
+
         // -- categories import begin
         if (this.categoryIds.length > 0 && this.categories.length > 0) {
             const allCategories =  this.categories.map((c) => {return c.record});
@@ -95,23 +95,23 @@ export class ProductImport {
         // -- attributes import end
 
         // -- resources import begin
+      if (this.resources.length) {
         const recordTypeId = recordTypes.filter(e => e.Object === 'Product2').find(e => e.DeveloperName === 'Resource').id;
         this.resources.forEach(res => {
             res.record.RecordTypeId = recordTypeId;
         })
-        if (this.resources.length > 0) {
             const allResources = this.resources.map((a) => {return a.record});
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allResources), 'Product2', 'Resource Product2 Objects');
         }
         // -- resources import end
-        
+
         // -- products import begin
         if (this.productIds.length > 0) {
             let allProducts = [];
             this.products.forEach(product => { allProducts = [...allProducts, ... product.getProducts()] });
             const allProductsRTfix = Util.fixRecordTypes(allProducts, recordTypes, 'Product2');
             const allProductsWithoutRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
-            
+
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithoutRelationships), 'Product2', 'Products with no relationship');
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsRTfix), 'Product2', 'Products with relationship');
         }
@@ -121,7 +121,7 @@ export class ProductImport {
         let allProductResources = [];
         this.products.forEach((product) => {
             if(product.resources.length > 0) allProductResources.push(...product.resources);
-        });    
+        });
         // @TO-DO handle array > 200 items
         if (allProductResources.length > 0)
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductResources), 'enxCPQ__ProductResource__c', 'Product Resource Objects');
@@ -211,7 +211,7 @@ export class ProductImport {
         let standardPricebookEntries = [];
         let pricebookEntries = [];
 
-        this.pricebooks.forEach((pbook) => { 
+        this.pricebooks.forEach((pbook) => {
             standardPricebookEntries = [... standardPricebookEntries, ...pbook.getStandardPricebookEntriesToInsert(product2TargetIds, pricebook2TargetIds)];
             pricebookEntries = [... pricebookEntries, ...pbook.getPricebookEntriesToInsert(product2TargetIds, pricebook2TargetIds)];
         })
@@ -332,7 +332,7 @@ export class ProductImport {
     }
 
     private async setProductImportScope(productToImportNames: Array<string>) {
-        
+
         const allProductsLocal = await this.getAllProductsLocal();
 
         this.products = [];
@@ -340,7 +340,7 @@ export class ProductImport {
 
         let productFileNames;
 
-        if (productToImportNames[0] === '*ALL') { 
+        if (productToImportNames[0] === '*ALL') {
             productFileNames = allProductsLocal;
         } else {
             productFileNames = allProductsLocal.filter((elem) => {
@@ -348,7 +348,7 @@ export class ProductImport {
                                                                    productToImportNames.includes(elem.substring(0, elem.indexOf('_BDL')));
                                                        });
         }
-        
+
         let productJSONArray = [];
         productFileNames.forEach((fileName) => {
             const productInputReader = this.fileManager.readFile('products', fileName);
@@ -407,7 +407,7 @@ export class ProductImport {
                 resourceJSONs.forEach((atr) => {
                     const atrObj:Resource = new Resource(null);
                     atrObj.fillFromJSON(atr);
-    
+
                     this.resources.push(atrObj);
                 });
             });
@@ -443,7 +443,7 @@ export class ProductImport {
                 attributeSetJSONs.forEach((ast) => {
                     const astObj:AttributeSet = new AttributeSet(null);
                     astObj.fillFromJSON(ast);
-    
+
                     this.attributeSets.push(astObj);
                 });
             });
@@ -465,21 +465,21 @@ export class ProductImport {
                 const fileNameId = elem.substring(elem.indexOf('_CAT')+1, elem.indexOf('.json'));
                 return this.categoryIds.includes(fileNameId);
             });
-    
+
             let categoryJSONArray = [];
             categoryFileNames.forEach((fileName) => {
                 const categoryInputReader = this.fileManager.readFile('categories', fileName);
                 categoryJSONArray.push(categoryInputReader);
             });
-    
+
             return Promise.all(categoryJSONArray)
                 .then((values) => {
                     const categoryJSONs = values;
-    
+
                     categoryJSONs.forEach((cat) => {
                         const catObj:Category = new Category(null);
                         catObj.fillFromJSON(cat);
-    
+
                         this.categories.push(catObj);
                     });
                 })
@@ -510,22 +510,22 @@ export class ProductImport {
                 const fileNameId = elem.substring(elem.indexOf('_CAT')+1, elem.indexOf('.json'));
                 return parentCategoryIds.includes(fileNameId);
             });
-    
+
             let categoryJSONArray = [];
             categoryFileNames.forEach((fileName) => {
                 const categoryInputReader = this.fileManager.readFile('categories', fileName);
                 categoryJSONArray.push(categoryInputReader);
             });
-    
+
             await Promise.all(categoryJSONArray)
             .then((values) => {
                 const categoryJSONs = values;
-    
+
                 if(categoryJSONs.length > 0){
                     categoryJSONs.forEach((cat) => {
                         const catObj:Category = new Category(null);
                         catObj.fillFromJSON(cat);
-        
+
                         this.categories.push(catObj);
                     });
                 }
@@ -564,7 +564,7 @@ export class ProductImport {
                 attributeJSONs.forEach((atr) => {
                     const atrObj:Attribute = new Attribute(null);
                     atrObj.fillFromJSON(atr);
-    
+
                     this.attributes.push(atrObj);
                 });
             });
@@ -599,7 +599,7 @@ export class ProductImport {
                 chargeJSONs.forEach((chrg) => {
                     const chrgObj:Charge = new Charge(null);
                     chrgObj.fillFromJSON(chrg);
-    
+
                     this.charges.push(chrgObj);
                 });
             });
@@ -656,7 +656,7 @@ export class ProductImport {
                 provisioningPlanJSONs.forEach((ppl) => {
                     const pplObj:ProvisioningPlan = new ProvisioningPlan(null);
                     pplObj.fillFromJSON(ppl);
-    
+
                     this.provisioningPlans.push(pplObj);
                 });
             });
@@ -691,7 +691,7 @@ export class ProductImport {
                 provisioningTaskJSONs.forEach((ptsk) => {
                     const ptskObj:ProvisioningTask = new ProvisioningTask(null);
                     ptskObj.fillFromJSON(ptsk);
-    
+
                     this.provisioningTasks.push(ptskObj);
                 });
             });
@@ -705,14 +705,14 @@ export class ProductImport {
 
     private mapPricebookEntries(target:Array<any>, source:Array<any>) {
         let result = {
-                toInsert: [], 
-                toUpdate: [], 
+                toInsert: [],
+                toUpdate: [],
                 toDelete: []
             };
-        
+
         source.forEach((sourceElement) => {
-            const targetElementIndex = target.findIndex(e => { return e['Product2Id'] === sourceElement['Product2Id'] && 
-                                                                      e['CurrencyIsoCode'] === sourceElement['CurrencyIsoCode'] && 
+            const targetElementIndex = target.findIndex(e => { return e['Product2Id'] === sourceElement['Product2Id'] &&
+                                                                      e['CurrencyIsoCode'] === sourceElement['CurrencyIsoCode'] &&
                                                                       e['Pricebook2Id'] === sourceElement['Pricebook2Id']; });
 
             if (targetElementIndex !== -1) {

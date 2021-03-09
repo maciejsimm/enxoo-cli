@@ -51,11 +51,11 @@ export class ProductExport {
     public async export(productNames: Array<string>,
                         exportRelationships: Boolean,
                         currencyNames: Set<String>) {
-        
+
         const querySettings = await this.loadQueryConfiguration(this.targetDirectory);
         this.productNames = productNames;
         const productSelector = new ProductSelector(querySettings, this.exportB2BObjects);
-        
+
         const allProducts = await this.getAllProducts(productSelector);
         this.setProductExportScope(productNames, allProducts);
 
@@ -65,7 +65,7 @@ export class ProductExport {
         }
 
         this.fileManager.createDirectoriesForExport();
-        
+
         // -- products export begin
         const products = await productSelector.getProducts(this.connection, this.productIds);
         this.wrapProducts(products);
@@ -75,16 +75,18 @@ export class ProductExport {
 
         const allResourceProductIds = [...this.productIds, ...this.optionIds];
         const productResourceJunctions =  await productSelector.getResourceJunctionObjects(this.connection, allResourceProductIds);
-        const resourceProducts = await productSelector.getProductsWithResourceRecordType(this.connection, productResourceJunctions);
-        const unrelatedResources = await productSelector.getUnrelatedResources(this.connection, productResourceJunctions);
-        this.wrapProductResources(resourceProducts, productResourceJunctions);
-        this.wrapUnrelatedResources(unrelatedResources);
+        if(productResourceJunctions){
+          const resourceProducts = await productSelector.getProductsWithResourceRecordType(this.connection, productResourceJunctions);
+          const unrelatedResources = await productSelector.getUnrelatedResources(this.connection, productResourceJunctions);
+          this.wrapProductResources(resourceProducts, productResourceJunctions);
+          this.wrapUnrelatedResources(unrelatedResources);
+        }
         const charges = await productSelector.getCharges(this.connection, this.productIds);
         this.wrapProductCharges(charges);
 
         const productAttributes = await productSelector.getProductAttributes(this.connection, this.productIds);
         this.wrapProductAttributes(productAttributes);
-                            
+
         const localAttributeValues = await productSelector.getLocalAttributeValues(this.connection, this.productIds);
         this.wrapAttributeValues(localAttributeValues);
 
@@ -243,10 +245,12 @@ export class ProductExport {
             this.fileManager.writeFile('products', product.getFileName(), product);
         });
 
-        await this.resources.forEach((resource) => {
+        if(this.resources){
+          await this.resources.forEach((resource) => {
             this.fileManager.deleteOldFilesWithDifferentName('resources', resource.getFileName(), resource.getRecordId());
             this.fileManager.writeFile('resources', resource.getFileName(), resource);
-        });
+          });
+        }
 
         await this.attributes.forEach((attribute) => {
             this.fileManager.deleteOldFilesWithDifferentName('attributes', attribute.getFileName(), attribute.getRecordId());
@@ -291,10 +295,10 @@ export class ProductExport {
         const productList = await selector.getAllProducts(this.connection);
         const productNames = [...productList];
         return productNames;
-    }   
+    }
 
     private setProductExportScope(productToExportNames: Array<string>, allProducts: Array<any>) {
-        if (productToExportNames[0] === '*ALL') { 
+        if (productToExportNames[0] === '*ALL') {
             this.productIds = allProducts.map((p) => { return p.id; });
         } else {
             this.productIds = [];
@@ -370,7 +374,7 @@ export class ProductExport {
 
     private wrapUnrelatedResources(unrelatedResources:Array<any>) {
         //In case of specific product, only the related resources are queried. In case of '*ALL', the unrelated resources are also queried.
-        if (this.productNames[0] !== '*ALL') { 
+        if (this.productNames[0] !== '*ALL') {
             return;
         }
         unrelatedResources.forEach((resource) => {
