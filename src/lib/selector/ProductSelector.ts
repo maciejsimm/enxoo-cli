@@ -134,8 +134,12 @@ export class ProductSelector {
         const productResources = await Query.executeQuery(connection, productResourcequery, 'productResource');
         return productResources;
       } catch (e){
-        //if this falls it means that we retrieve from package version less than 9 and we have to skip querying productResources
-        console.log('-- Querying productResources omitted due to package version');
+        if(e.errorCode === 'INVALID_TYPE'){
+          // if this falls it because of invalid type error it means, that we retrieve from package version less than 9 and we have to skip querying productResources
+          console.log('-- Querying productResources omitted due to package version');
+        } else {
+          throw e;
+        }
       }
     }
 
