@@ -10,11 +10,11 @@ export class ProductSelector {
     private exportB2BObjects: boolean;
     private resourceRecordSFIDs: Array<any>;
 
-    constructor(querySettings: any, queryFields: any = null, exportB2BObjects: boolean = null) {
-        this.additionalFields = querySettings ? querySettings.customFields ? querySettings.customFields : [] : [];
-        this.fieldsToIgnore = querySettings ? querySettings.fieldsToIgnore ? querySettings.fieldsToIgnore : [] : [];
+    constructor(querySettings: any = [], queryFields: any = [], exportB2BObjects: boolean) {
+        this.additionalFields = querySettings.customFields ? querySettings.customFields : [];
+        this.fieldsToIgnore = querySettings.fieldsToIgnore ? querySettings.fieldsToIgnore : [];
+        this.queryFields = queryFields;
         this.exportB2BObjects = exportB2BObjects;
-        this.queryFields = queryFields? queryFields : [];
     }
 
     public async getRecordTypes(connection: Connection) {
