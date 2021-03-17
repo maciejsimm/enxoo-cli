@@ -1,4 +1,4 @@
-import { ProductSelector } from './../selector/ProductSelector';
+import { ProductSelector } from '../selector/ProductSelector';
 import { Product } from './Product';
 import { Attribute } from './Attribute';
 import { Resource } from './Resource';
@@ -8,9 +8,9 @@ import { ProvisioningTask } from './ProvisioningTask';
 import { Charge } from './Charge';
 import { Category } from './Category';
 import { Pricebook } from './Pricebook';
-import { FileManager } from './../file/FileManager';
+import { FileManager } from '../file/FileManager';
 import { Connection } from "@salesforce/core";
-import { Util } from './../Util';
+import { Util } from '../Util';
 import * as fs from 'fs';
 
 export class ProductExport {
@@ -53,8 +53,9 @@ export class ProductExport {
                         currencyNames: Set<String>) {
 
         const querySettings = await this.loadQueryConfiguration(this.targetDirectory);
+        const queryFields = await this.loadQueryFields(this.targetDirectory);
         this.productNames = productNames;
-        const productSelector = new ProductSelector(querySettings, this.exportB2BObjects);
+        const productSelector = new ProductSelector(querySettings, queryFields, this.exportB2BObjects);
 
         const allProducts = await this.getAllProducts(productSelector);
         this.setProductExportScope(productNames, allProducts);
@@ -77,7 +78,7 @@ export class ProductExport {
         const productResourceJunctions =  await productSelector.getResourceJunctionObjects(this.connection, allResourceProductIds);
         if(productResourceJunctions){
           const resourceProducts = await productSelector.getProductsWithResourceRecordType(this.connection, productResourceJunctions);
-          const unrelatedResources = await productSelector.getUnrelatedResources(this.connection, productResourceJunctions);
+          const unrelatedResources = await productSelector.getUnrelatedResources(this.connection);
           this.wrapProductResources(resourceProducts, productResourceJunctions);
           this.wrapUnrelatedResources(unrelatedResources);
         }
@@ -710,5 +711,22 @@ export class ProductExport {
             });
         });
     }
+
+  private async loadQueryFields(queryDir: string) {
+    return new Promise<String>((resolve: Function, reject: Function) => {
+      let content;
+      fs.readFile('./' + queryDir + '/qryFields.json', function read(err, data) {
+        if (err) {
+          if (err.code == 'ENOENT') {
+            resolve({});
+          }
+          reject(err);
+        } else {
+          content = data.toString('utf8');
+          resolve(JSON.parse(content));
+        }
+      });
+    });
+  }
 
 }
