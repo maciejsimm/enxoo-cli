@@ -55,7 +55,7 @@ export class ProductExport {
         const querySettings = await this.loadQueryConfiguration(this.targetDirectory);
         const queryFields = await this.loadQueryFields(this.targetDirectory);
         this.productNames = productNames;
-        const productSelector = new ProductSelector(querySettings, queryFields, this.exportB2BObjects);
+        const productSelector = new ProductSelector(this.exportB2BObjects, querySettings, queryFields);
 
         const allProducts = await this.getAllProducts(productSelector);
         this.setProductExportScope(productNames, allProducts);

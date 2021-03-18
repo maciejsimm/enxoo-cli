@@ -10,7 +10,7 @@ export class ProductSelector {
     private exportB2BObjects: boolean;
     private resourceRecordSFIDs: Array<any>;
 
-    constructor(querySettings: any = [], queryFields: any = [], exportB2BObjects: boolean) {
+    constructor(exportB2BObjects: boolean, querySettings: any = [], queryFields: any = []) {
         this.additionalFields = querySettings.customFields ? querySettings.customFields : [];
         this.fieldsToIgnore = querySettings.fieldsToIgnore ? querySettings.fieldsToIgnore : [];
         this.queryFields = queryFields;
