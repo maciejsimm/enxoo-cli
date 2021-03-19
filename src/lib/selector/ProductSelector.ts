@@ -420,7 +420,36 @@ export class ProductSelector {
                          FROM enxB2B__ProvisioningTask__c \
                         WHERE enxB2B__TECH_External_Id__c IN ('" + taskIds.join('\',\'') + "')";
         const tasks = await Query.executeQuery(connection, query, queryLabel);
+        await this.setOwnerFieldOnProvisioningTask(connection, tasks);
         return tasks;
+    }
+
+    private async setOwnerFieldOnProvisioningTask(connection: Connection, tasks: Array<any>){
+      const ownerIds = new Set();
+      // @ts-ignore
+      tasks.forEach(task => ownerIds.add(task.OwnerId));
+      const userQuery = "SELECT Id, Email FROM User WHERE Id IN ('" + Array.from(ownerIds).join('\',\'') + "')";
+      const queueQuery = "SELECT Id, Name FROM Group WHERE Type = 'Queue' AND Id IN ('" + Array.from(ownerIds).join('\',\'') + "')";
+      const users = await Query.executeQuery(connection, userQuery, 'provisioning task user owner');
+      const queues = await Query.executeQuery(connection, queueQuery, 'provisioning task queue owner');
+      let usersMap = new Map();
+      // @ts-ignore
+      users.forEach(u => usersMap.set(u.Id, u.Email))
+      let queuesMap = new Map();
+      // @ts-ignore
+      queues.forEach(q => queuesMap.set(q.Id, q.Name))
+      for(let task of tasks){
+        // @ts-ignore
+        let email = usersMap.get(task.OwnerId);
+        let name = queuesMap.get(task.OwnerId);
+        if(email){
+          // @ts-ignore
+          task.OwnerEmail = email;
+        } else if(name){
+          // @ts-ignore
+          task.OwnerQueue = name;
+        }
+      }
     }
 
     public async getAttributeDefinitions(connection: Connection, attributeIds: Array<String>) {

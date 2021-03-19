@@ -12,6 +12,7 @@ import { FileManager } from '../file/FileManager';
 import { Connection } from "@salesforce/core";
 import { Upsert } from '../repository/Upsert';
 import { Util } from '../Util';
+import {Query} from "../selector/Query";
 
 export class ProductImport {
 
@@ -61,6 +62,7 @@ export class ProductImport {
         if (this.exportB2BObjects) {
             await this.setProvisioningPlanImportScope();
             await this.setProvisioningTaskImportScope();
+            await this.setProvisioningTaskOwnership();
         }
 
         const productSelector = new ProductSelector(null, this.exportB2BObjects);
@@ -696,6 +698,61 @@ export class ProductImport {
                 });
             });
         }
+    }
+
+    private async setProvisioningTaskOwnership(){
+      let userIdEmails = new Map(); //key is email, value is list of IDs
+      let queueIdName = new Map(); //key is queue name, value is ID
+      let userEmails = new Set();
+      let queueNames = new Set();
+      this.provisioningTasks.forEach(task => {
+        if(task.record.OwnerEmail){
+          userEmails.add(task.record.OwnerEmail);
+        } else if(task.record.OwnerQueue){
+          queueNames.add(task.record.OwnerQueue);
+        }
+      });
+      const queryUser = "SELECT Id, Email FROM User WHERE Email IN ('" + Array.from(userEmails).join('\',\'') + "')";
+      const queryQueue = "SELECT Id, Name FROM Group WHERE Type = 'Queue' AND Name IN ('" + Array.from(queueNames).join('\',\'') + "')";
+      const users = await Query.executeQuery(this.connection, queryUser, 'provisioning task user owner');
+      const queues = await Query.executeQuery(this.connection, queryQueue, 'provisioning task queue owner');
+      users.forEach( (u) => {
+        // @ts-ignore-start
+        if(userIdEmails.get(u.Email)){
+          // @ts-ignore
+          let listOfIds = userIdEmails.get(u.Email);
+          // @ts-ignore
+          listOfIds.push(u.Id);
+          // @ts-ignore
+          userIdEmails.set(u.Email, listOfIds);
+        } else {
+          // @ts-ignore
+          userIdEmails.set(u.Email, [u.Id]);
+        }
+      });
+      queues.forEach( (q) => {
+        // @ts-ignore
+        queueIdName.set(q.Name, q.Id);
+      });
+      for(let task of this.provisioningTasks){
+        if(task.record.OwnerEmail){
+          if(userIdEmails.get(task.record.OwnerEmail) && userIdEmails.get(task.record.OwnerEmail).length === 1){
+            task.record.OwnerId = userIdEmails.get(task.record.OwnerEmail)[0];
+          } else{
+            // if there is more than one user with owner email system should set owner to system administrator what is default behaviour and ownerId is not needed
+            delete task.record.OwnerId;
+          }
+          delete task.record.OwnerEmail;
+        } else if(task.record.OwnerQueue){
+          if(queueIdName.get(task.record.OwnerQueue)){
+            task.record.OwnerId = queueIdName.get(task.record.OwnerQueue);
+          } else {
+            // if queue name doesnt exist on target org than system should set owner to system administrator
+            delete task.record.OwnerId;
+          }
+          delete task.record.OwnerQueue;
+        }
+      }
     }
 
     private async getAllProductsLocal() {

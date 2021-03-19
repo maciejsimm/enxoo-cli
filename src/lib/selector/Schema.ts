@@ -257,6 +257,7 @@ export class Schema {
 
     public static ProvisioningTask:Array<string> = [
         'Name',
+        'OwnerId',
         'CurrencyIsoCode',
         'enxB2B__Apex_handler_reference__c',
         'enxB2B__Automated_Task_Type__c',
