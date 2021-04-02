@@ -675,7 +675,7 @@ export class ProductSelector {
       let label = queryLabel + 'FieldNames';
       if(this.queryFields[label]){
         queryFields.forEach(field => {
-          if(!this.queryFields[label].includes(field)){
+          if(!this.queryFields[label].includes(field) && field != 'OwnerId'){
             incompatibleFields.push(field);
           }
         });
