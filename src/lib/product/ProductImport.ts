@@ -389,31 +389,24 @@ export class ProductImport {
             this.resourceIds = [...this.resourceIds, ...new Set(product.getProductResourceIds())];
         });
 
-        if (this.resourceIds.length > 0) {
-            const allResourceFileNames = await this.fileManager.readAllFileNames('resources');
+        const allResourceFileNames = await this.fileManager.readAllFileNames('resources');
 
-            const resourceFileNames = allResourceFileNames.filter((elem) => {
-                const fileNameId = elem.substring(elem.indexOf('_PRD') + 1, elem.indexOf('.json'));
-                return this.resourceIds.includes(fileNameId);
+        let resourceJSONArray = [];
+        allResourceFileNames.forEach((fileName) => {
+            const attributeInputReader = this.fileManager.readFile('resources', fileName);
+            resourceJSONArray.push(attributeInputReader);
+        });
+
+        return Promise.all(resourceJSONArray).then((values) => {
+            const resourceJSONs = values;
+
+            resourceJSONs.forEach((atr) => {
+                const atrObj:Resource = new Resource(null);
+                atrObj.fillFromJSON(atr);
+
+                this.resources.push(atrObj);
             });
-
-            let resourceJSONArray = [];
-            resourceFileNames.forEach((fileName) => {
-                const attributeInputReader = this.fileManager.readFile('resources', fileName);
-                resourceJSONArray.push(attributeInputReader);
-            });
-
-            return Promise.all(resourceJSONArray).then((values) => {
-                const resourceJSONs = values;
-
-                resourceJSONs.forEach((atr) => {
-                    const atrObj:Resource = new Resource(null);
-                    atrObj.fillFromJSON(atr);
-
-                    this.resources.push(atrObj);
-                });
-            });
-        }
+        });
     }
 
 
