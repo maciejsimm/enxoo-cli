@@ -12,16 +12,16 @@ export class Upsert {
         const displayedObjectName = sObjectLabel || sObjectName;
         const messageString = '-- Upserting ' + displayedObjectName;
         Logs.showSpinner(messageString);
-        //@TO-DO: Check the Pricebook Entries matcher - when querying before inserting. 
-        
+        //@TO-DO: Check the Pricebook Entries matcher - when querying before inserting.
+
         const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
 
         if (records.length < 200 || avoidBulk) {
             // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
             sobjectsResult = await connection.sobject(sObjectName).upsert(records, externalIdString, {}, (err, rets:RecordResult[]) => {
-                if (err) { 
-                    Util.log(err); 
+                if (err) {
+                    Util.log(err);
                 }
             });
 
@@ -32,9 +32,9 @@ export class Upsert {
         }
 
         const errors = Logs.getErrors(sobjectsResult);
-        
+
         await Logs.displayStatusMessage(sobjectsResult, messageString);
-        
+
         if (errors.length > 0) {
 
             if (sObjectName.includes("Product2")) {
@@ -49,7 +49,7 @@ export class Upsert {
             await Logs.showSpinner('-- Second attempt at upserting ' + sObjectName);
 
             //if (failedRecords.length > 0) {
-                //05.08.2020 SZILN - ECPQ-4615 - after any failure on upsert or insert, the importer now 
+                //05.08.2020 SZILN - ECPQ-4615 - after any failure on upsert or insert, the importer now
                 //tries to repeat the operation.
                 // @TO-DO: after getting the failed record IDs, only the failed records should be queried again
                 // sobjectsResult = await connection.sobject(sObjectName).upsert(records, externalIdString, {}, (err, rets: RecordResult[]) => {
@@ -81,12 +81,12 @@ export class Upsert {
         // };
 
         // await someFunc();
-        
+
         return new Promise<String[]>((resolve: Function, reject: Function) => {
             connection.bulk.pollTimeout = 250000;
             connection.bulk.load(sObjectName, "upsert", {"extIdField": externalIdString}, dataToImport, async (err:any, rets:RecordResult[]) => {
-                if (err) { 
-                    Util.log(err); 
+                if (err) {
+                    Util.log(err);
                     rets = [];
                 }
 
@@ -101,14 +101,14 @@ export class Upsert {
 
     public static async insertData(connection: Connection, records: Array<any>, sObjectName: string) {
         const messageString = '-- Inserting ' + sObjectName;
-        Logs.showSpinner(messageString); 
+        Logs.showSpinner(messageString);
 
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
 
         // @ts-ignore: Don't know why, but TypeScript doesn't use the correct method override
         sobjectsResult = await connection.sobject(sObjectName).insert(records, { allowRecursive: true }, (err: any, rets: any) => {
-            if (err) { 
-                Util.log(err); 
+            if (err) {
+                Util.log(err);
             }
         });
 
@@ -195,19 +195,19 @@ export class Upsert {
                         enxCPQ__Setting_Name__c: "CPQ_DISABLE_TRIGGERS",
                         enxCPQ__Context__c: "Global",
                         enxCPQ__Col1__c: connection.getUsername() };
-    
+
         return new Promise ((resolve, reject) => {
             connection.sobject("enxCPQ__CPQ_Settings__c").insert(data, function(err, rets) {
                 if (err) {
                     reject('error disabling triggers: ' + err);
                     return;
                 }
-            
+
             Util.hideSpinner(' done. Setting ID: ' + rets['id']);
             //@ts-ignore
             resolve();
             });
-        });      
+        });
     }
 
     public static async enableTriggers(connection: Connection, log:boolean=true) {
@@ -226,14 +226,14 @@ export class Upsert {
                         reject('error enabling triggers: ' + err);
                         return;
                     }
-                    
+
                     // @TO-DO check with Łuki, cause it's printed after '*** Finished ***'
                     if (log) Util.hideSpinner(' done.');
                     //@ts-ignore
                     resolve();
-                }); 
+                });
             });
-        });      
+        });
     }
 
     private static extractIds(arr:any[]) {
@@ -242,7 +242,7 @@ export class Upsert {
           targetArr.push(arr[i].Id);
         }
         return targetArr;
-      } 
+      }
 
     private static async loadIgnoredFiles(queryDir: string) {
         return new Promise<String>((resolve: Function, reject: Function) => {

@@ -52,7 +52,7 @@ export class ProductExport {
                         exportRelationships: Boolean,
                         currencyNames: Set<String>) {
 
-        const querySettings = await this.loadQueryConfiguration(this.targetDirectory);
+        const querySettings = await this.fileManager.loadQueryConfiguration(this.targetDirectory);
         const queryFields = await this.loadQueryFields(this.targetDirectory);
         this.productNames = productNames;
         const productSelector = new ProductSelector(this.exportB2BObjects, querySettings, queryFields);
@@ -691,23 +691,6 @@ export class ProductExport {
                 pbookObj.fillFromJSON(pbook);
 
                 this.pricebooks.push(pbookObj);
-            });
-        });
-    }
-
-    private async loadQueryConfiguration(queryDir: string) {
-        return new Promise<String>((resolve: Function, reject: Function) => {
-            let content;
-            fs.readFile('./' + queryDir + '/queryConfiguration.json', function read(err, data) {
-                if (err) {
-                    if (err.code == 'ENOENT') {
-                        resolve({});
-                    }
-                    reject(err);
-                } else {
-                    content = data.toString('utf8');
-                    resolve(JSON.parse(content));
-                }
             });
         });
     }

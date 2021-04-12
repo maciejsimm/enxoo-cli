@@ -60,7 +60,7 @@ export class FileManager {
                                           .split('|').join('')
                                           .split('?').join('')
                                           .split('*').join('');
-        
+
         const path = './' + this.directory + '/' + fileDirectory + '/' + fileNameSanitized;
         const contentJSON = JSON.stringify(Util.sanitizeJSON(data), null, 3);
         await fs.writeFile(path, contentJSON, function(err) {
@@ -82,12 +82,12 @@ export class FileManager {
     }
 
     public createDirectoriesForExport() {
-        let directories = ['products', 
+        let directories = ['products',
                            'resources',
-                           'categories', 
-                           'attributes', 
-                           'attributeSets', 
-                           'priceBooks', 
+                           'categories',
+                           'attributes',
+                           'attributeSets',
+                           'priceBooks',
                            'charges',
                            'settings'];
 
@@ -103,5 +103,22 @@ export class FileManager {
             }
         })
     }
+
+  public async loadQueryConfiguration(queryDir: string) {
+    return new Promise<String>((resolve: Function, reject: Function) => {
+      let content;
+      fs.readFile('./' + queryDir + '/queryConfiguration.json', function read(err, data) {
+        if (err) {
+          if (err.code == 'ENOENT') {
+            resolve({});
+          }
+          reject(err);
+        } else {
+          content = data.toString('utf8');
+          resolve(JSON.parse(content));
+        }
+      });
+    });
+  }
 
 }

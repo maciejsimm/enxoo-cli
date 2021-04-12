@@ -343,7 +343,7 @@ export class ProductSelector {
     }
 
     public async getAttributeValueDependencies(connection: Connection, productIds: Array<String>) {
-        const queryLabel = 'attrValueDependecy';
+        const queryLabel = 'attrValueDependency';
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.AttributeValueDependency), ...queryInject];
         const incompatibleFields = this.filterIncompatibleFields(queryFields, queryLabel);
@@ -356,8 +356,8 @@ export class ProductSelector {
                          FROM enxCPQ__AttributeValueDependency__c \
                         WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                      ORDER BY enxCPQ__Execution_Order__c, enxCPQ__TECH_Key__c, enxCPQ__TECH_External_Id__c";
-        const attrValueDependecy = await Query.executeQuery(connection, query, queryLabel);
-        return attrValueDependecy;
+        const attrValueDependency = await Query.executeQuery(connection, query, queryLabel);
+        return attrValueDependency;
     }
 
     public async getProductProvisioningPlans(connection: Connection, productIds: Array<String>) {
