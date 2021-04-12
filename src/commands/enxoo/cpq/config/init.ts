@@ -69,7 +69,7 @@ export default class Org extends SfdxCommand {
       attrValues: [],
       attrDefaultValues: [],
       productRelationships: [],
-      attrValueDependecy: [],
+      attrValueDependency: [],
       attrRules: [],
       category: [],
       attrSet: [],
@@ -92,7 +92,7 @@ export default class Org extends SfdxCommand {
       attrValues: [],
       attrDefaultValues: [],
       productRelationships: [],
-      attrValueDependecy: [],
+      attrValueDependency: [],
       attrRules: [],
       category: [],
       attrSet: [],
@@ -101,6 +101,10 @@ export default class Org extends SfdxCommand {
       prvPlan: [],
       prvTaskAssignment: [],
       productResources: []
+    }
+    ,
+    settingsToIgnore: {
+      settingName: []
     }
   };
 

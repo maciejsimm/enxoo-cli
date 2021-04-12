@@ -26,7 +26,7 @@ export class Describer {
         queryFields.attrValuesFieldNames = await this.describeAttrValues(conn);
         queryFields.attrDefaultValuesFieldNames = await this.describeAttrDefaultValues(conn);
         queryFields.productRelationshipsFieldNames = await this.describeProductRelationships(conn);
-        queryFields.attrValueDependecyFieldNames = await this.describeAttrValueDependecy(conn);
+        queryFields.attrValueDependencyFieldNames = await this.describeattrValueDependency(conn);
         queryFields.attrRulesFieldNames = await this.describeAttrRules(conn);
         queryFields.categoryFieldNames = await this.describeCategory(conn);
         queryFields.attrSetFieldNames = await this.describeAttrSet(conn);
@@ -48,7 +48,7 @@ export class Describer {
         let fieldNames = new Array<String>();
         metaData.filter(record => record['relationshipName'] === null && record['updateable'])
                  .forEach(record => {fieldNames.push(' ' + record['name'])});
-    
+
         if(!this.isB2B){
             fieldNames = this.removeB2BFields(fieldNames);
         }
@@ -138,11 +138,11 @@ export class Describer {
         return productRelationshipsFieldNames;
     }
 
-    public async describeAttrValueDependecy(conn: core.Connection){
-        let attrValueDependecyFields = await Queries.describeAllFields(conn, 'enxCPQ__AttributeValueDependency__c');
-        let attrValueDependecyFieldNames = this.retrieveFieldNames(attrValueDependecyFields);
+    public async describeattrValueDependency(conn: core.Connection){
+        let attrValueDependencyFields = await Queries.describeAllFields(conn, 'enxCPQ__AttributeValueDependency__c');
+        let attrValueDependencyFieldNames = this.retrieveFieldNames(attrValueDependencyFields);
 
-        return attrValueDependecyFieldNames;
+        return attrValueDependencyFieldNames;
     }
 
     public async describeAttrRules(conn: core.Connection){

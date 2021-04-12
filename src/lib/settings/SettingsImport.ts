@@ -7,8 +7,10 @@ export class SettingsImport {
 
     private connection:Connection;
     private fileManager:FileManager;
+    private targetDirectory:string;
 
     constructor(targetDirectory:string, connection: Connection) {
+        this.targetDirectory = targetDirectory;
         this.fileManager = new FileManager(targetDirectory);
         this.connection = connection;
     }
@@ -16,8 +18,9 @@ export class SettingsImport {
     public async import() {
 
         const settings = await this.getSettings();
-        
-        const settingsSelector = new SettingsSelector();
+
+        const querySettings = await this.fileManager.loadQueryConfiguration(this.targetDirectory);
+        const settingsSelector = new SettingsSelector(querySettings);
         const settingsTargetIds = await settingsSelector.getAllSettingIds(this.connection);
 
         await Upsert.deleteData(this.connection, settingsTargetIds, 'enxCPQ__CPQ_Settings__c');
