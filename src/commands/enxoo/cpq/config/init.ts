@@ -101,8 +101,7 @@ export default class Org extends SfdxCommand {
       prvPlan: [],
       prvTaskAssignment: [],
       productResources: []
-    }
-    ,
+    },
     settingsToIgnore: {
       settingName: []
     }
