@@ -170,9 +170,9 @@ export class ProductSelector {
 
         const queryInject = this.additionalFields[queryLabel] || [];
         const queryFields = [...this.filterFields(Schema.Resource), ...queryInject];
-
+        const incompatibleFields = this.filterIncompatibleFields(queryFields, 'product');
         const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
-            return !this.fieldsToIgnore[queryLabel].includes(e);
+            return !this.fieldsToIgnore[queryLabel].includes(e) && !incompatibleFields.includes(e);
         }) : queryFields;
 
         const queryProductResources = "SELECT " + queryFieldsReduced.join(',') + " \

@@ -17,7 +17,19 @@ export class SettingsSelector {
                      ORDER BY enxCPQ__Context__c, Name";
 
         const settings = await Query.executeQuery(connection, query, queryLabel);
+        this.ignoreFieldsThatShouldNotBeMoved(settings);
         return settings;
+    }
+
+    private ignoreFieldsThatShouldNotBeMoved(settings: any){
+      const ignoreCol2: Array<string> = ['B2B_BID_NAMING_CONVENTION', 'B2B_SERVICE_NAMING_CONVENTION'];
+      for (let setting of settings) {
+        // @ts-ignore
+        if (ignoreCol2.includes(setting.enxCPQ__Setting_Name__c)) {
+          // @ts-ignore
+          setting.enxCPQ__Col2__c = null;
+        }
+      }
     }
 
     public async getAllSettingIds(connection: Connection) {
