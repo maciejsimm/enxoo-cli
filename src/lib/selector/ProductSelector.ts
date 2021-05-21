@@ -175,7 +175,7 @@ export class ProductSelector {
             return !this.fieldsToIgnore[queryLabel].includes(e) && !incompatibleFields.includes(e);
         }) : queryFields;
 
-        const queryProductResources = "SELECT " + queryFieldsReduced.join(',') + " \
+        const queryProductResources = "SELECT " + queryFieldsReduced.join(',') + ", enxCPQ__Category__r.enxCPQ__TECH_External_Id__c \
                                          FROM Product2 \
                                         WHERE Id IN ('" + this.resourceRecordSFIDs.join('\',\'') + "')";
 
@@ -194,7 +194,7 @@ export class ProductSelector {
             return !this.fieldsToIgnore[queryLabel].includes(e) && !incompatibleFields.includes(e);
         }) : queryFields;
 
-        const queryUnrelatedResources = "SELECT " + queryFieldsReduced.join(',') + " \
+        const queryUnrelatedResources = "SELECT " + queryFieldsReduced.join(',') + ", enxCPQ__Category__r.enxCPQ__TECH_External_Id__c \
                                         FROM Product2 \
                                         WHERE enxCPQ__Record_Type_Name__c = 'Resource' \
                                         AND Id NOT IN ('" + this.resourceRecordSFIDs.join('\',\'') + "')";

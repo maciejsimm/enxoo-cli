@@ -24,4 +24,11 @@ export class Resource extends Serializable {
         return [this.record];
     }
 
+    public getCategoryId() {
+        if (this.record.enxCPQ__Category__r && this.record.enxCPQ__Category__r.enxCPQ__TECH_External_Id__c) {
+            return this.record['enxCPQ__Category__r']['enxCPQ__TECH_External_Id__c'];
+        }
+        return null;
+    }
+
 }

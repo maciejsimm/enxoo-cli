@@ -74,6 +74,7 @@ export class ProductExport {
         const productOptions = await productSelector.getProductOptions(this.connection, this.productIds);
         this.wrapProductOptions(productOptions);
 
+        // -- resources export begin
         const allResourceProductIds = [...this.productIds, ...this.optionIds];
         const productResourceJunctions =  await productSelector.getResourceJunctionObjects(this.connection, allResourceProductIds);
         if(productResourceJunctions){
@@ -121,6 +122,7 @@ export class ProductExport {
         // -- categories begin
         this.categoryIds = [];
         this.products.forEach(product => { if (product.getCategoryId() != null) this.categoryIds.push(product.getCategoryId()) });
+        this.resources.forEach(product => { if (product.getCategoryId() != null) this.categoryIds.push(product.getCategoryId()) });
 
         const categories = await productSelector.getCategories(this.connection, this.categoryIds);
         this.wrapCategories(categories);
