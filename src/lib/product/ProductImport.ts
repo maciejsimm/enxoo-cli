@@ -81,9 +81,9 @@ export class ProductImport {
         // -- categories import begin
         if (this.categoryIds.length > 0 && this.categories.length > 0) {
             const allCategories =  this.categories.map((c) => {return c.record});
-            const allCategoriesWithouthRelationships = Util.sanitizeDeepForUpsert(allCategories);
+            const allCategoriesWithoutRelationships = Util.sanitizeDeepForUpsert(allCategories);
 
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allCategoriesWithouthRelationships), 'enxCPQ__Category__c');
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allCategoriesWithoutRelationships), 'enxCPQ__Category__c');
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allCategories), 'enxCPQ__Category__c');
         }
         // -- categories import end
@@ -449,6 +449,11 @@ export class ProductImport {
         this.categoryIds = [];
         this.categories = [];
         this.products.forEach((product) => {
+            const categoryId = product.getCategoryId();
+            if (categoryId !== null) this.categoryIds.push(categoryId);
+        });
+
+        this.resources.forEach((product) => {
             const categoryId = product.getCategoryId();
             if (categoryId !== null) this.categoryIds.push(categoryId);
         });

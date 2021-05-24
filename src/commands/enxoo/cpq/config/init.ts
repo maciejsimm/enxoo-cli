@@ -103,7 +103,7 @@ export default class Org extends SfdxCommand {
       productResources: []
     },
     settingsToIgnore: {
-      settingName: []
+      settingName: ["B2B_VENDOR_SCREEN_PUBLIC_SITE_URL", "LAST_OLI_NUMBER", "MAP_PROVIDER_API_KEY"]
     }
   };
 
