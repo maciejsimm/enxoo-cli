@@ -37,27 +37,33 @@ export class Upsert {
 
         if (errors.length > 0) {
 
+            //errors is an array of objects (errorObject / errorElement) with array (singleError) of objects (property).
+            //That's how it gets returned from sfdx API.
+            const errorsModified = errors.map(errorElement => {
+
+                //TO-DO: when more additional information are added, this anonymous function can be refactored into a separate function 
+                const errorObject = Object.values(errorElement).map(singleError => {
+                    singleError.map(property => {
+                        if (property.statusCode == 'METHOD_NOT_ALLOWED') {
+                            property.enxooMessage = 'The system might be missing an external ID that is crucial for the upsert operation. Please check the data for the presence of TECH_External_Id__c Field.'
+                        }
+                        return property;
+                    });
+                    return singleError;
+                });
+                return errorObject;
+            });
+
             if (sObjectName.includes("Product2")) {
                 await Logs.showSpinner('-- Some errors were present during Product2 import. The import will repeat after charges are also imported.');
                 Upsert.reimportProduct2AfterCharges = true;
             }
 
-            await Util.warn(JSON.stringify(errors, null, 2));
+            await Util.warn(JSON.stringify(errorsModified, null, 2));
             // @TO-DO it would be great if error message could somehow indicate record ID where the app failed
             //          would be easier for debugging
 
             await Logs.showSpinner('-- Second attempt at upserting ' + sObjectName);
-
-            //if (failedRecords.length > 0) {
-                //05.08.2020 SZILN - ECPQ-4615 - after any failure on upsert or insert, the importer now
-                //tries to repeat the operation.
-                // @TO-DO: after getting the failed record IDs, only the failed records should be queried again
-                // sobjectsResult = await connection.sobject(sObjectName).upsert(records, externalIdString, {}, (err, rets: RecordResult[]) => {
-                //     if (err) {
-                //         Util.log(err);
-                //     }
-                // });
-            //}
 
             await Logs.displayStatusMessage(sobjectsResult, messageString);
 
