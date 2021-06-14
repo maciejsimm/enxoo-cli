@@ -91,7 +91,7 @@ export class FileManager {
                            'charges',
                            'priceRules',
                            'priceRuleConditions',
-                           'priceRuleCActions',
+                           'priceRuleActions',
                            'settings'];
 
         if (this.isB2B) {
