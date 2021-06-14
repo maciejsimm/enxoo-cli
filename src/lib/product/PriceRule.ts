@@ -1,9 +1,11 @@
 import { Serializable } from "./Serializable";
+import {PriceRuleCondition} from "./PriceRuleCondition";
+import {PriceRuleAction} from "./PriceRuleAction";
 export class PriceRule extends Serializable {
 
   public record:any;
-  public priceRuleCondition:Array<any>;
-  public priceRuleAction:Array<any>;
+  public priceRuleCondition:Array<PriceRuleCondition>;
+  public priceRuleAction:Array<PriceRuleAction>;
 
   constructor(priceRule:any) {
     super();
