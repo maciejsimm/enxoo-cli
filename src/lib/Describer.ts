@@ -30,6 +30,9 @@ export class Describer {
         queryFields.attrRulesFieldNames = await this.describeAttrRules(conn);
         queryFields.categoryFieldNames = await this.describeCategory(conn);
         queryFields.attrSetFieldNames = await this.describeAttrSet(conn);
+        queryFields.priceRulesFieldNames = await this.describePriceRules(conn);
+        queryFields.priceRuleConditionFieldNames = await this.describePriceRuleCondition(conn);
+        queryFields.priceRuleActionFieldNames = await this.describePriceRuleAction(conn);
         if(this.isB2B){
             queryFields.prvPlanAssignmentFieldNames = await this.describePrvPlanAssignment(conn);
             queryFields.prvTaskFieldNames = await this.describePrvTask(conn);
@@ -171,6 +174,27 @@ export class Describer {
         let attrSetFieldNames = this.retrieveFieldNames(attrSetFields);
 
         return attrSetFieldNames;
+    }
+
+    public async describePriceRules(conn: core.Connection){
+      let priceRulesFields = await Queries.describeAllFields(conn, 'enxCPQ__PriceRule__c');
+      let priceRulesFieldNames = this.retrieveFieldNames(priceRulesFields);
+
+      return priceRulesFieldNames;
+    }
+
+    public async describePriceRuleCondition(conn: core.Connection){
+      let priceRuleConditionFields = await Queries.describeAllFields(conn, 'enxCPQ__PriceRuleCondition__c');
+      let priceRuleConditionFieldNames = this.retrieveFieldNames(priceRuleConditionFields);
+
+      return priceRuleConditionFieldNames;
+    }
+
+    public async describePriceRuleAction(conn: core.Connection){
+      let priceRuleActionFields = await Queries.describeAllFields(conn, 'enxCPQ__PriceRuleAction__c');
+      let priceRuleActionFieldNames = this.retrieveFieldNames(priceRuleActionFields);
+
+      return priceRuleActionFieldNames;
     }
 
     public async describePrvTaskAssignment(conn: core.Connection){

@@ -2,6 +2,9 @@ import { ProductSelector } from '../selector/ProductSelector';
 import { Product } from './Product';
 import { Attribute } from './Attribute';
 import { Resource } from './Resource';
+import { PriceRule } from "./PriceRule";
+import { PriceRuleAction } from "./PriceRuleAction";
+import { PriceRuleCondition } from "./PriceRuleCondition";
 import { AttributeSet } from './AttributeSet';
 import { ProvisioningPlan } from './ProvisioningPlan';
 import { ProvisioningTask } from './ProvisioningTask';
@@ -23,6 +26,7 @@ export class ProductExport {
     private provisioningPlanIds:Array<String>;
     private provisioningTaskIds:Array<String>;
     private chargeIds:Array<String>;
+    private priceRuleIds:Array<String>;
 
     private products:Array<Product>;
     private resources:Array<Resource>;
@@ -34,6 +38,9 @@ export class ProductExport {
     private charges:Array<Charge>;
     private categories:Array<Category>;
     private pricebooks:Array<Pricebook>;
+    private priceRules:Array<PriceRule>;
+    private priceRuleCondition:Array<PriceRuleCondition>;
+    private priceRuleAction:Array<PriceRuleAction>;
 
     private productNames:Array<string>;
     private targetDirectory:string;
@@ -241,6 +248,19 @@ export class ProductExport {
         }
         // -- provisioning plans end
 
+      // -- price rules begin
+      this.priceRuleIds = [];
+      this.priceRules = [];
+      const priceRules = await productSelector.getPriceRules(this.connection, this.productIds);
+      this.wrapPriceRules(priceRules);
+
+      const priceRuleConditions = await productSelector.getPriceRuleConditions(this.connection, this.priceRuleIds);
+      this.wrapPriceRuleConditions(priceRuleConditions);
+
+      const priceRuleActions = await productSelector.getPriceRuleActions(this.connection, this.priceRuleIds);
+      this.wrapPriceRuleActions(priceRuleActions);
+      // -- price rules end
+
 
         // -- saving files begin
         await this.products.forEach((product) => {
@@ -278,6 +298,21 @@ export class ProductExport {
         await this.pricebooks.forEach((pbook) => {
             this.fileManager.deleteOldFilesWithDifferentName('priceBooks', pbook.getFileName(), pbook.getPricebookId());
             this.fileManager.writeFile('priceBooks', pbook.getFileName(), pbook);
+        });
+
+        await this.priceRules.forEach((priceRule) => {
+          this.fileManager.deleteOldFilesWithDifferentName('priceRules', priceRule.getFileName(), priceRule.getRecordId());
+          this.fileManager.writeFile('priceRules', priceRule.getFileName(), priceRule);
+        });
+
+        await this.priceRuleAction.forEach((pra) => {
+          this.fileManager.deleteOldFilesWithDifferentName('priceRuleActions', pra.getFileName(), pra.getRecordId());
+          this.fileManager.writeFile('priceRuleActions', pra.getFileName(), pra);
+        });
+
+        await this.priceRuleCondition.forEach((prc) => {
+          this.fileManager.deleteOldFilesWithDifferentName('priceRuleConditions', prc.getFileName(), prc.getRecordId());
+          this.fileManager.writeFile('priceRuleConditions', prc.getFileName(), prc);
         });
 
         if (this.exportB2BObjects) {
@@ -457,6 +492,37 @@ export class ProductExport {
                 product.bundleElements.push(bel);
             }
         });
+    }
+
+    private wrapPriceRules(priceRules:Array<any>) {
+      priceRules.forEach((pr) => {
+        const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === pr['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
+        if (product !== undefined) {
+          product.priceRules.push(pr);
+        }
+        this.priceRules.push(new PriceRule(pr));
+        this.priceRuleIds.push(pr['enxCPQ__TECH_External_Id__c']);
+      });
+    }
+
+    private wrapPriceRuleConditions(priceRuleConditions:Array<any>) {
+      priceRuleConditions.forEach((prc) => {
+        const priceRule = this.priceRules.find(e => e.record['enxCPQ__TECH_External_Id__c'] === prc['enxCPQ__Price_Rule__r']['enxCPQ__TECH_External_Id__c']);
+        if (priceRule !== undefined) {
+          priceRule.priceRuleCondition.push(prc);
+        }
+        this.priceRuleAction.push(new PriceRuleAction(prc))
+      });
+    }
+
+    private wrapPriceRuleActions(priceRuleConditions:Array<any>) {
+      priceRuleConditions.forEach((pra) => {
+        const priceRule = this.priceRules.find(e => e.record['enxCPQ__TECH_External_Id__c'] === pra['enxCPQ__Price_Rule__r']['enxCPQ__TECH_External_Id__c']);
+        if (priceRule !== undefined) {
+          priceRule.priceRuleAction.push(pra);
+        }
+        this.priceRuleCondition.push(new PriceRuleCondition(pra))
+      });
     }
 
     private wrapBundleElementOptions(bundleElementOptions:Array<any>) {

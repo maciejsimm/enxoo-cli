@@ -14,7 +14,8 @@ export class Product extends Serializable {
     public bundleElementOptions:Array<any>;
     public provisioningPlans:Array<any>;
     public resources:Array<any>;
-    
+    public priceRules:Array<any>;
+
     constructor(product:any) {
         super();
         this.record = product;
@@ -30,12 +31,13 @@ export class Product extends Serializable {
         this.bundleElementOptions = [];
         this.provisioningPlans = [];
         this.resources = [];
+        this.priceRules = [];
     }
 
     public getProductId() {
         return this.record['enxCPQ__TECH_External_Id__c'];
     }
-    
+
     public getFileName() {
         return this.record['Name'] +'_' + this.record['enxCPQ__TECH_External_Id__c']+ '.json'
     }
@@ -62,7 +64,7 @@ export class Product extends Serializable {
 
     public getAttributeSetIds() {
         return this.productAttributes
-                        .filter((attr) => { 
+                        .filter((attr) => {
                             return attr['enxCPQ__Attribute_Set__r'] !== undefined && attr['enxCPQ__Attribute_Set__r'] !== null
                         })
                         .map((attr) => {

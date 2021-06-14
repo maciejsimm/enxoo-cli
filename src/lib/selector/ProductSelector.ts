@@ -441,6 +441,54 @@ export class ProductSelector {
         return tasks;
     }
 
+    public async getPriceRules(connection: Connection, productIds: Array<String>) {
+      const queryLabel = 'priceRules';
+      const queryInject = this.additionalFields[queryLabel] || [];
+      const queryFields = [...this.filterFields(Schema.PriceRule), ...queryInject];
+      const incompatibleFields = this.filterIncompatibleFields(queryFields, queryLabel);
+      const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
+        return !this.fieldsToIgnore[queryLabel].includes(e) && !incompatibleFields.includes(e);
+      }) : queryFields;
+      const query = "SELECT " + queryFieldsReduced.join(',') + ", enxCPQ__Product__r.enxCPQ__TECH_External_Id__c  \
+                        FROM enxCPQ__PriceRule__c \
+                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                     ORDER BY enxCPQ__TECH_External_Id__c";
+      const priceRules = await Query.executeQuery(connection, query, queryLabel);
+      return priceRules;
+    }
+
+  public async getPriceRuleConditions(connection: Connection, priceRuleIds: Array<String>) {
+    const queryLabel = 'priceRuleCondition';
+    const queryInject = this.additionalFields[queryLabel] || [];
+    const queryFields = [...this.filterFields(Schema.PriceRuleCondition), ...queryInject];
+    const incompatibleFields = this.filterIncompatibleFields(queryFields, queryLabel);
+    const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
+      return !this.fieldsToIgnore[queryLabel].includes(e) && !incompatibleFields.includes(e);
+    }) : queryFields;
+    const query = "SELECT " + queryFieldsReduced.join(',') + ", enxCPQ__Price_Rule__r.enxCPQ__TECH_External_Id__c \
+                     FROM enxCPQ__PriceRuleCondition__c \
+                     WHERE enxCPQ__Price_Rule__r.enxCPQ__TECH_External_Id__c IN ('" + priceRuleIds.join('\',\'') + "') \
+                     ORDER BY enxCPQ__TECH_External_Id__c";
+    const priceRuleConditions = await Query.executeQuery(connection, query, queryLabel);
+    return priceRuleConditions;
+  }
+
+  public async getPriceRuleActions(connection: Connection, priceRuleIds: Array<String>) {
+    const queryLabel = 'priceRuleAction';
+    const queryInject = this.additionalFields[queryLabel] || [];
+    const queryFields = [...this.filterFields(Schema.PriceRuleAction), ...queryInject];
+    const incompatibleFields = this.filterIncompatibleFields(queryFields, queryLabel);
+    const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
+      return !this.fieldsToIgnore[queryLabel].includes(e) && !incompatibleFields.includes(e);
+    }) : queryFields;
+    const query = "SELECT " + queryFieldsReduced.join(',') + ", enxCPQ__Price_Rule__r.enxCPQ__TECH_External_Id__c \
+                     FROM enxCPQ__PriceRuleAction__c \
+                     WHERE enxCPQ__Price_Rule__r.enxCPQ__TECH_External_Id__c IN ('" + priceRuleIds.join('\',\'') + "') \
+                     ORDER BY enxCPQ__TECH_External_Id__c";
+    const priceRuleActions = await Query.executeQuery(connection, query, queryLabel);
+    return priceRuleActions;
+  }
+
     private async setOwnerFieldOnProvisioningTask(connection: Connection, tasks: Array<any>){
       const ownerIds = new Set();
       // @ts-ignore

@@ -77,7 +77,8 @@ export default class Org extends SfdxCommand {
       prvTask: [],
       prvPlan: [],
       prvTaskAssignment: [],
-      productResources: []
+      productResources: [],
+      priceRules: []
     },
     fieldsToIgnore: {
       product: [],
@@ -100,7 +101,8 @@ export default class Org extends SfdxCommand {
       prvTask: [],
       prvPlan: [],
       prvTaskAssignment: [],
-      productResources: []
+      productResources: [],
+      priceRules: []
     },
     settingsToIgnore: {
       settingName: ["B2B_VENDOR_SCREEN_PUBLIC_SITE_URL", "LAST_OLI_NUMBER", "MAP_PROVIDER_API_KEY"]
