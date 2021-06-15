@@ -489,15 +489,6 @@ export class ProductSelector {
     return priceRuleActions;
   }
 
-  public async getPriceRuleIds(connection: Connection, priceRuleIds: Array<String>) {
-    const queryLabel = 'priceRule ids';
-    const query = "SELECT enxCPQ__TECH_External_Id__c \
-                         FROM enxCPQ__PriceRule__c \
-                        WHERE enxCPQ__TECH_External_Id__c IN ('" + priceRuleIds.join('\',\'') + "')";
-    const taskAssignments = await Query.executeQuery(connection, query, queryLabel);
-    return taskAssignments;
-  }
-
     private async setOwnerFieldOnProvisioningTask(connection: Connection, tasks: Array<any>){
       const ownerIds = new Set();
       // @ts-ignore
