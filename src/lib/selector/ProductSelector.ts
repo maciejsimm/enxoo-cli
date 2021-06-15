@@ -465,7 +465,7 @@ export class ProductSelector {
     const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
       return !this.fieldsToIgnore[queryLabel].includes(e) && !incompatibleFields.includes(e);
     }) : queryFields;
-    const query = "SELECT " + queryFieldsReduced.join(',') + ", enxCPQ__Price_Rule__r.enxCPQ__TECH_External_Id__c \
+    const query = "SELECT " + queryFieldsReduced.join(',') + ", enxCPQ__Price_Rule__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
                      FROM enxCPQ__PriceRuleCondition__c \
                      WHERE enxCPQ__Price_Rule__r.enxCPQ__TECH_External_Id__c IN ('" + priceRuleIds.join('\',\'') + "') \
                      ORDER BY enxCPQ__TECH_External_Id__c";
@@ -481,12 +481,21 @@ export class ProductSelector {
     const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
       return !this.fieldsToIgnore[queryLabel].includes(e) && !incompatibleFields.includes(e);
     }) : queryFields;
-    const query = "SELECT " + queryFieldsReduced.join(',') + ", enxCPQ__Price_Rule__r.enxCPQ__TECH_External_Id__c \
+    const query = "SELECT " + queryFieldsReduced.join(',') + ", enxCPQ__Price_Rule__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
                      FROM enxCPQ__PriceRuleAction__c \
                      WHERE enxCPQ__Price_Rule__r.enxCPQ__TECH_External_Id__c IN ('" + priceRuleIds.join('\',\'') + "') \
                      ORDER BY enxCPQ__TECH_External_Id__c";
     const priceRuleActions = await Query.executeQuery(connection, query, queryLabel);
     return priceRuleActions;
+  }
+
+  public async getPriceRuleIds(connection: Connection, priceRuleIds: Array<String>) {
+    const queryLabel = 'priceRule ids';
+    const query = "SELECT enxCPQ__TECH_External_Id__c \
+                         FROM enxCPQ__PriceRule__c \
+                        WHERE enxCPQ__TECH_External_Id__c IN ('" + priceRuleIds.join('\',\'') + "')";
+    const taskAssignments = await Query.executeQuery(connection, query, queryLabel);
+    return taskAssignments;
   }
 
     private async setOwnerFieldOnProvisioningTask(connection: Connection, tasks: Array<any>){
