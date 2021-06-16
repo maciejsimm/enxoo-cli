@@ -61,7 +61,7 @@ workflows:
   "enxoo":
     jobs:
       - node-latest
-      - node-8
+      # - node-8
       - cache:
           filters:
             tags:
