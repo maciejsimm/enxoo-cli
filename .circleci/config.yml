@@ -11,9 +11,9 @@ jobs:
           keys:
             - v1-npm-{{checksum ".circleci/config.yml"}}-{{checksum "yarn.lock"}}
             - v1-npm-{{checksum ".circleci/config.yml"}}
-      - run:
-          name: Install dependencies
-          command: yarn
+      # - run:
+      #     name: Install dependencies
+      #     command: yarn
       # - run:
       #     name: Testing
       #     command: yarn test
