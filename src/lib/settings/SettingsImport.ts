@@ -23,8 +23,10 @@ export class SettingsImport {
         const settingsSelector = new SettingsSelector(querySettings);
         const settingsTargetIds = await settingsSelector.getAllSettingIds(this.connection);
 
-        await Upsert.deleteData(this.connection, settingsTargetIds, 'enxCPQ__CPQ_Settings__c');
-        await Upsert.insertData(this.connection, settings, 'enxCPQ__CPQ_Settings__c');
+        if(settings.length){
+          await Upsert.deleteData(this.connection, settingsTargetIds, 'enxCPQ__CPQ_Settings__c');
+          await Upsert.insertData(this.connection, settings, 'enxCPQ__CPQ_Settings__c');
+        }
 
     }
 
