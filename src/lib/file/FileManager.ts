@@ -90,7 +90,7 @@ export class FileManager {
                            'priceBooks',
                            'charges',
                            'priceRules',
-                           'settings'];
+                           'settings',
                            'approvalRules'];
 
         if (this.isB2B) {
