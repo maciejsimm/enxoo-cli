@@ -89,7 +89,9 @@ export class FileManager {
                            'attributeSets',
                            'priceBooks',
                            'charges',
+                           'priceRules',
                            'settings'];
+                           'approvalRules'];
 
         if (this.isB2B) {
             directories.push('provisioningPlans',

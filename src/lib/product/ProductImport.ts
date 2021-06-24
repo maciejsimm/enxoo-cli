@@ -8,6 +8,9 @@ import { ProvisioningTask } from './ProvisioningTask';
 import { Charge } from './Charge';
 import { Pricebook } from './Pricebook';
 import { Category } from './Category';
+import { PriceRule } from './PriceRule';
+import { PriceRuleAction } from "./PriceRuleAction";
+import { PriceRuleCondition } from "./PriceRuleCondition";
 import { FileManager } from '../file/FileManager';
 import { Connection } from "@salesforce/core";
 import { Upsert } from '../repository/Upsert';
@@ -34,6 +37,9 @@ export class ProductImport {
     private charges:Array<Charge>;
     private categories:Array<Category>;
     private pricebooks:Array<Pricebook>;
+    private priceRules:Array<PriceRule>;
+    private priceRuleConditions:Array<PriceRuleCondition>;
+    private priceRuleActions:Array<PriceRuleAction>;
 
     private targetDirectory:string;
     private exportB2BObjects: boolean;
@@ -58,6 +64,7 @@ export class ProductImport {
         await this.setParentCategoryImportScope();
         await this.setChargeImportScope();
         await this.setPricebookImportScope();
+        await this.setPriceRuleImportScope();
 
         if (this.exportB2BObjects) {
             await this.setProvisioningPlanImportScope();
@@ -329,6 +336,21 @@ export class ProductImport {
                 await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningPlanAssignments), 'enxB2B__ProvisioningPlanAssignment__c');
         }
         // -- provisioning plans import end
+
+        // -- price rules import begin
+        if(this.priceRules && this.priceRules.length){
+          const allPriceRules =  this.priceRules.map((priceRule) => {return priceRule.record});
+          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allPriceRules), 'enxCPQ__PriceRule__c');
+          if(this.priceRuleConditions && this.priceRuleConditions.length){
+            const allPriceRuleConditions =  this.priceRuleConditions.map((prc) => {return prc.record});
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allPriceRuleConditions), 'enxCPQ__PriceRuleCondition__c');
+          }
+          if(this.priceRuleActions && this.priceRuleActions.length){
+            const allPriceRuleActions =  this.priceRuleActions.map((prc) => {return prc.record});
+            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allPriceRuleActions), 'enxCPQ__PriceRuleAction__c');
+          }
+        }
+        // -- price rules import end
 
         await Upsert.enableTriggers(this.connection);
     }
@@ -627,6 +649,32 @@ export class ProductImport {
             });
         });
     }
+
+  private async setPriceRuleImportScope() {
+    this.priceRules = [];
+    this.priceRuleConditions = [];
+    this.priceRuleActions = [];
+
+    const priceRuleFileNames = await this.fileManager.readAllFileNames('priceRules');
+
+    let priceRuleJSONArray = [];
+    priceRuleFileNames.forEach((fileName) => {
+      const priceRuleInputReader = this.fileManager.readFile('priceRules', fileName);
+      priceRuleJSONArray.push(priceRuleInputReader);
+    });
+
+    return Promise.all(priceRuleJSONArray).then((values) => {
+      const priceRuleJSONs = values;
+
+      priceRuleJSONs.forEach((pRule) => {
+        const pRuleObj:PriceRule = new PriceRule(null);
+        pRuleObj.fillFromJSON(pRule);
+        this.priceRules.push(pRuleObj);
+        this.priceRuleConditions = [...this.priceRuleConditions, ...pRuleObj.priceRuleCondition];
+        this.priceRuleActions = [...this.priceRuleActions, ...pRuleObj.priceRuleAction];
+      });
+    });
+  }
 
     private async setProvisioningPlanImportScope() {
         this.provisioningPlanIds = [];

@@ -424,4 +424,45 @@ export class Schema {
         'enxCPQ__TECH_Key__c',
         'enxCPQ__Unavailable_Dependent_Attribute_Value__c'
     ]
+
+    public static PriceRule:Array<string> = [
+      'Name',
+      'CurrencyIsoCode',
+      'enxCPQ__TECH_External_Id__c',
+      'enxCPQ__Active__c',
+      'enxCPQ__Conditions_Logic__c',
+      'enxCPQ__Context__c',
+      'enxCPQ__Discount_End_Date__c',
+      'enxCPQ__Discount_Scope__c',
+      'enxCPQ__Discount_Start_Date__c',
+      'enxCPQ__Order__c',
+      'enxCPQ__Tier_Field__c',
+    ]
+
+    public static PriceRuleCondition:Array<string> = [
+      'Name',
+      'CurrencyIsoCode',
+      'enxCPQ__TECH_External_Id__c',
+      'enxCPQ__Field_Name__c',
+      'enxCPQ__Object_Name__c',
+      'enxCPQ__Operator__c',
+      'enxCPQ__Order__c',
+      'enxCPQ__Value__c'
+    ]
+
+    public static PriceRuleAction:Array<string> = [
+      'Name',
+      'CurrencyIsoCode',
+      'enxCPQ__Action_Type__c',
+      'enxCPQ__Discount_Period__c',
+      'enxCPQ__Duration__c',
+      'enxCPQ__Field_Name__c',
+      'enxCPQ__Order__c',
+      'enxCPQ__Start_Period__c',
+      'enxCPQ__Target_Field_Name__c',
+      'enxCPQ__Target_Value__c',
+      'enxCPQ__Tier_Value_From__c',
+      'enxCPQ__Tier_Value_To__c',
+      'enxCPQ__TECH_External_Id__c'
+    ]
 }
