@@ -74,4 +74,33 @@ export class LogHandler {
             return error
         }));
     }
+
+    public static addEnxooMessages(error: any) {
+        if (error.message.includes('No such column')) {
+            const message = error.message;
+            const debug = error;
+            const fieldName = message.substring(message.indexOf('No such column') + 16, message.indexOf('on entity') - 2);
+            const objectName = message.substring(message.indexOf('on entity') + 11, message.indexOf('. If you are attempting') - 1);
+            const enxooErrorMessage = `This error might be caused by a difference in supported enxoo packages or some other factors. Please consider using the fieldsToIgnore feature to add ${fieldName} to the ignored fields of ${objectName} object`
+            const errorObject = {...error, message, enxooErrorMessage};
+            return errorObject;
+        }
+    }
+
+    public static displayError(error: any) {
+        const red = `\u001b[1;31m`;
+        const blue = `\u001b[1;34m`;
+        const white = `\u001B[37m`;
+        console.log(red);
+        for (const property in error) {
+            if (property == 'enxooErrorMessage') {
+                console.log(blue);
+            }
+            console.log(`${property}: ${error[property]}`);
+            if (property == 'enxooErrorMessage') {
+                console.log(red);
+            }
+        }
+        console.log(white);
+    }
 }
