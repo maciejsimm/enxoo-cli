@@ -1,6 +1,7 @@
 import { Connection } from "@salesforce/core";
 import { LogHandler as Logs } from './../LogHandler';
 import { ExecuteOptions } from 'jsforce/query'
+import { fail } from "assert";
 
 export class Query {
 
@@ -8,11 +9,17 @@ export class Query {
         if (recordsCount === undefined || recordsCount < 200) {
             const messageString = '-- Querying ' + logLabel;
             Logs.showSpinner(messageString);
-            //todo: the maxFetch query option could be set to higher values only when prompted instead of always
             let queryOptions: ExecuteOptions = { maxFetch: 50000 };
-            const recordResults = (await connection.autoFetchQuery(query, queryOptions)).records;
-            Logs.hideSpinner(Logs.prettifyUpsertMessage(messageString, 3) + 'Retrieved: ' + recordResults.length);
-            return recordResults;
+            try {
+                const recordResults = (await connection.autoFetchQuery(query, queryOptions)).records;
+                Logs.hideSpinner(Logs.prettifyUpsertMessage(messageString, 3) + 'Retrieved: ' + recordResults.length);
+                return recordResults;
+            } catch (error) {
+                const errorWithComments = Logs.addEnxooMessages(error);
+                Logs.displayError(errorWithComments);
+                console.log('Error during query execution. Importer will now exit the operation.');
+                process.exit(1);
+            }
         } else {
             return this.executeBulkQuery(connection, query, logLabel);
         }
