@@ -540,7 +540,7 @@ export class ProductSelector {
         const queryFieldsReduced = this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
             return !this.fieldsToIgnore[queryLabel].includes(e) && !incompatibleFields.includes(e);
         }) : queryFields;
-        const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
+        const query = "SELECT " + queryFieldsReduced.join(',') + " , enxCPQ__Exclusive_for_Product__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeValue__c \
                         WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "') \
                           AND enxCPQ__Exclusive_for_Product__c = null \
