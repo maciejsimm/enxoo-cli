@@ -81,14 +81,22 @@ export class ProductExport {
 
         // -- resources export begin
         const allResourceProductIds = [...this.productIds, ...this.optionIds];
+        let resourceIds = [];
         const productResourceJunctions =  await productSelector.getResourceJunctionObjects(this.connection, allResourceProductIds);
         if(productResourceJunctions){
           const resourceProducts = await productSelector.getProductsWithResourceRecordType(this.connection, productResourceJunctions);
+          for (let resourceProduct of resourceProducts) {
+            resourceIds.push(resourceProduct['enxCPQ__TECH_External_Id__c']);
+          }
           const unrelatedResources = await productSelector.getUnrelatedResources(this.connection);
+          for (let resourceProduct of unrelatedResources) {
+            resourceIds.push(resourceProduct['enxCPQ__TECH_External_Id__c']);
+          }
           this.wrapProductResources(resourceProducts, productResourceJunctions);
           this.wrapUnrelatedResources(unrelatedResources);
         }
-        const charges = await productSelector.getCharges(this.connection, this.productIds);
+        const allIdsToRetrieveCharges = [...this.productIds, ...resourceIds];
+        const charges = await productSelector.getCharges(this.connection, allIdsToRetrieveCharges);
         this.wrapProductCharges(charges);
 
         const productAttributes = await productSelector.getProductAttributes(this.connection, this.productIds);
@@ -182,6 +190,7 @@ export class ProductExport {
         // -- charges begin
         this.chargeIds = [];
         this.products.forEach(product => { this.chargeIds = [...this.chargeIds, ...product.getChargeIds()] });
+        this.resources.forEach(resource => { this.chargeIds = [...this.chargeIds, ...resource.getChargeIds()] });
 
         const chargeDefinitions = await productSelector.getChargeDefinitions(this.connection, this.chargeIds);
         this.wrapChargeDefinitions(chargeDefinitions);
@@ -410,10 +419,20 @@ export class ProductExport {
 
     private wrapProductCharges(productCharges:Array<any>) {
         productCharges.forEach((charge) => {
-            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c']);
-            if (product !== undefined) {
-                product.charges.push(charge);
-            }
+          let product;
+          let resource;
+          if(charge['enxCPQ__Root_Product__r']){
+            product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c']);
+          }
+          if(charge['enxCPQ__Charge_Parent__r']){
+            resource = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c']);
+          }
+          if (product !== undefined) {
+            product.charges.push(charge);
+          }
+          if (resource !== undefined) {
+            resource.charges.push(charge);
+          }
         });
     }
 

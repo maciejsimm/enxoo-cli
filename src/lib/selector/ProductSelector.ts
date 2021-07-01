@@ -212,7 +212,8 @@ export class ProductSelector {
                               enxCPQ__Dimension_1__c, enxCPQ__Dimension_2__c, enxCPQ__Dimension_3__c, enxCPQ__Dimension_4__c, enxCPQ__Dimension_5__c, \
                               enxCPQ__Dimension_1_Numeric__c, enxCPQ__Dimension_2_Numeric__c, enxCPQ__Dimension_3_Numeric__c, enxCPQ__Dimension_4_Numeric__c, enxCPQ__Dimension_5_Numeric__c \
                          FROM Product2 \
-                        WHERE enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                        WHERE (enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')\
+                        \ OR enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')) \
                           AND RecordType.Name = 'Charge' \
                      ORDER BY enxCPQ__Charge_Type__c, enxCPQ__Sorting_Order__c, enxCPQ__TECH_External_Id__c";
 
