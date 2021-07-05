@@ -145,11 +145,9 @@ export class ProductImport {
             let attrUniqueValues = [];
             allAttributeValues.forEach(attVal => {
                 const dupl = attrUniqueValues.filter(elem => {
-                    const jede = attVal.enxCPQ__TECH_External_Id__c;
-                    const dwa = elem.enxCPQ__TECH_External_Id__c;
                     return elem.enxCPQ__TECH_External_Id__c === attVal.enxCPQ__TECH_External_Id__c;
                 });
-                if (dupl.length < 1) {
+                if (!dupl.length) {
                     attrUniqueValues.push(attVal);
                 }
             });
