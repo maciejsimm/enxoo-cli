@@ -601,6 +601,10 @@ export class ProductImport {
             this.chargeIds = [...this.chargeIds, ...new Set(product.getChargeIds())];
         });
 
+        this.resources.forEach(resource => {
+          this.chargeIds = [...this.chargeIds, ...new Set(resource.getChargeIds())];
+        });
+
         if (this.chargeIds.length > 0) {
             const allChargeFileNames = await this.fileManager.readAllFileNames('charges');
 
