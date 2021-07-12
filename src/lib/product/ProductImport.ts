@@ -45,6 +45,7 @@ export class ProductImport {
     private exportB2BObjects: boolean;
     private connection:Connection;
     private fileManager:FileManager;
+    private fieldsToIgnore: any;
 
     constructor(targetDirectory:string, connection: Connection, exportB2BObjects: boolean) {
         this.targetDirectory = targetDirectory;
@@ -52,10 +53,15 @@ export class ProductImport {
         this.fileManager = new FileManager(targetDirectory);
         this.connection = connection;
     }
+    private async setFieldsToIgnore() {
+      const querySettings : any = await this.fileManager.loadQueryConfiguration(this.targetDirectory);
+      this.fieldsToIgnore = querySettings.fieldsToIgnore ? querySettings.fieldsToIgnore : [];
+    }
 
     public async import(productNames: Array<string>,
                         currencyNames: Set<String>) {
 
+        await this.setFieldsToIgnore();
         await this.setProductImportScope(productNames);
         await this.setResourceImportScope();
         await this.setAttributeSetImportScope();
@@ -150,6 +156,9 @@ export class ProductImport {
                     return elem.enxCPQ__TECH_External_Id__c === attVal.enxCPQ__TECH_External_Id__c;
                 });
                 if (dupl.length < 1) {
+                    this.fieldsToIgnore['attrValues'].forEach( field => {
+                      delete attVal[field];
+                    });
                     attrUniqueValues.push(attVal);
                 }
             });
@@ -171,6 +180,11 @@ export class ProductImport {
         const productAttributesTarget = await productSelector.getProductAttributeIds(this.connection, this.productIds);
         let allProductAttributes = [];
         this.products.forEach((prod) => { allProductAttributes = [...allProductAttributes, ...prod.productAttributes] });
+        allProductAttributes.map(prodAtt => {
+          this.fieldsToIgnore['productAttr'].forEach( field => {
+            delete prodAtt[field];
+          });
+        });
         const allProductAttributesRTfix = Util.fixRecordTypes(allProductAttributes, recordTypes, 'enxCPQ__ProductAttribute__c');
         // @TO-DO handle array > 200 items
         if (productAttributesTarget.length > 0)
@@ -224,6 +238,11 @@ export class ProductImport {
             standardPricebookEntries = [... standardPricebookEntries, ...pbook.getStandardPricebookEntriesToInsert(product2TargetIds, pricebook2TargetIds)];
             pricebookEntries = [... pricebookEntries, ...pbook.getPricebookEntriesToInsert(product2TargetIds, pricebook2TargetIds)];
         })
+        pricebookEntries.map(pbe => {
+          this.fieldsToIgnore['pbe'].forEach( field => {
+            delete pbe[field];
+          });
+        });
 
         let stdPricebookEntriesTarget = [];
         let pricebookEntriesTarget = [];
@@ -257,8 +276,14 @@ export class ProductImport {
         // -- product relationships import begin
         let allProductRelationships = [];
         this.products.forEach((prod) => { allProductRelationships = [...allProductRelationships, ...prod.productRelationships] });
-        if (allProductRelationships.length > 0)
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductRelationships), 'enxCPQ__ProductRelationship__c');
+        if (allProductRelationships.length > 0){
+          allProductRelationships.map(prodRel => {
+            this.fieldsToIgnore['productRelationships'].forEach( field => {
+              delete prodRel[field];
+            });
+          });
+          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductRelationships), 'enxCPQ__ProductRelationship__c');
+        }
         // -- product relationships import end
 
 
@@ -266,8 +291,14 @@ export class ProductImport {
         // @TO-DO - this doesn't handle removal of bundle elements
         let allBundleElements = [];
         this.products.forEach((prod) => { allBundleElements = [...allBundleElements, ...prod.bundleElements] });
-        if (allBundleElements.length > 0)
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allBundleElements), 'enxCPQ__BundleElement__c');
+        if (allBundleElements.length > 0){
+          allBundleElements.map(bundleEl => {
+            this.fieldsToIgnore['bundleElement'].forEach( field => {
+              delete bundleEl[field];
+            });
+          });
+          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allBundleElements), 'enxCPQ__BundleElement__c');
+        }
         // -- bundle elements import end
 
 
@@ -275,8 +306,14 @@ export class ProductImport {
         // @TO-DO - this doesn't handle removal of bundle element options
         let allBundleElementOptions = [];
         this.products.forEach((prod) => { allBundleElementOptions = [...allBundleElementOptions, ...prod.bundleElementOptions] });
-        if (allBundleElementOptions.length > 0)
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allBundleElementOptions), 'enxCPQ__BundleElementOption__c');
+        if (allBundleElementOptions.length > 0){
+          allBundleElementOptions.map(bundleElOp => {
+            this.fieldsToIgnore['bundleElementOption'].forEach( field => {
+              delete bundleElOp[field];
+            });
+          });
+          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allBundleElementOptions), 'enxCPQ__BundleElementOption__c');
+        }
         // -- bundle element options import end
 
 
@@ -284,24 +321,42 @@ export class ProductImport {
         let allAttributeRules = [];
         this.products.forEach((prod) => { allAttributeRules = [...allAttributeRules, ...prod.attributeRules] });
         const allAttributeRulesRTfix = Util.fixRecordTypes(allAttributeRules, recordTypes, 'enxCPQ__AttributeRule__c');
-        if (allAttributeRulesRTfix.length > 0)
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeRulesRTfix), 'enxCPQ__AttributeRule__c');
+        if (allAttributeRulesRTfix.length > 0){
+          allAttributeRulesRTfix.map(attrRule => {
+            this.fieldsToIgnore['attrRules'].forEach( field => {
+              delete attrRule[field];
+            });
+          });
+          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeRulesRTfix), 'enxCPQ__AttributeRule__c');
+        }
         // -- attribute rules import end
 
 
         // -- attribute default values import begin
         let allAttributeDefaultValues = [];
         this.products.forEach((prod) => { allAttributeDefaultValues = [...allAttributeDefaultValues, ...prod.attributeDefaultValues] });
-        if (allAttributeDefaultValues.length > 0)
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeDefaultValues), 'enxCPQ__AttributeDefaultValue__c');
+        if (allAttributeDefaultValues.length > 0){
+          allAttributeDefaultValues.map(attrDefVal => {
+            this.fieldsToIgnore['attrDefaultValues'].forEach( field => {
+              delete attrDefVal[field];
+            });
+          });
+          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeDefaultValues), 'enxCPQ__AttributeDefaultValue__c');
+        }
         // -- attribute default values import end
 
 
         // -- attribute value dependencies import begin
         let allAttributeValueDependencies = [];
         this.products.forEach((prod) => { allAttributeValueDependencies = [...allAttributeValueDependencies, ...prod.attributeValueDependencies] });
-        if (allAttributeValueDependencies.length > 0)
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeValueDependencies), 'enxCPQ__AttributeValueDependency__c');
+        if (allAttributeValueDependencies.length > 0){
+          allAttributeValueDependencies.map(avd => {
+            this.fieldsToIgnore['attrValueDependency'].forEach( field => {
+              delete avd[field];
+            });
+          });
+          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeValueDependencies), 'enxCPQ__AttributeValueDependency__c');
+        }
         // -- attribute value dependencies import end
 
 
@@ -324,16 +379,27 @@ export class ProductImport {
             this.provisioningPlans.forEach(plan => { allProvisioningTaskAssignments = [...allProvisioningTaskAssignments, ... plan.provisioningTasks] });
             if (provisioningTaskAssignmentsTarget.length > 0)
                 await Upsert.deleteData(this.connection, provisioningTaskAssignmentsTarget, 'enxB2B__ProvisioningTaskAssignment__c');
-            if (allProvisioningTaskAssignments.length > 0)
-                await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningTaskAssignments), 'enxB2B__ProvisioningTaskAssignment__c');
-
+            if (allProvisioningTaskAssignments.length > 0){
+              allProvisioningTaskAssignments.map(pta => {
+                this.fieldsToIgnore['prvTaskAssignment'].forEach( field => {
+                  delete pta[field];
+                });
+              });
+              await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningTaskAssignments), 'enxB2B__ProvisioningTaskAssignment__c');
+            }
             const provisioningPlanAssignmentsTarget = await productSelector.getProductProvisioningPlanIds(this.connection, this.productIds);
             let allProvisioningPlanAssignments = [];
             this.products.forEach(product => { allProvisioningPlanAssignments = [...allProvisioningPlanAssignments, ... product.provisioningPlans] });
             if (provisioningPlanAssignmentsTarget.length > 0)
                 await Upsert.deleteData(this.connection, provisioningPlanAssignmentsTarget, 'enxB2B__ProvisioningPlanAssignment__c');
-            if (allProvisioningPlanAssignments.length > 0)
-                await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningPlanAssignments), 'enxB2B__ProvisioningPlanAssignment__c');
+            if (allProvisioningPlanAssignments.length > 0){
+              allProvisioningPlanAssignments.map(ppa => {
+                this.fieldsToIgnore['prvPlanAssignment'].forEach( field => {
+                  delete ppa[field];
+                });
+              });
+              await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningPlanAssignments), 'enxB2B__ProvisioningPlanAssignment__c');
+            }
         }
         // -- provisioning plans import end
 
@@ -343,11 +409,25 @@ export class ProductImport {
           await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allPriceRules), 'enxCPQ__PriceRule__c');
           if(this.priceRuleConditions && this.priceRuleConditions.length){
             const allPriceRuleConditions =  this.priceRuleConditions.map((prc) => {return prc.record});
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allPriceRuleConditions), 'enxCPQ__PriceRuleCondition__c');
+            if(allPriceRuleConditions.length){
+              allPriceRuleConditions.map(prc => {
+                this.fieldsToIgnore['priceRuleCondition'].forEach( field => {
+                  delete prc[field];
+                });
+              });
+              await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allPriceRuleConditions), 'enxCPQ__PriceRuleCondition__c');
+            }
           }
           if(this.priceRuleActions && this.priceRuleActions.length){
             const allPriceRuleActions =  this.priceRuleActions.map((prc) => {return prc.record});
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allPriceRuleActions), 'enxCPQ__PriceRuleAction__c');
+            if(allPriceRuleActions.length){
+              allPriceRuleActions.map(pra => {
+                this.fieldsToIgnore['priceRuleAction'].forEach( field => {
+                  delete pra[field];
+                });
+              });
+              await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allPriceRuleActions), 'enxCPQ__PriceRuleAction__c');
+            }
           }
         }
         // -- price rules import end
@@ -393,6 +473,11 @@ export class ProductImport {
                         }
                     });
                 }
+
+                this.fieldsToIgnore['product'].forEach( field => {
+                  delete prodObj.record[field];
+                });
+
                 this.products.push(prodObj);
                 this.productIds.push(prodObj.getProductId());
             });
@@ -425,6 +510,10 @@ export class ProductImport {
             resourceJSONs.forEach((atr) => {
                 const atrObj:Resource = new Resource(null);
                 atrObj.fillFromJSON(atr);
+
+                this.fieldsToIgnore['product'].forEach( field => {
+                  delete atrObj.record[field];
+                });
 
                 this.resources.push(atrObj);
             });
@@ -460,6 +549,10 @@ export class ProductImport {
                 attributeSetJSONs.forEach((ast) => {
                     const astObj:AttributeSet = new AttributeSet(null);
                     astObj.fillFromJSON(ast);
+
+                    this.fieldsToIgnore['attrSet'].forEach( field => {
+                      delete astObj.record[field];
+                    });
 
                     this.attributeSets.push(astObj);
                 });
@@ -502,7 +595,11 @@ export class ProductImport {
                         const catObj:Category = new Category(null);
                         catObj.fillFromJSON(cat);
 
-                        this.categories.push(catObj);
+                        this.fieldsToIgnore['category'].forEach( field => {
+                          delete catObj.record[field];
+                        });
+
+                      this.categories.push(catObj);
                     });
                 })
                 .catch((function(error){
@@ -548,6 +645,10 @@ export class ProductImport {
                         const catObj:Category = new Category(null);
                         catObj.fillFromJSON(cat);
 
+                        this.fieldsToIgnore['category'].forEach( field => {
+                          delete catObj.record[field];
+                        });
+
                         this.categories.push(catObj);
                     });
                 }
@@ -586,6 +687,10 @@ export class ProductImport {
                 attributeJSONs.forEach((atr) => {
                     const atrObj:Attribute = new Attribute(null);
                     atrObj.fillFromJSON(atr);
+
+                    this.fieldsToIgnore['attr'].forEach( field => {
+                      delete atrObj.record[field];
+                    });
 
                     this.attributes.push(atrObj);
                 });
@@ -626,6 +731,10 @@ export class ProductImport {
                     const chrgObj:Charge = new Charge(null);
                     chrgObj.fillFromJSON(chrg);
 
+                    this.fieldsToIgnore['product'].forEach( field => {
+                      delete chrgObj.record[field];
+                    });
+
                     this.charges.push(chrgObj);
                 });
             });
@@ -649,6 +758,11 @@ export class ProductImport {
             pricebookJSONs.forEach((pbook) => {
                 const pbookObj:Pricebook = new Pricebook(null);
                 pbookObj.fillFromJSON(pbook);
+
+                this.fieldsToIgnore['pricebook'].forEach( field => {
+                  delete pbookObj.record[field];
+                });
+
                 this.pricebooks.push(pbookObj);
             });
         });
@@ -673,6 +787,11 @@ export class ProductImport {
       priceRuleJSONs.forEach((pRule) => {
         const pRuleObj:PriceRule = new PriceRule(null);
         pRuleObj.fillFromJSON(pRule);
+
+        this.fieldsToIgnore['priceRules'].forEach( field => {
+          delete pRuleObj.record[field];
+        });
+
         this.priceRules.push(pRuleObj);
         this.priceRuleConditions = [...this.priceRuleConditions, ...pRuleObj.priceRuleCondition];
         this.priceRuleActions = [...this.priceRuleActions, ...pRuleObj.priceRuleAction];
@@ -709,6 +828,10 @@ export class ProductImport {
                     const pplObj:ProvisioningPlan = new ProvisioningPlan(null);
                     pplObj.fillFromJSON(ppl);
 
+                    this.fieldsToIgnore['prvPlan'].forEach( field => {
+                      delete pplObj.record[field];
+                    });
+
                     this.provisioningPlans.push(pplObj);
                 });
             });
@@ -743,6 +866,10 @@ export class ProductImport {
                 provisioningTaskJSONs.forEach((ptsk) => {
                     const ptskObj:ProvisioningTask = new ProvisioningTask(null);
                     ptskObj.fillFromJSON(ptsk);
+
+                    this.fieldsToIgnore['prvTask'].forEach( field => {
+                      delete ptskObj.record[field];
+                    });
 
                     this.provisioningTasks.push(ptskObj);
                 });
