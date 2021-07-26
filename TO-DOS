@@ -2,10 +2,6 @@ TO-DO LIST
 
 High
 ========
-- test in real life scenario 
---- MTN
---- Tele2 - interesting use cases for add-ons 
---- HGC - product GEPL 
 - test when changing products
 - flag -r (related products) for import
 - flag -c (currencies) for export & import
