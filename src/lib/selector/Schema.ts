@@ -103,6 +103,7 @@ export class Schema {
         'enxCPQ__Resource_Price_Type__c',
         'enxCPQ__Resource_Pricing_Strategy__c',
         'enxCPQ__Resource_Type__c',
+        'enxCPQ__Resource_Location_Type__c',
         'enxCPQ__TECH_External_Id__c',
         'enxCPQ__Include_Resource_In_Item_Price__c',
         'ProductCode',
