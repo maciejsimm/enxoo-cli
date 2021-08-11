@@ -366,10 +366,10 @@ export class ProductExport {
 
     private wrapProductObject(objects:Array<any>, objectName:string = null, parent:string = null){
       parent = parent? parent : 'enxCPQ__Product__r';
-      objects.forEach((arl) => {
-        const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === arl[parent]['enxCPQ__TECH_External_Id__c']);
+      objects.forEach((obj) => {
+        const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === obj[parent]['enxCPQ__TECH_External_Id__c']);
         if (product !== undefined) {
-          product[objectName].push(arl);
+          product[objectName].push(obj);
         }
       });
     }
