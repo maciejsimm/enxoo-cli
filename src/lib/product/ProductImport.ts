@@ -260,21 +260,7 @@ export class ProductImport {
         const stdPricebookEntriesResult = this.mapPricebookEntries(stdPricebookEntriesTarget, standardPricebookEntries);
         const pricebookEntriesResult = this.mapPricebookEntries(pricebookEntriesTarget, pricebookEntries);
 
-        if (pricebookEntriesResult.toDelete.length > 0)
-            await Upsert.deleteData(this.connection, pricebookEntriesResult.toDelete, 'PricebookEntry');
-        if (stdPricebookEntriesResult.toDelete.length > 0)
-            await Upsert.deleteData(this.connection, stdPricebookEntriesResult.toDelete, 'PricebookEntry');
-
-        if (stdPricebookEntriesResult.toUpdate.length > 0) {
-            await Upsert.updateData(this.connection, stdPricebookEntriesResult.toUpdate, 'PricebookEntry');
-        }
-        if (pricebookEntriesResult.toUpdate.length > 0)
-            await Upsert.updateData(this.connection, pricebookEntriesResult.toUpdate, 'PricebookEntry');
-
-        if (stdPricebookEntriesResult.toInsert.length > 0)
-            await Upsert.insertData(this.connection, stdPricebookEntriesResult.toInsert, 'PricebookEntry');
-        if (pricebookEntriesResult.toInsert.length > 0)
-            await Upsert.insertData(this.connection, pricebookEntriesResult.toInsert, 'PricebookEntry');
+        await this.clearAndInsertPricebookEntries(pricebookEntriesResult, stdPricebookEntriesResult);
         // -- pricebooks import end
 
 
@@ -345,6 +331,24 @@ export class ProductImport {
         // -- price rules import end
 
         await Upsert.enableTriggers(this.connection);
+    }
+
+    private async clearAndInsertPricebookEntries(pricebookEntriesResult: any, stdPricebookEntriesResult: any){
+      if (pricebookEntriesResult.toDelete.length > 0)
+        await Upsert.deleteData(this.connection, pricebookEntriesResult.toDelete, 'PricebookEntry');
+      if (stdPricebookEntriesResult.toDelete.length > 0)
+        await Upsert.deleteData(this.connection, stdPricebookEntriesResult.toDelete, 'PricebookEntry');
+
+      if (stdPricebookEntriesResult.toUpdate.length > 0) {
+        await Upsert.updateData(this.connection, stdPricebookEntriesResult.toUpdate, 'PricebookEntry');
+      }
+      if (pricebookEntriesResult.toUpdate.length > 0)
+        await Upsert.updateData(this.connection, pricebookEntriesResult.toUpdate, 'PricebookEntry');
+
+      if (stdPricebookEntriesResult.toInsert.length > 0)
+        await Upsert.insertData(this.connection, stdPricebookEntriesResult.toInsert, 'PricebookEntry');
+      if (pricebookEntriesResult.toInsert.length > 0)
+        await Upsert.insertData(this.connection, pricebookEntriesResult.toInsert, 'PricebookEntry');
     }
 
     private removeIgnoredFields(objects: any[], label: string){
