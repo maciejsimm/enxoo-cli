@@ -260,7 +260,6 @@ export class ProductImport {
         const stdPricebookEntriesResult = this.mapPricebookEntries(stdPricebookEntriesTarget, standardPricebookEntries);
         const pricebookEntriesResult = this.mapPricebookEntries(pricebookEntriesTarget, pricebookEntries);
 
-        //do jednej metody
         if (pricebookEntriesResult.toDelete.length > 0)
             await Upsert.deleteData(this.connection, pricebookEntriesResult.toDelete, 'PricebookEntry');
         if (stdPricebookEntriesResult.toDelete.length > 0)
