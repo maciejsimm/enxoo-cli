@@ -96,14 +96,14 @@ export class ProductExport {
           this.wrapProductResources(resourceProducts, productResourceJunctions);
           this.wrapUnrelatedResources(unrelatedResources);
         }
-        const allIdsToRetrieveCharges = [...this.productIds, ...resourceIds];
-        const charges = await productSelector.getCharges(this.connection, allIdsToRetrieveCharges);
+        const productAndResourceIds = [...this.productIds, ...resourceIds];
+        const charges = await productSelector.getCharges(this.connection, productAndResourceIds);
         this.wrapProductCharges(charges);
 
-        const productAttributes = await productSelector.getProductAttributes(this.connection, this.productIds);
-        this.wrapProductObject(productAttributes, 'productAttributes')
+        const productAttributes = await productSelector.getProductAttributes(this.connection, productAndResourceIds);
+        this.wrapProductObject(productAttributes, 'productAttributes', null,true);
 
-        const localAttributeValues = await productSelector.getLocalAttributeValues(this.connection, this.productIds);
+        const localAttributeValues = await productSelector.getLocalAttributeValues(this.connection, [...this.productIds, ...resourceIds]);
         this.wrapAttributeValues(localAttributeValues);
 
         const attributeRules = await productSelector.getAttributeRules(this.connection, this.productIds);
@@ -167,6 +167,7 @@ export class ProductExport {
         // -- attributes begin
         this.attributeIds = [];
         this.products.forEach(product => { this.attributeIds = [...this.attributeIds, ...product.getAttributeIds()] });
+        this.resources.forEach(res => { this.attributeIds = [...this.attributeIds, ...res.getAttributeIds()] });
 
         const attributes = await productSelector.getAttributeDefinitions(this.connection, this.attributeIds);
         this.wrapAttributes(attributes);
@@ -179,6 +180,7 @@ export class ProductExport {
         // -- attribute sets begin
         this.attributeSetIds = [];
         this.products.forEach(product => { this.attributeSetIds = [...this.attributeSetIds, ...new Set(product.getAttributeSetIds())] });
+        this.resources.forEach(res => { this.attributeSetIds = [...this.attributeSetIds, ...new Set(res.getAttributeSetIds())] });
 
         const attributeSets = await productSelector.getAttributeSets(this.connection, this.attributeSetIds);
         this.wrapAttributeSets(attributeSets);
@@ -364,10 +366,14 @@ export class ProductExport {
         Util.log('-- Following related products will also be retrieved: ' + productNames);
     }
 
-    private wrapProductObject(objects:Array<any>, objectName:string = null, parent:string = null){
+    private wrapProductObject(objects:Array<any>, objectName:string = null, parent:string = null, includeResources:boolean = false){
       parent = parent? parent : 'enxCPQ__Product__r';
       objects.forEach((obj) => {
-        const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === obj[parent]['enxCPQ__TECH_External_Id__c']);
+        let product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === obj[parent]['enxCPQ__TECH_External_Id__c']);
+        if (product == null && includeResources){
+          // @ts-ignore
+          product = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === obj[parent]['enxCPQ__TECH_External_Id__c']);
+        }
         if (product !== undefined) {
           product[objectName].push(obj);
         }
@@ -450,7 +456,11 @@ export class ProductExport {
     private wrapAttributeValues(productAttributeValues:Array<any>) {
         this.attributeLocalValues = productAttributeValues;
         productAttributeValues.forEach((ava) => {
-            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
+            let product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
+            if(product == null){
+              // @ts-ignore
+              product = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
+            }
             if (product !== undefined) {
                 product.attributeValues.push(ava);
                 product.attributeValues.sort((a, b) => (a.Name > b.Name) ? 1 : -1);

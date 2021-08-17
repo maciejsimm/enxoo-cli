@@ -178,12 +178,20 @@ export class ProductImport {
 
 
         // -- product attributes import begin
-        const productAttributesTarget = await productSelector.getProductAttributeIds(this.connection, this.productIds);
+        const productAttributesTarget = await productSelector.getProductAttributeIds(this.connection, [...this.productIds, ...this.resourceIds]);
         let allProductAttributes = [];
         this.products.forEach((prod) => { allProductAttributes = [...allProductAttributes, ...prod.productAttributes] });
         allProductAttributes.map(prodAtt => {
           if (this.fieldsToIgnore['productAttr']) {
               this.fieldsToIgnore['productAttr'].forEach( field => {
+              delete prodAtt[field];
+            });
+          }
+        });
+        this.resources.forEach((res) => { allProductAttributes = [...allProductAttributes, ...res.productAttributes] });
+        allProductAttributes.map(prodAtt => {
+          if (this.fieldsToIgnore['productAttr']) {
+            this.fieldsToIgnore['productAttr'].forEach( field => {
               delete prodAtt[field];
             });
           }
@@ -485,6 +493,10 @@ export class ProductImport {
             this.attributeSetIds = [...this.attributeSetIds, ...new Set(product.getAttributeSetIds())];
         });
 
+        this.resources.forEach(resource => {
+          this.attributeSetIds = [...this.attributeSetIds, ...new Set(resource.getAttributeSetIds())];
+        });
+
         if (this.attributeSetIds.length > 0) {
             let attributeSetJSONArray = await this.getObjectJSONArray('attributeSets','_ATS', this.attributeSetIds);
 
@@ -603,6 +615,10 @@ export class ProductImport {
 
         this.products.forEach(product => {
             this.attributeIds = [...this.attributeIds, ...new Set(product.getAttributeIds())];
+        });
+
+        this.resources.forEach(resource => {
+          this.attributeIds = [...this.attributeIds, ...new Set(resource.getAttributeIds())];
         });
 
         if (this.attributeIds.length > 0) {
