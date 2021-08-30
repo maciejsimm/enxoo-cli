@@ -309,7 +309,6 @@ export class Schema {
         'Name',
         'CurrencyIsoCode',
         'IsActive',
-        'IsStandard',
         'Description',
         'enxCPQ__Global_Partner_Price_Book__c',
         'enxCPQ__Master__c',

@@ -468,7 +468,7 @@ export class ProductSelector {
 
     public async getPricebooks(connection: Connection) {
         const queryLabel = 'pricebook';
-        const query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'Pricebook').join(',') + " FROM Pricebook2";
+        const query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'Pricebook').join(',') + ", IsStandard FROM Pricebook2";
         return await Query.executeQuery(connection, query, queryLabel);
     }
 
