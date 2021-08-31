@@ -105,6 +105,7 @@ export class Schema {
         'enxCPQ__Resource_Type__c',
         'enxCPQ__Resource_Location_Type__c',
         'enxCPQ__TECH_External_Id__c',
+        'enxCPQ__Target_Resource_Markup__c',
         'enxCPQ__Include_Resource_In_Item_Price__c',
         'ProductCode',
         'Description',
