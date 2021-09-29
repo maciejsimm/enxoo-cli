@@ -5,6 +5,8 @@ export class Resource extends Serializable {
     public RecordTypeId:any;
     public charges:Array<any>;
     public productResources:Array<any>;
+    public productAttributes:Array<any>;
+    public attributeValues:Array<any>;
 
     constructor(resource:any) {
         super();
@@ -12,6 +14,8 @@ export class Resource extends Serializable {
         this.productResources = [];
         this.charges = [];
         this.RecordTypeId = '';
+        this.productAttributes = [];
+        this.attributeValues = [];
     }
 
     public getFileName() {
@@ -26,6 +30,24 @@ export class Resource extends Serializable {
         return charge['enxCPQ__TECH_External_Id__c'];
       }
     });
+  }
+
+  public getAttributeIds() {
+    return this.productAttributes.map((attr) => {
+      if(attr['enxCPQ__Attribute__r']){
+        return attr['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'];
+      }
+    });
+  }
+
+  public getAttributeSetIds() {
+    return this.productAttributes
+      .filter((attr) => {
+        return attr['enxCPQ__Attribute_Set__r'] !== undefined && attr['enxCPQ__Attribute_Set__r'] !== null
+      })
+      .map((attr) => {
+        return attr['enxCPQ__Attribute_Set__r']['enxCPQ__TECH_External_Id__c'];
+      });
   }
 
     public getRecordId(){

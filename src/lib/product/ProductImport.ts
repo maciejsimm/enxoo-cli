@@ -1,20 +1,20 @@
-import { ProductSelector } from '../selector/ProductSelector';
-import { Resource } from './Resource';
-import { Product } from './Product';
-import { Attribute } from './Attribute';
-import { AttributeSet } from './AttributeSet';
-import { ProvisioningPlan } from './ProvisioningPlan';
-import { ProvisioningTask } from './ProvisioningTask';
-import { Charge } from './Charge';
-import { Pricebook } from './Pricebook';
-import { Category } from './Category';
-import { PriceRule } from './PriceRule';
-import { PriceRuleAction } from "./PriceRuleAction";
-import { PriceRuleCondition } from "./PriceRuleCondition";
-import { FileManager } from '../file/FileManager';
-import { Connection } from "@salesforce/core";
-import { Upsert } from '../repository/Upsert';
-import { Util } from '../Util';
+import {ProductSelector} from '../selector/ProductSelector';
+import {Resource} from './Resource';
+import {Product} from './Product';
+import {Attribute} from './Attribute';
+import {AttributeSet} from './AttributeSet';
+import {ProvisioningPlan} from './ProvisioningPlan';
+import {ProvisioningTask} from './ProvisioningTask';
+import {Charge} from './Charge';
+import {Pricebook} from './Pricebook';
+import {Category} from './Category';
+import {PriceRule} from './PriceRule';
+import {PriceRuleAction} from "./PriceRuleAction";
+import {PriceRuleCondition} from "./PriceRuleCondition";
+import {FileManager} from '../file/FileManager';
+import {Connection} from "@salesforce/core";
+import {Upsert} from '../repository/Upsert';
+import {Util} from '../Util';
 import {Query} from "../selector/Query";
 
 export class ProductImport {
@@ -46,6 +46,7 @@ export class ProductImport {
     private connection:Connection;
     private fileManager:FileManager;
     private fieldsToIgnore: any;
+    private recordTypes: any;
 
     constructor(targetDirectory:string, connection: Connection, exportB2BObjects: boolean) {
         this.targetDirectory = targetDirectory;
@@ -79,7 +80,7 @@ export class ProductImport {
         }
 
         const productSelector = new ProductSelector(this.exportB2BObjects);
-        const recordTypes = await productSelector.getRecordTypes(this.connection);
+        this.recordTypes = await productSelector.getRecordTypes(this.connection);
 
         await Upsert.disableTriggers(this.connection);
 
@@ -111,7 +112,7 @@ export class ProductImport {
 
         // -- resources import begin
       if (this.resources.length) {
-        const recordTypeId = recordTypes.filter(e => e.Object === 'Product2').find(e => e.DeveloperName === 'Resource').id;
+        const recordTypeId = this.recordTypes.filter(e => e.Object === 'Product2').find(e => e.DeveloperName === 'Resource').id;
         this.resources.forEach(res => {
             res.record.RecordTypeId = recordTypeId;
         })
@@ -124,7 +125,7 @@ export class ProductImport {
         if (this.productIds.length > 0) {
             let allProducts = [];
             this.products.forEach(product => { allProducts = [...allProducts, ... product.getProducts()] });
-            const allProductsRTfix = Util.fixRecordTypes(allProducts, recordTypes, 'Product2');
+            const allProductsRTfix = Util.fixRecordTypes(allProducts, this.recordTypes, 'Product2');
             const allProductsWithoutRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
 
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithoutRelationships), 'Product2', 'Products with no relationship');
@@ -177,7 +178,7 @@ export class ProductImport {
 
 
         // -- product attributes import begin
-        const productAttributesTarget = await productSelector.getProductAttributeIds(this.connection, this.productIds);
+        const productAttributesTarget = await productSelector.getProductAttributeIds(this.connection, [...this.productIds, ...this.resourceIds]);
         let allProductAttributes = [];
         this.products.forEach((prod) => { allProductAttributes = [...allProductAttributes, ...prod.productAttributes] });
         allProductAttributes.map(prodAtt => {
@@ -187,7 +188,15 @@ export class ProductImport {
             });
           }
         });
-        const allProductAttributesRTfix = Util.fixRecordTypes(allProductAttributes, recordTypes, 'enxCPQ__ProductAttribute__c');
+        this.resources.forEach((res) => { allProductAttributes = [...allProductAttributes, ...res.productAttributes] });
+        allProductAttributes.map(prodAtt => {
+          if (this.fieldsToIgnore['productAttr']) {
+            this.fieldsToIgnore['productAttr'].forEach( field => {
+              delete prodAtt[field];
+            });
+          }
+        });
+        const allProductAttributesRTfix = Util.fixRecordTypes(allProductAttributes, this.recordTypes, 'enxCPQ__ProductAttribute__c');
         // @TO-DO handle array > 200 items
         if (productAttributesTarget.length > 0)
             await Upsert.deleteData(this.connection, productAttributesTarget, 'enxCPQ__ProductAttribute__c');
@@ -199,13 +208,13 @@ export class ProductImport {
         // -- charges import begin
         if (this.chargeIds.length > 0) {
             const allCharges = this.charges.map((c) => {return c.record});
-            const allChargesRTfix = Util.fixRecordTypes(allCharges, recordTypes, 'Product2');
+            const allChargesRTfix = Util.fixRecordTypes(allCharges, this.recordTypes, 'Product2');
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allChargesRTfix), 'Product2', 'Charge products');
 
             let allChargeItems = [];
             this.charges.forEach((charge) => { allChargeItems = [...allChargeItems, ...charge.chargeElements, ...charge.chargeTiers] });
             if (allChargeItems.length > 0) {
-                const allChargeItemsRTfix = Util.fixRecordTypes(allChargeItems, recordTypes, 'Product2');
+                const allChargeItemsRTfix = Util.fixRecordTypes(allChargeItems, this.recordTypes, 'Product2');
                 await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allChargeItemsRTfix), 'Product2', 'Charge products');
             }
         }
@@ -214,7 +223,7 @@ export class ProductImport {
         if (this.productIds.length > 0 && Upsert.reimportProduct2AfterCharges) {
             let allProducts = [];
             this.products.forEach(product => { allProducts = [...allProducts, ...product.getProducts()] });
-            const allProductsRTfix = Util.fixRecordTypes(allProducts, recordTypes, 'Product2');
+            const allProductsRTfix = Util.fixRecordTypes(allProducts, this.recordTypes, 'Product2');
             const allProductsWithoutRelationships = Util.sanitizeDeepForUpsert(allProductsRTfix);
 
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductsWithoutRelationships), 'Product2', 'Products again after charges');
@@ -259,127 +268,24 @@ export class ProductImport {
         const stdPricebookEntriesResult = this.mapPricebookEntries(stdPricebookEntriesTarget, standardPricebookEntries);
         const pricebookEntriesResult = this.mapPricebookEntries(pricebookEntriesTarget, pricebookEntries);
 
-        if (pricebookEntriesResult.toDelete.length > 0)
-            await Upsert.deleteData(this.connection, pricebookEntriesResult.toDelete, 'PricebookEntry');
-        if (stdPricebookEntriesResult.toDelete.length > 0)
-            await Upsert.deleteData(this.connection, stdPricebookEntriesResult.toDelete, 'PricebookEntry');
-
-        if (stdPricebookEntriesResult.toUpdate.length > 0) {
-            await Upsert.updateData(this.connection, stdPricebookEntriesResult.toUpdate, 'PricebookEntry');
-        }
-        if (pricebookEntriesResult.toUpdate.length > 0)
-            await Upsert.updateData(this.connection, pricebookEntriesResult.toUpdate, 'PricebookEntry');
-
-        if (stdPricebookEntriesResult.toInsert.length > 0)
-            await Upsert.insertData(this.connection, stdPricebookEntriesResult.toInsert, 'PricebookEntry');
-        if (pricebookEntriesResult.toInsert.length > 0)
-            await Upsert.insertData(this.connection, pricebookEntriesResult.toInsert, 'PricebookEntry');
+        await this.clearAndInsertPricebookEntries(pricebookEntriesResult, stdPricebookEntriesResult);
         // -- pricebooks import end
 
 
-        // -- product relationships import begin
-        let allProductRelationships = [];
-        this.products.forEach((prod) => { allProductRelationships = [...allProductRelationships, ...prod.productRelationships] });
-        if (allProductRelationships.length > 0){
-          allProductRelationships.map(prodRel => {
-            if (this.fieldsToIgnore['productRelationships']) {
-              this.fieldsToIgnore['productRelationships'].forEach( field => {
-                delete prodRel[field];
-              });
-            }
-          });
-          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductRelationships), 'enxCPQ__ProductRelationship__c');
-        }
-        // -- product relationships import end
-
-
-        // -- bundle elements import begin
-        // @TO-DO - this doesn't handle removal of bundle elements
-        let allBundleElements = [];
-        this.products.forEach((prod) => { allBundleElements = [...allBundleElements, ...prod.bundleElements] });
-        if (allBundleElements.length > 0){
-          allBundleElements.map(bundleEl => {
-            if(this.fieldsToIgnore['bundleElement']) {
-              this.fieldsToIgnore['bundleElement'].forEach( field => {
-                delete bundleEl[field];
-              });
-            }
-          });
-          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allBundleElements), 'enxCPQ__BundleElement__c');
-        }
-        // -- bundle elements import end
-
-
-        // -- bundle element options import begin
-        // @TO-DO - this doesn't handle removal of bundle element options
-        let allBundleElementOptions = [];
-        this.products.forEach((prod) => { allBundleElementOptions = [...allBundleElementOptions, ...prod.bundleElementOptions] });
-        if (allBundleElementOptions.length > 0){
-          allBundleElementOptions.map(bundleElOp => {
-            if(this.fieldsToIgnore['bundleElementOption']) {
-              this.fieldsToIgnore['bundleElementOption'].forEach( field => {
-                delete bundleElOp[field];
-              });
-            }
-          });
-          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allBundleElementOptions), 'enxCPQ__BundleElementOption__c');
-        }
-        // -- bundle element options import end
-
-
-        // -- attribute rules import begin
-        let allAttributeRules = [];
-        this.products.forEach((prod) => { allAttributeRules = [...allAttributeRules, ...prod.attributeRules] });
-        const allAttributeRulesRTfix = Util.fixRecordTypes(allAttributeRules, recordTypes, 'enxCPQ__AttributeRule__c');
-        if (allAttributeRulesRTfix.length > 0){
-          allAttributeRulesRTfix.map(attrRule => {
-            if (this.fieldsToIgnore['attrRules']) {
-              this.fieldsToIgnore['attrRules'].forEach( field => {
-                delete attrRule[field];
-              });
-            }
-          });
-          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeRulesRTfix), 'enxCPQ__AttributeRule__c');
-        }
-        // -- attribute rules import end
-
-
-        // -- attribute default values import begin
-        let allAttributeDefaultValues = [];
-        this.products.forEach((prod) => { allAttributeDefaultValues = [...allAttributeDefaultValues, ...prod.attributeDefaultValues] });
-        if (allAttributeDefaultValues.length > 0){
-          allAttributeDefaultValues.map(attrDefVal => {
-            if(this.fieldsToIgnore['attrDefaultValues']) {
-              this.fieldsToIgnore['attrDefaultValues'].forEach( field => {
-                delete attrDefVal[field];
-              });
-            }
-          });
-          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeDefaultValues), 'enxCPQ__AttributeDefaultValue__c');
-        }
-        // -- attribute default values import end
-
-
-        // -- attribute value dependencies import begin
-        let allAttributeValueDependencies = [];
-        this.products.forEach((prod) => { allAttributeValueDependencies = [...allAttributeValueDependencies, ...prod.attributeValueDependencies] });
-        if (allAttributeValueDependencies.length > 0){
-          allAttributeValueDependencies.map(avd => {
-            if(this.fieldsToIgnore['attrValueDependency']) {
-              this.fieldsToIgnore['attrValueDependency'].forEach( field => {
-                delete avd[field];
-              });
-            }
-          });
-          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allAttributeValueDependencies), 'enxCPQ__AttributeValueDependency__c');
-        }
-        // -- attribute value dependencies import end
+        // -- objects with product parent import begin
+        await this.importElements('productRelationships','productRelationships','enxCPQ__ProductRelationship__c');
+        await this.importElements('bundleElements','bundleElement','enxCPQ__BundleElement__c');
+        await this.importElements('bundleElementOptions','bundleElementOption','enxCPQ__BundleElementOption__c');
+        await this.importElements('attributeRules','attrRules','enxCPQ__AttributeRule__c');
+        await this.importElements('attributeDefaultValues','attrDefaultValues','enxCPQ__AttributeDefaultValue__c');
+        await this.importElements('attributeValueDependencies','attrValueDependency','enxCPQ__AttributeValueDependency__c');
+        // -- objects with product parent import end
 
 
         // -- provisioning tasks import begin
         if (this.provisioningTaskIds && this.provisioningTaskIds.length > 0) {
             const allProvisioningTasks =  this.provisioningTasks.map((task) => {return task.record});
-            const allProvisioningTasksRTfix = Util.fixRecordTypes(allProvisioningTasks, recordTypes, 'enxB2B__ProvisioningTask__c');
+            const allProvisioningTasksRTfix = Util.fixRecordTypes(allProvisioningTasks, this.recordTypes, 'enxB2B__ProvisioningTask__c');
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProvisioningTasksRTfix), 'enxB2B__ProvisioningTask__c');
         }
         // -- provisioning tasks import end
@@ -396,13 +302,7 @@ export class ProductImport {
             if (provisioningTaskAssignmentsTarget.length > 0)
                 await Upsert.deleteData(this.connection, provisioningTaskAssignmentsTarget, 'enxB2B__ProvisioningTaskAssignment__c');
             if (allProvisioningTaskAssignments.length > 0){
-              allProvisioningTaskAssignments.map(pta => {
-                if(this.fieldsToIgnore['prvTaskAssignment']) {
-                  this.fieldsToIgnore['prvTaskAssignment'].forEach( field => {
-                    delete pta[field];
-                  });
-                }
-              });
+              this.removeIgnoredFields(allProvisioningTaskAssignments, 'prvTaskAssignment');
               await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningTaskAssignments), 'enxB2B__ProvisioningTaskAssignment__c');
             }
             const provisioningPlanAssignmentsTarget = await productSelector.getProductProvisioningPlanIds(this.connection, this.productIds);
@@ -411,13 +311,7 @@ export class ProductImport {
             if (provisioningPlanAssignmentsTarget.length > 0)
                 await Upsert.deleteData(this.connection, provisioningPlanAssignmentsTarget, 'enxB2B__ProvisioningPlanAssignment__c');
             if (allProvisioningPlanAssignments.length > 0){
-              allProvisioningPlanAssignments.map(ppa => {
-                if(this.fieldsToIgnore['prvPlanAssignment']) {
-                  this.fieldsToIgnore['prvPlanAssignment'].forEach( field => {
-                    delete ppa[field];
-                  });
-                }
-              });
+              this.removeIgnoredFields(allProvisioningPlanAssignments, 'prvPlanAssignment');
               await Upsert.insertData(this.connection, Util.sanitizeForUpsert(allProvisioningPlanAssignments), 'enxB2B__ProvisioningPlanAssignment__c');
             }
         }
@@ -430,24 +324,14 @@ export class ProductImport {
           if(this.priceRuleConditions && this.priceRuleConditions.length){
             const allPriceRuleConditions =  this.priceRuleConditions.map((prc) => {return prc.record});
             if(allPriceRuleConditions.length){
-              allPriceRuleConditions.map(prc => {
-                if(this.fieldsToIgnore['priceRuleCondition']) {
-                  this.fieldsToIgnore['priceRuleCondition'].forEach( field => {
-                    delete prc[field];
-                  });
-                }
-              });
+              this.removeIgnoredFields(allPriceRuleConditions, 'priceRuleCondition');
               await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allPriceRuleConditions), 'enxCPQ__PriceRuleCondition__c');
             }
           }
           if(this.priceRuleActions && this.priceRuleActions.length){
             const allPriceRuleActions =  this.priceRuleActions.map((prc) => {return prc.record});
             if(allPriceRuleActions.length){
-              allPriceRuleActions.map(pra => {
-                this.fieldsToIgnore['priceRuleAction'].forEach( field => {
-                  delete pra[field];
-                });
-              });
+              this.removeIgnoredFields(allPriceRuleActions, 'priceRuleAction');
               await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allPriceRuleActions), 'enxCPQ__PriceRuleAction__c');
             }
           }
@@ -457,7 +341,65 @@ export class ProductImport {
         await Upsert.enableTriggers(this.connection);
     }
 
-    private async setProductImportScope(productToImportNames: Array<string>) {
+    private async clearAndInsertPricebookEntries(pricebookEntriesResult: any, stdPricebookEntriesResult: any){
+      if (pricebookEntriesResult.toDelete.length > 0)
+        await Upsert.deleteData(this.connection, pricebookEntriesResult.toDelete, 'PricebookEntry');
+      if (stdPricebookEntriesResult.toDelete.length > 0)
+        await Upsert.deleteData(this.connection, stdPricebookEntriesResult.toDelete, 'PricebookEntry');
+
+      if (stdPricebookEntriesResult.toUpdate.length > 0) {
+        await Upsert.updateData(this.connection, stdPricebookEntriesResult.toUpdate, 'PricebookEntry');
+      }
+      if (pricebookEntriesResult.toUpdate.length > 0)
+        await Upsert.updateData(this.connection, pricebookEntriesResult.toUpdate, 'PricebookEntry');
+
+      if (stdPricebookEntriesResult.toInsert.length > 0)
+        await Upsert.insertData(this.connection, stdPricebookEntriesResult.toInsert, 'PricebookEntry');
+      if (pricebookEntriesResult.toInsert.length > 0)
+        await Upsert.insertData(this.connection, pricebookEntriesResult.toInsert, 'PricebookEntry');
+    }
+
+    private removeIgnoredFields(objects: any[], label: string){
+        objects.map(prodRel => {
+            if (this.fieldsToIgnore[label]) {
+                this.fieldsToIgnore[label].forEach( field => {
+                    delete prodRel[field];
+                });
+            }
+        });
+    }
+
+    private async importElements(objName: string, objLabel: string, sObjectName :string){
+      let allElements = [];
+      this.products.forEach((prod) => { allElements = [...allElements, ...prod[objName]] });
+      if(objName === 'attributeRules'){
+        allElements = Util.fixRecordTypes(allElements, this.recordTypes, sObjectName);
+      }
+      if(allElements.length){
+        this.removeIgnoredFields(allElements, objLabel);
+        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allElements), sObjectName);
+      }
+    }
+
+  private async getObjectJSONArray(fileDirectory: string, index: string, scope: any[]){
+    const allFileNames = await this.fileManager.readAllFileNames(fileDirectory);
+
+    const fileNames = allFileNames.filter((elem) => {
+      const fileNameId = elem.substring(elem.indexOf(index)+1, elem.indexOf('.json'));
+      return scope.includes(fileNameId);
+    });
+
+    let objJSONArray = [];
+    fileNames.forEach((fileName) => {
+      const objInputReader = this.fileManager.readFile(fileDirectory, fileName);
+      objJSONArray.push(objInputReader);
+    });
+
+    return objJSONArray
+  }
+
+
+  private async setProductImportScope(productToImportNames: Array<string>) {
 
         const allProductsLocal = await this.getAllProductsLocal();
 
@@ -482,9 +424,7 @@ export class ProductImport {
         });
 
         return Promise.all(productJSONArray).then((values) => {
-            const productsJSONs = values;
-
-            productsJSONs.forEach((prd) => {
+          values.forEach((prd) => {
                 const prodObj:Product = new Product(null);
                 prodObj.fillFromJSON(prd);
 
@@ -529,9 +469,7 @@ export class ProductImport {
         });
 
         return Promise.all(resourceJSONArray).then((values) => {
-            const resourceJSONs = values;
-
-            resourceJSONs.forEach((atr) => {
+          values.forEach((atr) => {
                 const atrObj:Resource = new Resource(null);
                 atrObj.fillFromJSON(atr);
 
@@ -555,24 +493,15 @@ export class ProductImport {
             this.attributeSetIds = [...this.attributeSetIds, ...new Set(product.getAttributeSetIds())];
         });
 
+        this.resources.forEach(resource => {
+          this.attributeSetIds = [...this.attributeSetIds, ...new Set(resource.getAttributeSetIds())];
+        });
+
         if (this.attributeSetIds.length > 0) {
-            const allAttributeSetFileNames = await this.fileManager.readAllFileNames('attributeSets');
-
-            const attributeSetFileNames = allAttributeSetFileNames.filter((elem) => {
-                const fileNameId = elem.substring(elem.indexOf('_ATS')+1, elem.indexOf('.json'));
-                return this.attributeSetIds.includes(fileNameId);
-            });
-
-            let attributeSetJSONArray = [];
-            attributeSetFileNames.forEach((fileName) => {
-                const attributeSetInputReader = this.fileManager.readFile('attributeSets', fileName);
-                attributeSetJSONArray.push(attributeSetInputReader);
-            });
+            let attributeSetJSONArray = await this.getObjectJSONArray('attributeSets','_ATS', this.attributeSetIds);
 
             return Promise.all(attributeSetJSONArray).then((values) => {
-                const attributeSetJSONs = values;
-
-                attributeSetJSONs.forEach((ast) => {
+              values.forEach((ast) => {
                     const astObj:AttributeSet = new AttributeSet(null);
                     astObj.fillFromJSON(ast);
 
@@ -604,22 +533,11 @@ export class ProductImport {
         const allCategoryFileNames = await this.fileManager.readAllFileNames('categories');
 
         if(allCategoryFileNames && allCategoryFileNames.length > 0) {
-            const categoryFileNames = allCategoryFileNames.filter((elem) => {
-                const fileNameId = elem.substring(elem.indexOf('_CAT')+1, elem.indexOf('.json'));
-                return this.categoryIds.includes(fileNameId);
-            });
-
-            let categoryJSONArray = [];
-            categoryFileNames.forEach((fileName) => {
-                const categoryInputReader = this.fileManager.readFile('categories', fileName);
-                categoryJSONArray.push(categoryInputReader);
-            });
+            let categoryJSONArray = await this.getObjectJSONArray('categories', '_CAT', this.categoryIds);
 
             return Promise.all(categoryJSONArray)
                 .then((values) => {
-                    const categoryJSONs = values;
-
-                    categoryJSONs.forEach((cat) => {
+                  values.forEach((cat) => {
                         const catObj:Category = new Category(null);
                         catObj.fillFromJSON(cat);
 
@@ -699,24 +617,14 @@ export class ProductImport {
             this.attributeIds = [...this.attributeIds, ...new Set(product.getAttributeIds())];
         });
 
+        this.resources.forEach(resource => {
+          this.attributeIds = [...this.attributeIds, ...new Set(resource.getAttributeIds())];
+        });
+
         if (this.attributeIds.length > 0) {
-            const allAttributeFileNames = await this.fileManager.readAllFileNames('attributes');
-
-            const attributeFileNames = allAttributeFileNames.filter((elem) => {
-                const fileNameId = elem.substring(elem.indexOf('_ATR')+1, elem.indexOf('.json'));
-                return this.attributeIds.includes(fileNameId);
-            });
-
-            let attributeJSONArray = [];
-            attributeFileNames.forEach((fileName) => {
-                const attributeInputReader = this.fileManager.readFile('attributes', fileName);
-                attributeJSONArray.push(attributeInputReader);
-            });
-
-            return Promise.all(attributeJSONArray).then((values) => {
-                const attributeJSONs = values;
-
-                attributeJSONs.forEach((atr) => {
+          let attributeJSONArray = await this.getObjectJSONArray('attributes','_ATR', this.attributeIds);
+          return Promise.all(attributeJSONArray).then((values) => {
+              values.forEach((atr:string) => {
                     const atrObj:Attribute = new Attribute(null);
                     atrObj.fillFromJSON(atr);
 
@@ -745,30 +653,16 @@ export class ProductImport {
         });
 
         if (this.chargeIds.length > 0) {
-            const allChargeFileNames = await this.fileManager.readAllFileNames('charges');
-
-            const chargeFileNames = allChargeFileNames.filter((elem) => {
-                const fileNameId = elem.substring(elem.indexOf('_PRD')+1, elem.indexOf('.json'));
-                return this.chargeIds.includes(fileNameId);
-            });
-
-            let chargeJSONArray = [];
-            chargeFileNames.forEach((fileName) => {
-                const chargeInputReader = this.fileManager.readFile('charges', fileName);
-                chargeJSONArray.push(chargeInputReader);
-            });
-
+            let chargeJSONArray = await this.getObjectJSONArray('charges','_PRD', this.chargeIds);
             return Promise.all(chargeJSONArray).then((values) => {
-                const chargeJSONs = values;
-
-                chargeJSONs.forEach((chrg) => {
+              values.forEach((chrg) => {
                     const chrgObj:Charge = new Charge(null);
                     chrgObj.fillFromJSON(chrg);
 
                     if(this.fieldsToIgnore['product']) {
                       this.fieldsToIgnore['product'].forEach( field => {
                         delete chrgObj.record[field];
-                      });                      
+                      });
                     }
 
                     this.charges.push(chrgObj);
@@ -789,9 +683,7 @@ export class ProductImport {
         });
 
         return Promise.all(pricebookJSONArray).then((values) => {
-            const pricebookJSONs = values;
-
-            pricebookJSONs.forEach((pbook) => {
+          values.forEach((pbook) => {
                 const pbookObj:Pricebook = new Pricebook(null);
                 pbookObj.fillFromJSON(pbook);
 
@@ -820,9 +712,7 @@ export class ProductImport {
     });
 
     return Promise.all(priceRuleJSONArray).then((values) => {
-      const priceRuleJSONs = values;
-
-      priceRuleJSONs.forEach((pRule) => {
+      values.forEach((pRule) => {
         const pRuleObj:PriceRule = new PriceRule(null);
         pRuleObj.fillFromJSON(pRule);
 
@@ -848,23 +738,9 @@ export class ProductImport {
         });
 
         if (this.provisioningPlanIds.length > 0) {
-            const allProvisioningPlanFileNames = await this.fileManager.readAllFileNames('provisioningPlans');
-
-            const provisioningPlanFileNames = allProvisioningPlanFileNames.filter((elem) => {
-                const fileNameId = elem.substring(elem.indexOf('_PPL')+1, elem.indexOf('.json'));
-                return this.provisioningPlanIds.includes(fileNameId);
-            });
-
-            let provisioningPlanJSONArray = [];
-            provisioningPlanFileNames.forEach((fileName) => {
-                const provisioningPlanInputReader = this.fileManager.readFile('provisioningPlans', fileName);
-                provisioningPlanJSONArray.push(provisioningPlanInputReader);
-            });
-
+            let provisioningPlanJSONArray = await this.getObjectJSONArray('provisioningPlans','_PPL', this.provisioningPlanIds);
             return Promise.all(provisioningPlanJSONArray).then((values) => {
-                const provisioningPlanJSONs = values;
-
-                provisioningPlanJSONs.forEach((ppl) => {
+              values.forEach((ppl) => {
                     const pplObj:ProvisioningPlan = new ProvisioningPlan(null);
                     pplObj.fillFromJSON(ppl);
 
@@ -889,23 +765,9 @@ export class ProductImport {
         });
 
         if (this.provisioningTaskIds.length > 0) {
-            const allProvisioningTaskFileNames = await this.fileManager.readAllFileNames('provisioningTasks');
-
-            const provisioningTaskFileNames = allProvisioningTaskFileNames.filter((elem) => {
-                const fileNameId = elem.substring(elem.indexOf('_PTS')+1, elem.indexOf('.json'));
-                return this.provisioningTaskIds.includes(fileNameId);
-            });
-
-            let provisioningTaskJSONArray = [];
-            provisioningTaskFileNames.forEach((fileName) => {
-                const provisioningTaskInputReader = this.fileManager.readFile('provisioningTasks', fileName);
-                provisioningTaskJSONArray.push(provisioningTaskInputReader);
-            });
-
+            let provisioningTaskJSONArray = await this.getObjectJSONArray('provisioningTasks','_PTS', this.provisioningTaskIds);
             return Promise.all(provisioningTaskJSONArray).then((values) => {
-                const provisioningTaskJSONs = values;
-
-                provisioningTaskJSONs.forEach((ptsk) => {
+              values.forEach((ptsk) => {
                     const ptskObj:ProvisioningTask = new ProvisioningTask(null);
                     ptskObj.fillFromJSON(ptsk);
 
@@ -977,8 +839,7 @@ export class ProductImport {
     }
 
     private async getAllProductsLocal() {
-        const productFileNames = await this.fileManager.readAllFileNames('products');
-        return productFileNames;
+      return await this.fileManager.readAllFileNames('products');
     }
 
     private mapPricebookEntries(target:Array<any>, source:Array<any>) {

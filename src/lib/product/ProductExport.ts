@@ -1,19 +1,19 @@
-import { ProductSelector } from '../selector/ProductSelector';
-import { Product } from './Product';
-import { Attribute } from './Attribute';
-import { Resource } from './Resource';
-import { PriceRule } from "./PriceRule";
-import { PriceRuleAction } from "./PriceRuleAction";
-import { PriceRuleCondition } from "./PriceRuleCondition";
-import { AttributeSet } from './AttributeSet';
-import { ProvisioningPlan } from './ProvisioningPlan';
-import { ProvisioningTask } from './ProvisioningTask';
-import { Charge } from './Charge';
-import { Category } from './Category';
-import { Pricebook } from './Pricebook';
-import { FileManager } from '../file/FileManager';
-import { Connection } from "@salesforce/core";
-import { Util } from '../Util';
+import {ProductSelector} from '../selector/ProductSelector';
+import {Product} from './Product';
+import {Attribute} from './Attribute';
+import {Resource} from './Resource';
+import {PriceRule} from "./PriceRule";
+import {PriceRuleAction} from "./PriceRuleAction";
+import {PriceRuleCondition} from "./PriceRuleCondition";
+import {AttributeSet} from './AttributeSet';
+import {ProvisioningPlan} from './ProvisioningPlan';
+import {ProvisioningTask} from './ProvisioningTask';
+import {Charge} from './Charge';
+import {Category} from './Category';
+import {Pricebook} from './Pricebook';
+import {FileManager} from '../file/FileManager';
+import {Connection} from "@salesforce/core";
+import {Util} from '../Util';
 import * as fs from 'fs';
 
 export class ProductExport {
@@ -74,7 +74,8 @@ export class ProductExport {
 
         // -- products export begin
         const products = await productSelector.getProducts(this.connection, this.productIds);
-        this.wrapProducts(products);
+        this.products = [];
+          this.wrapProducts(products);
 
         const productOptions = await productSelector.getProductOptions(this.connection, this.productIds);
         this.wrapProductOptions(productOptions);
@@ -95,30 +96,30 @@ export class ProductExport {
           this.wrapProductResources(resourceProducts, productResourceJunctions);
           this.wrapUnrelatedResources(unrelatedResources);
         }
-        const allIdsToRetrieveCharges = [...this.productIds, ...resourceIds];
-        const charges = await productSelector.getCharges(this.connection, allIdsToRetrieveCharges);
+        const productAndResourceIds = [...this.productIds, ...resourceIds];
+        const charges = await productSelector.getCharges(this.connection, productAndResourceIds);
         this.wrapProductCharges(charges);
 
-        const productAttributes = await productSelector.getProductAttributes(this.connection, this.productIds);
-        this.wrapProductAttributes(productAttributes);
+        const productAttributes = await productSelector.getProductAttributes(this.connection, productAndResourceIds);
+        this.wrapProductObject(productAttributes, 'productAttributes', null,true);
 
-        const localAttributeValues = await productSelector.getLocalAttributeValues(this.connection, this.productIds);
+        const localAttributeValues = await productSelector.getLocalAttributeValues(this.connection, [...this.productIds, ...resourceIds]);
         this.wrapAttributeValues(localAttributeValues);
 
         const attributeRules = await productSelector.getAttributeRules(this.connection, this.productIds);
-        this.wrapAttributeRules(attributeRules);
+        this.wrapProductObject(attributeRules, 'attributeRules');
 
         const productRelationships = await productSelector.getProductRelationships(this.connection, this.productIds);
-        this.wrapProductRelationships(productRelationships);
+        this.wrapProductObject(productRelationships, 'productRelationships', 'enxCPQ__Primary_Product__r');
 
         const attributeDefaultValues = await productSelector.getAttributeDefaultValues(this.connection, this.productIds);
-        this.wrapAttributeDefaultValues(attributeDefaultValues);
+        this.wrapProductObject(attributeDefaultValues, 'attributeDefaultValues');
 
         const attributeValueDependencies = await productSelector.getAttributeValueDependencies(this.connection, this.productIds);
-        this.wrapAttributeValueDependencies(attributeValueDependencies);
+        this.wrapProductObject(attributeValueDependencies, 'attributeValueDependencies');
 
         const bundleElements = await productSelector.getBundleElements(this.connection, this.productIds);
-        this.wrapBundleElements(bundleElements);
+        this.wrapProductObject(bundleElements, 'bundleElements', 'enxCPQ__Bundle__r');
 
         let bundleElementIds = [];
         this.products.forEach(product => { bundleElementIds = [...bundleElementIds, ...product.getBundleElementIds()] });
@@ -127,7 +128,7 @@ export class ProductExport {
 
         if (this.exportB2BObjects) {
             const productProvisioningPlans = await productSelector.getProductProvisioningPlans(this.connection, this.productIds);
-            this.wrapProductProvisioningPlans(productProvisioningPlans);
+            this.wrapProductObject(productProvisioningPlans, 'provisioningPlans', 'enxB2B__Product__r');
         }
         // -- products export end
 
@@ -166,6 +167,7 @@ export class ProductExport {
         // -- attributes begin
         this.attributeIds = [];
         this.products.forEach(product => { this.attributeIds = [...this.attributeIds, ...product.getAttributeIds()] });
+        this.resources.forEach(res => { this.attributeIds = [...this.attributeIds, ...res.getAttributeIds()] });
 
         const attributes = await productSelector.getAttributeDefinitions(this.connection, this.attributeIds);
         this.wrapAttributes(attributes);
@@ -178,6 +180,7 @@ export class ProductExport {
         // -- attribute sets begin
         this.attributeSetIds = [];
         this.products.forEach(product => { this.attributeSetIds = [...this.attributeSetIds, ...new Set(product.getAttributeSetIds())] });
+        this.resources.forEach(res => { this.attributeSetIds = [...this.attributeSetIds, ...new Set(res.getAttributeSetIds())] });
 
         const attributeSets = await productSelector.getAttributeSets(this.connection, this.attributeSetIds);
         this.wrapAttributeSets(attributeSets);
@@ -204,7 +207,7 @@ export class ProductExport {
 
 
         // -- pricebooks begin
-        this.loadPricebooks();
+        await this.loadPricebooks();
         const pricebooks = await productSelector.getPricebooks(this.connection);
         this.wrapPricebooks(pricebooks);
 
@@ -328,8 +331,7 @@ export class ProductExport {
 
     private async getAllProducts(selector:ProductSelector) {
         const productList = await selector.getAllProducts(this.connection);
-        const productNames = [...productList];
-        return productNames;
+        return [...productList];
     }
 
     private setProductExportScope(productToExportNames: Array<string>, allProducts: Array<any>) {
@@ -362,6 +364,20 @@ export class ProductExport {
         })
 
         Util.log('-- Following related products will also be retrieved: ' + productNames);
+    }
+
+    private wrapProductObject(objects:Array<any>, objectName:string = null, parent:string = null, includeResources:boolean = false){
+      parent = parent? parent : 'enxCPQ__Product__r';
+      objects.forEach((obj) => {
+        let product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === obj[parent]['enxCPQ__TECH_External_Id__c']);
+        if (product == null && includeResources){
+          // @ts-ignore
+          product = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === obj[parent]['enxCPQ__TECH_External_Id__c']);
+        }
+        if (product !== undefined) {
+          product[objectName].push(obj);
+        }
+      });
     }
 
     private wrapProducts(products:Array<any>) {
@@ -436,67 +452,18 @@ export class ProductExport {
         });
     }
 
-    private wrapProductAttributes(productAttributes:Array<any>) {
-        productAttributes.forEach((attr) => {
-            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === attr['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
-            if (product !== undefined) {
-                product.productAttributes.push(attr);
-            }
-        });
-    }
 
     private wrapAttributeValues(productAttributeValues:Array<any>) {
         this.attributeLocalValues = productAttributeValues;
         productAttributeValues.forEach((ava) => {
-            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
+            let product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
+            if(product == null){
+              // @ts-ignore
+              product = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
+            }
             if (product !== undefined) {
                 product.attributeValues.push(ava);
                 product.attributeValues.sort((a, b) => (a.Name > b.Name) ? 1 : -1);
-            }
-        });
-    }
-
-    private wrapAttributeRules(attributeRules:Array<any>) {
-        attributeRules.forEach((arl) => {
-            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === arl['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
-            if (product !== undefined) {
-                product.attributeRules.push(arl);
-            }
-        });
-    }
-
-    private wrapProductRelationships(productRelationships:Array<any>) {
-        productRelationships.forEach((arl) => {
-            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === arl['enxCPQ__Primary_Product__r']['enxCPQ__TECH_External_Id__c']);
-            if (product !== undefined) {
-                product.productRelationships.push(arl);
-            }
-        });
-    }
-
-    private wrapAttributeDefaultValues(attributeDefaultValues:Array<any>) {
-        attributeDefaultValues.forEach((adv) => {
-            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === adv['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
-            if (product !== undefined) {
-                product.attributeDefaultValues.push(adv);
-            }
-        });
-    }
-
-    private wrapAttributeValueDependencies(attributeValueDependencies:Array<any>) {
-        attributeValueDependencies.forEach((avd) => {
-            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === avd['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
-            if (product !== undefined) {
-                product.attributeValueDependencies.push(avd);
-            }
-        });
-    }
-
-    private wrapBundleElements(bundleElements:Array<any>) {
-        bundleElements.forEach((bel) => {
-            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === bel['enxCPQ__Bundle__r']['enxCPQ__TECH_External_Id__c']);
-            if (product !== undefined) {
-                product.bundleElements.push(bel);
             }
         });
     }
@@ -548,15 +515,6 @@ export class ProductExport {
 
             if (product !== null && product !== undefined) {
                 product.bundleElementOptions.push(bel);
-            }
-        });
-    }
-
-    private wrapProductProvisioningPlans(provisioningPlans:Array<any>) {
-        provisioningPlans.forEach((ppl) => {
-            const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ppl['enxB2B__Product__r']['enxCPQ__TECH_External_Id__c']);
-            if (product !== undefined) {
-                product.provisioningPlans.push(ppl);
             }
         });
     }
@@ -757,9 +715,7 @@ export class ProductExport {
         });
 
         return Promise.all(pricebookJSONArray).then((values) => {
-            const pricebookJSONs = values;
-
-            pricebookJSONs.forEach((pbook) => {
+          values.forEach((pbook) => {
                 const pbookObj:Pricebook = new Pricebook(null);
                 pbookObj.fillFromJSON(pbook);
 
