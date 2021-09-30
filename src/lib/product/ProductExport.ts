@@ -456,7 +456,8 @@ export class ProductExport {
     private wrapAttributeValues(productAttributeValues:Array<any>) {
         this.attributeLocalValues = productAttributeValues;
         productAttributeValues.forEach((ava) => {
-            let product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
+            const currentAttrValueTechId = ava['enxCPQ__Exclusive_for_Product__r'] ? ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c'] : ava['enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c'];
+            let product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === currentAttrValueTechId);
             if(product == null){
               // @ts-ignore
               product = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
@@ -546,7 +547,10 @@ export class ProductExport {
         this.attributes = new Array<Attribute>();
         attributes.forEach((a) => {
             let attributeTyped = new Attribute(a);
-            const attributesFiltered = this.attributeLocalValues.filter(e=>e['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] === a['enxCPQ__TECH_External_Id__c'])
+            const attributesFiltered = this.attributeLocalValues.filter(e => {
+                const currentAttrTechId = e['enxCPQ__Exclusive_for_Product__r'] ? e['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c'] : e['enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c'];
+                return currentAttrTechId === a['enxCPQ__TECH_External_Id__c'];
+            });
             if (attributesFiltered !== undefined && attributesFiltered.length > 0) {
                 attributeTyped.attributeValues.push(...attributesFiltered);
             }
