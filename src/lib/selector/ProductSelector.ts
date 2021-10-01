@@ -365,7 +365,7 @@ export class ProductSelector {
 
     public async getPriceRules(connection: Connection, productIds: Array<String>) {
       const queryLabel = 'priceRules';
-      const query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'PriceRule').join(',') + ", enxCPQ__Product__r.enxCPQ__TECH_External_Id__c  \
+      const query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'PriceRule').join(',') + ", RecordType.Name, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c  \
                         FROM enxCPQ__PriceRule__c \
                         WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
                      ORDER BY enxCPQ__TECH_External_Id__c";
