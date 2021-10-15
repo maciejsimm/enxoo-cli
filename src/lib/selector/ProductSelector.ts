@@ -32,15 +32,16 @@ export class ProductSelector {
     public getQueryFieldsReduced(queryLabel: string, schemaSetName: string, filterFieldsSource: string = null) {
       const queryInject = this.additionalFields[queryLabel] || [];
       const queryFields = [...this.filterFields(Schema[schemaSetName]), ...queryInject];
-      const incompatibleFields = this.filterIncompatibleFields(queryFields, filterFieldsSource? filterFieldsSource : queryLabel);
+      const queryFieldsDeduplicated = this.deduplicateQueryFields(queryFields);
+      const incompatibleFields = this.filterIncompatibleFields(queryFieldsDeduplicated, filterFieldsSource? filterFieldsSource : queryLabel);
       if (incompatibleFields.length) {
         console.warn('The following list of fields found in queryConfiguration.json file are incompatible with their description achieved from qryfields.json: ');
         console.table(incompatibleFields);
         console.log('HINT: When qryFields.JSON file is present in the system (after running the "enxoo:cpq:prd:describe" command), the content of "customFields" from queryConfiguration.JSON is being ignored')
       }
-      return this.fieldsToIgnore[queryLabel] ? queryFields.filter(e => {
+      return this.fieldsToIgnore[queryLabel] ? queryFieldsDeduplicated.filter(e => {
         return !this.fieldsToIgnore[queryLabel].includes(e) && !incompatibleFields.includes(e);
-      }) : queryFields;
+      }) : queryFieldsDeduplicated;
     }
 
     public async getAllProducts(connection: Connection) {
@@ -533,6 +534,18 @@ export class ProductSelector {
         } else {
             return fieldNames.filter(elem => { return !elem.includes('enxB2B') });
         }
+    }
+
+    private deduplicateQueryFields(queryFields: Array<String>) {
+      let deduplicationSet = new Set()
+      let returnedArray = new Array()
+      queryFields.forEach(element => {
+        deduplicationSet.add(element);
+      });
+      deduplicationSet.forEach(element => {
+        returnedArray.push(element);
+      });
+      return returnedArray;
     }
 
     private filterIncompatibleFields(queryFields: Array<String>, queryLabel: String){
