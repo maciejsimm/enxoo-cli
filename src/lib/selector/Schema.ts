@@ -180,7 +180,8 @@ export class Schema {
         'enxCPQ__TECH_Option_JSON__c',
         'enxCPQ__Unit_of_Measure__c',
         'enxCPQ__Value_From__c',
-        'enxCPQ__Value_To__c'
+        'enxCPQ__Value_To__c',
+        'enxCPQ__Resource_Location_Type__c'
     ]
 
     public static ProductAttribute:Array<string> = [
