@@ -22,6 +22,7 @@ export class Schema {
         'enxCPQ__Charge_Model__c',
         'enxCPQ__Charge_Name__c',
         'enxCPQ__Charge_Type__c',
+        'enxCPQ__Charge_Editable_in_Runtime__c',
         'enxCPQ__Column_Dimension__c',
         'enxCPQ__Column_Numeric__c',
         'enxCPQ__Column_Value__c',
