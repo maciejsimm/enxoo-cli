@@ -22,6 +22,7 @@ export class Schema {
         'enxCPQ__Charge_Model__c',
         'enxCPQ__Charge_Name__c',
         'enxCPQ__Charge_Type__c',
+        'enxCPQ__Charge_Editable_in_Runtime__c',
         'enxCPQ__Column_Dimension__c',
         'enxCPQ__Column_Numeric__c',
         'enxCPQ__Column_Value__c',
@@ -180,7 +181,8 @@ export class Schema {
         'enxCPQ__TECH_Option_JSON__c',
         'enxCPQ__Unit_of_Measure__c',
         'enxCPQ__Value_From__c',
-        'enxCPQ__Value_To__c'
+        'enxCPQ__Value_To__c',
+        'enxCPQ__Resource_Location_Type__c'
     ]
 
     public static ProductAttribute:Array<string> = [
