@@ -480,6 +480,7 @@ export class ProductImport {
                 }
 
                 this.resources.push(atrObj);
+                this.resourceIds.push(atrObj.getRecordId());
             });
         });
     }
