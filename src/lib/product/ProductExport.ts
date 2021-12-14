@@ -29,7 +29,7 @@ export class ProductExport {
     private priceRuleIds:Array<String>;
 
     private products:Array<Product>;
-    private resources:Array<Resource>;
+    private resources:Array<Resource> = [];
     private attributeLocalValues:Array<any>;
     private attributes:Array<Attribute>;
     private attributeSets:Array<AttributeSet>;
@@ -437,10 +437,10 @@ export class ProductExport {
         productCharges.forEach((charge) => {
           let product;
           let resource;
-          if(charge['enxCPQ__Root_Product__r']){
+          if(this.products && charge['enxCPQ__Root_Product__r']){
             product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c']);
           }
-          if(charge['enxCPQ__Charge_Parent__r']){
+          if(this.resources && charge['enxCPQ__Charge_Parent__r']){
             resource = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c']);
           }
           if (product !== undefined) {

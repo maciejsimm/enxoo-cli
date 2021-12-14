@@ -15,10 +15,14 @@ export class Query {
                 Logs.hideSpinner(Logs.prettifyUpsertMessage(messageString, 3) + 'Retrieved: ' + recordResults.length);
                 return recordResults;
             } catch (error) {
+              if(error.errorCode === 'INVALID_TYPE'){
+                throw error;
+              } else {
                 const errorWithComments = Logs.addEnxooMessages(error);
                 Logs.displayError(errorWithComments);
                 console.log('Error during query execution. Importer will now exit the operation.');
                 process.exit(1);
+              }
             }
         } else {
             return this.executeBulkQuery(connection, query, logLabel);

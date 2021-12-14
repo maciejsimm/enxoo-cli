@@ -39,9 +39,9 @@ export class ProductSelector {
         console.table(incompatibleFields);
         console.log('HINT: When qryFields.JSON file is present in the system (after running the "enxoo:cpq:prd:describe" command), the content of "customFields" from queryConfiguration.JSON is being ignored')
       }
-      return this.fieldsToIgnore[queryLabel] ? queryFieldsDeduplicated.filter(e => {
-        return !this.fieldsToIgnore[queryLabel].includes(e) && !incompatibleFields.includes(e);
-      }) : queryFieldsDeduplicated;
+      return queryFieldsDeduplicated.filter(e => {
+        return this.fieldsToIgnore[queryLabel]?!this.fieldsToIgnore[queryLabel].includes(e) && !incompatibleFields.includes(e) : !incompatibleFields.includes(e);
+      });
     }
 
     public async getAllProducts(connection: Connection) {
@@ -189,11 +189,8 @@ export class ProductSelector {
 
     public async getCharges(connection: Connection, productIds: Array<String>) {
         const queryLabel = 'charge';
-        const query = "SELECT Name, enxCPQ__Charge_Editable_in_Runtime__c, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Field__c, \
-                              enxCPQ__Charge_Name__c, enxCPQ__Pricing_Method__c, enxCPQ__Charge_Model__c, enxCPQ__Charge_Type__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, enxCPQ__TECH_External_Id__c, RecordType.DeveloperName, \
-                              enxCPQ__Sorting_Order__c, IsActive, enxCPQ__Billing_Frequency__c, enxCPQ__Unit_of_Measure__c, enxCPQ__Charge_Criteria__c, enxCPQ__Charge_Item_Action__c, enxCPQ__Reference_Price_Field__c, \
-                              enxCPQ__Dimension_1__c, enxCPQ__Dimension_2__c, enxCPQ__Dimension_3__c, enxCPQ__Dimension_4__c, enxCPQ__Dimension_5__c, \
-                              enxCPQ__Dimension_1_Numeric__c, enxCPQ__Dimension_2_Numeric__c, enxCPQ__Dimension_3_Numeric__c, enxCPQ__Dimension_4_Numeric__c, enxCPQ__Dimension_5_Numeric__c \
+        const query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'Charge','product').join(',') + ", enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, \
+        enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c \
                          FROM Product2 \
                         WHERE (enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')\
                         \ OR enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')) \
