@@ -190,6 +190,7 @@ export class Schema {
         'CurrencyIsoCode',
         'enxCPQ__Active__c',
         'enxCPQ__Option_Affecting__c',
+        'enxCPQ__Feasibility_Affecting__c',
         'enxCPQ__Order__c',
         'enxCPQ__Product_Field_to_Update__c',
         'enxCPQ__Role__c',
