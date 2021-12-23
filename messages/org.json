@@ -1,6 +1,7 @@
 {
   "commandDescription": "print a greeting and your org IDs",
   "productsFlagDescription": "comma separated list of product names, e.g.: 'GEPL,IPLC,VPN,Colocation Space'. Use '*ALL' keyword to take all products.",
+  "workflowsFlagDescription": "comma separated list of workflow names, e.g.: 'GEPL,IPLC,VPN,Colocation Space'. Use '*ALL' keyword to take all workflows.",
   "errorNoOrgResults": "No results found for the org '%s'.",
   "b2bFlagDescription": "boolean determining if export/import B2B specific objects",
   "dirFlagDescription": "directory with product .jsons, please don't use special characters for folder names",

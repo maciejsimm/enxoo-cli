@@ -499,4 +499,51 @@ export class Schema {
       'enxCPQ__Tier_Value_To__c',
       'enxCPQ__TECH_External_Id__c'
     ]
+
+    public static Workflow:Array<string> = [
+      'CurrencyIsoCode',
+      'enxCPQ__Reference_Id__c',
+      'enxCPQ__Status__c',
+      'enxCPQ__TECH_External_Id__c'
+    ]
+
+    public static WorkflowTaskDefinition:Array<string> = [
+      'Name',
+      'CurrencyIsoCode',
+      'enxCPQ__Class_Name__c',
+      'enxCPQ__Description__c',
+      'enxCPQ__Flow_Name__c',
+      'enxCPQ__TECH_External_Id__c'
+    ]
+
+    public static WorkflowTask:Array<string> = [
+      'CurrencyIsoCode',
+      'enxCPQ__Description__c',
+      'enxCPQ__Predecessors__c',
+      'enxCPQ__Status__c',
+      'enxCPQ__Subject__c',
+      'enxCPQ__TECH_External_Id__c'
+    ]
+
+    public static WorkflowPlan:Array<string> = [
+      'Name',
+      'CurrencyIsoCode',
+      'enxCPQ__Criteria__c',
+      'enxCPQ__Order__c',
+      'enxCPQ__Related_Object__c',
+      'enxCPQ__TECH_External_Id__c'
+    ]
+
+    public static WorkflowItem:Array<string> = [
+      'CurrencyIsoCode',
+      'enxCPQ__Criteria__c',
+      'enxCPQ__Order__c',
+      'enxCPQ__TECH_External_Id__c'
+    ]
+
+    public static WorkflowItemRule:Array<string> = [
+      'CurrencyIsoCode',
+      'enxCPQ__TECH_External_Id__c',
+      'enxCPQ__Type__c'
+    ]
 }

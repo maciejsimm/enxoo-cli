@@ -1,6 +1,7 @@
 import {Connection} from "@salesforce/core";
 import {Query} from "./Query";
 import {Schema} from "./Schema"
+import {Utils} from "./Utils"
 
 export class ProductSelector {
 
@@ -32,7 +33,7 @@ export class ProductSelector {
     public getQueryFieldsReduced(queryLabel: string, schemaSetName: string, filterFieldsSource: string = null) {
       const queryInject = this.additionalFields[queryLabel] || [];
       const queryFields = [...this.filterFields(Schema[schemaSetName]), ...queryInject];
-      const queryFieldsDeduplicated = this.deduplicateQueryFields(queryFields);
+      const queryFieldsDeduplicated = Utils.deduplicateQueryFields(queryFields);
       const incompatibleFields = this.filterIncompatibleFields(queryFieldsDeduplicated, filterFieldsSource? filterFieldsSource : queryLabel);
       if (incompatibleFields.length) {
         console.warn('The following list of fields found in queryConfiguration.json file are incompatible with their description achieved from qryfields.json: ');
@@ -531,18 +532,6 @@ export class ProductSelector {
         } else {
             return fieldNames.filter(elem => { return !elem.includes('enxB2B') });
         }
-    }
-
-    private deduplicateQueryFields(queryFields: Array<String>) {
-      let deduplicationSet = new Set()
-      let returnedArray = new Array()
-      queryFields.forEach(element => {
-        deduplicationSet.add(element);
-      });
-      deduplicationSet.forEach(element => {
-        returnedArray.push(element);
-      });
-      return returnedArray;
     }
 
     private filterIncompatibleFields(queryFields: Array<String>, queryLabel: String){
