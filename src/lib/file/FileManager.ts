@@ -106,6 +106,22 @@ export class FileManager {
         })
     }
 
+  public createDirectoriesForWorkflowExport() {
+    let directories = ['workflows',
+                       'workflowTaskDef',
+                       'workflowTasks',
+                       'workflowPlans',
+                       'workflowItems',
+                       'workflowItemRules'];
+
+    directories.forEach((dir) => {
+      const path = './' + this.directory + '/' + dir;
+      if (!fs.existsSync(path)) {
+        fs.mkdirSync(path, { recursive: true });
+      }
+    })
+  }
+
   public async loadQueryConfiguration(queryDir: string) {
     return new Promise<String>((resolve: Function, reject: Function) => {
       let content;

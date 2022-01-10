@@ -41,7 +41,7 @@ export class Upsert {
             //That's how it gets returned from sfdx API.
             const errorsModified = errors.map(errorElement => {
 
-                //TO-DO: when more additional information are added, this anonymous function can be refactored into a separate function 
+                //TO-DO: when more additional information are added, this anonymous function can be refactored into a separate function
                 const errorObject = Object.values(errorElement).map(singleError => {
                     singleError.map(property => {
                         if (property.statusCode == 'METHOD_NOT_ALLOWED') {

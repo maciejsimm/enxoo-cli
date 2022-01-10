@@ -80,7 +80,13 @@ export default class Org extends SfdxCommand {
       productResources: [],
       priceRules: [],
       priceRuleCondition: [],
-      priceRuleAction: []
+      priceRuleAction: [],
+      workflow: [],
+      workflowPlan: [],
+      workflowItem: [],
+      workflowItemRule: [],
+      workflowTaskDefinition: [],
+      workflowTask: []
     },
     fieldsToIgnore: {
       product: [],
@@ -106,7 +112,13 @@ export default class Org extends SfdxCommand {
       productResources: [],
       priceRules: [],
       priceRuleCondition: [],
-      priceRuleAction: []
+      priceRuleAction: [],
+      workflow: [],
+      workflowPlan: [],
+      workflowItem: [],
+      workflowItemRule: [],
+      workflowTaskDefinition: [],
+      workflowTask: []
     },
     settingsToIgnore: {
       settingName: ["B2B_VENDOR_SCREEN_PUBLIC_SITE_URL", "LAST_OLI_NUMBER", "MAP_PROVIDER_API_KEY"]
