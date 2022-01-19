@@ -500,13 +500,6 @@ export class Schema {
       'enxCPQ__TECH_External_Id__c'
     ]
 
-    public static Workflow:Array<string> = [
-      'CurrencyIsoCode',
-      'enxCPQ__Reference_Id__c',
-      'enxCPQ__Status__c',
-      'enxCPQ__TECH_External_Id__c'
-    ]
-
     public static WorkflowTaskDefinition:Array<string> = [
       'Name',
       'CurrencyIsoCode',
@@ -516,22 +509,14 @@ export class Schema {
       'enxCPQ__TECH_External_Id__c'
     ]
 
-    public static WorkflowTask:Array<string> = [
-      'CurrencyIsoCode',
-      'enxCPQ__Description__c',
-      'enxCPQ__Predecessors__c',
-      'enxCPQ__Status__c',
-      'enxCPQ__Subject__c',
-      'enxCPQ__TECH_External_Id__c'
-    ]
-
     public static WorkflowPlan:Array<string> = [
       'Name',
       'CurrencyIsoCode',
       'enxCPQ__Criteria__c',
       'enxCPQ__Order__c',
       'enxCPQ__Related_Object__c',
-      'enxCPQ__TECH_External_Id__c'
+      'enxCPQ__TECH_External_Id__c',
+      'enxCPQ__Active__c'
     ]
 
     public static WorkflowItem:Array<string> = [

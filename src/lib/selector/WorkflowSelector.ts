@@ -12,27 +12,6 @@ export class WorkflowSelector {
     this.fieldsToIgnore = querySettings.fieldsToIgnore ? querySettings.fieldsToIgnore : [];
   }
 
-  // public async getWorkflowObjects(connection: Connection){
-  //   // if(!this.queryFields['workflowFieldNames']) return;
-  //   try {
-  //     await this.getWorkflows(connection);
-  //     await this.getWorkflowPlans(connection);
-  //     await this.getWorkflowItems(connection);
-  //     await this.getWorkflowItemRules(connection);
-  //     await this.getWorkflowTaskDefinitions(connection);
-  //     await this.getWorkflowTasks(connection);
-  //   } catch (e) {
-  //     throw e;
-  //   }
-  // }
-
-  public async getWorkflows(connection: Connection){
-    const queryLabel = 'workflow';
-
-    const queryUnrelatedResources = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'Workflow').join(',') + " FROM enxCPQ__Workflow__c";
-
-    return await Query.executeQuery(connection, queryUnrelatedResources, 'Workflows');
-  }
   public async getWorkflowPlans(connection: Connection){
     const queryLabel = 'workflowPlan';
 
@@ -62,14 +41,6 @@ export class WorkflowSelector {
     const queryWorkflowTaskDefinitions = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'WorkflowTaskDefinition').join(',') + " FROM enxCPQ__WorkflowTaskDefinition__c ";
 
     return await Query.executeQuery(connection, queryWorkflowTaskDefinitions, 'Workflow Task Definitions');
-  }
-  public async getWorkflowTasks(connection: Connection){
-    const queryLabel = 'workflowTask';
-
-    const queryWorkflowTasks = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'WorkflowTask').join(',') + ", enxCPQ__Workflow__r.enxCPQ__TECH_External_Id__c, enxCPQ__Workflow_Task_Definition__r.enxCPQ__TECH_External_Id__c \
-                                        FROM enxCPQ__WorkflowTask__c ";
-
-    return await Query.executeQuery(connection, queryWorkflowTasks, 'Workflow Tasks');
   }
 
   public getQueryFieldsReduced(queryLabel: string, schemaSetName: string) {

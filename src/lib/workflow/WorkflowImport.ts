@@ -1,6 +1,4 @@
-import {Workflow} from "./Workflow";
 import {WorkflowTaskDef} from "./WorkflowTaskDef";
-import {WorkflowTask} from "./WorkflowTask";
 import {WorkflowItem} from "./WorkflowItem";
 import {WorkflowItemRule} from "./WorkflowItemRule";
 import {WorkflowPlan} from "./WorkflowPlan";
@@ -11,10 +9,8 @@ import {Util} from "../Util";
 
 export class WorkflowImport {
 
-  private workflows:Array<Workflow>;
   private workflowIds:Array<String>;
   private workflowTaskDefs:Array<WorkflowTaskDef>;
-  private workflowTasks:Array<WorkflowTask>;
   private workflowItems:Array<WorkflowItem>;
   private workflowItemRules:Array<WorkflowItemRule>;
   private workflowPlans:Array<WorkflowPlan>;
@@ -37,21 +33,12 @@ export class WorkflowImport {
     public async import() {
 
       await this.setFieldsToIgnore();
-      await this.setWorkflowImportScope();
       await this.setWorkflowTaskDefImportScope();
-      await this.setWorkflowTaskImportScope();
       await this.setWorkflowPlanImportScope();
       await this.setWorkflowItemImportScope();
       await this.setWorkflowItemRuleImportScope();
 
       await Upsert.disableTriggers(this.connection);
-
-      //  -- workflows import begins
-      if (this.workflowIds.length) {
-        const allWorkflows = this.workflows.map((a) => {return a.record});
-        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allWorkflows), 'enxCPQ__Workflow__c');
-      }
-      //  -- workflows import ends
 
       //  -- workflow task definitions import begins
       if (this.workflowTaskDefs.length) {
@@ -59,13 +46,6 @@ export class WorkflowImport {
         await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allWorkflowTaskDefs), 'enxCPQ__WorkflowTaskDefinition__c');
       }
       //  -- workflow task definitions import ends
-
-      //  -- workflow tasks import begins
-      if (this.workflowTasks.length) {
-        const allWorkflowTasks = this.workflowTasks.map((a) => {return a.record});
-        await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allWorkflowTasks), 'enxCPQ__WorkflowTask__c');
-      }
-      //  -- workflow tasks import ends
 
       //  -- workflow plans import begins
       if (this.workflowPlans.length) {
@@ -87,39 +67,6 @@ export class WorkflowImport {
         await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allWorkflowItemRules), 'enxCPQ__WorkflowItemRule__c');
       }
       //  -- workflow item rules import ends
-    }
-
-    private async setWorkflowImportScope() {
-      this.workflows = [];
-      this.workflowIds = [];
-
-
-      let workflowFileNames = await this.getAllObjects('workflows');
-      let workflowJSONArray = [];
-      workflowFileNames.forEach((fileName) => {
-        const workflowInputReader = this.fileManager.readFile('workflows', fileName);
-        workflowJSONArray.push(workflowInputReader);
-      });
-
-      return Promise.all(workflowJSONArray).then((values) => {
-        values.forEach((wrk) => {
-          const workflowObj:Workflow = new Workflow(null);
-          workflowObj.fillFromJSON(wrk);
-
-          if(this.fieldsToIgnore['workflow']) {
-            this.fieldsToIgnore['workflow'].forEach( field => {
-              delete workflowObj.record[field];
-            });
-          }
-
-          this.workflows.push(workflowObj);
-          this.workflowIds.push(workflowObj.getWorkflowId());
-        });
-
-        if (this.workflowIds.length === 0) {
-          Util.throwError('Nothing to import');
-        }
-      })
     }
 
   private async setWorkflowTaskDefImportScope() {
@@ -144,32 +91,6 @@ export class WorkflowImport {
         }
 
         this.workflowTaskDefs.push(workflowTaskDefObj);
-      });
-    })
-  }
-
-  private async setWorkflowTaskImportScope() {
-    this.workflowTasks = [];
-
-    let workflowTaskFileNames = await this.getAllObjects('workflowTasks');
-    let wtdJSONArray = [];
-    workflowTaskFileNames.forEach((fileName) => {
-      const workflowInputReader = this.fileManager.readFile('workflowTasks', fileName);
-      wtdJSONArray.push(workflowInputReader);
-    });
-
-    return Promise.all(wtdJSONArray).then((values) => {
-      values.forEach((wtd) => {
-        const workflowTaskObj:WorkflowTask = new WorkflowTask(null);
-        workflowTaskObj.fillFromJSON(wtd);
-
-        if(this.fieldsToIgnore['workflowTask']) {
-          this.fieldsToIgnore['workflowTask'].forEach( field => {
-            delete workflowTaskObj.record[field];
-          });
-        }
-
-        this.workflowTasks.push(workflowTaskObj);
       });
     })
   }
