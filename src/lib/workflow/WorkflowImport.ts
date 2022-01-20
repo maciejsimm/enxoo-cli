@@ -67,6 +67,8 @@ export class WorkflowImport {
         await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allWorkflowItemRules), 'enxCPQ__WorkflowItemRule__c');
       }
       //  -- workflow item rules import ends
+
+      await Upsert.enableTriggers(this.connection);
     }
 
   private async setWorkflowTaskDefImportScope() {
