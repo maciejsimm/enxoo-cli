@@ -84,11 +84,6 @@ export class ProductImport {
 
         await Upsert.disableTriggers(this.connection);
 
-        try{
-
-        } catch (e){
-
-        }
         // -- attribute sets import begin
         if (this.attributeSetIds.length > 0) {
             const allAttributeSets = this.attributeSets.map((a) => {return a.record});
