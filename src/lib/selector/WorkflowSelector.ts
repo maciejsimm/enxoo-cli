@@ -43,6 +43,18 @@ export class WorkflowSelector {
     return await Query.executeQuery(connection, queryWorkflowTaskDefinitions, 'Workflow Task Definitions');
   }
 
+  public async getRecordTypes(connection: Connection) {
+    const queryLabel = 'recordTypes';
+    const query = "SELECT Id, Name, DeveloperName, SObjectType \
+                         FROM RecordType";
+
+    const recordTypes = await Query.executeQuery(connection, query, queryLabel);
+
+    return recordTypes.map((rt) => {
+      return { Object: rt['SobjectType'], DeveloperName: rt['DeveloperName'], id: rt['Id'] };
+    });
+  }
+
   public getQueryFieldsReduced(queryLabel: string, schemaSetName: string) {
     const queryInject = this.additionalFields[queryLabel] || [];
     const queryFields = [...Schema[schemaSetName], ...queryInject];
