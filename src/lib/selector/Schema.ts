@@ -506,7 +506,8 @@ export class Schema {
       'enxCPQ__Class_Name__c',
       'enxCPQ__Description__c',
       'enxCPQ__Flow_Name__c',
-      'enxCPQ__TECH_External_Id__c'
+      'enxCPQ__TECH_External_Id__c',
+      'RecordType.DeveloperName'
     ]
 
     public static WorkflowPlan:Array<string> = [
