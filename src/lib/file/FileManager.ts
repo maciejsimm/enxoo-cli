@@ -107,9 +107,7 @@ export class FileManager {
     }
 
   public createDirectoriesForWorkflowExport() {
-    let directories = ['workflows',
-                       'workflowTaskDef',
-                       'workflowTasks',
+    let directories = ['workflowTaskDef',
                        'workflowPlans',
                        'workflowItems',
                        'workflowItemRules'];

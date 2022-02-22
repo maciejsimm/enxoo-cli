@@ -6,19 +6,19 @@ import { FileManager } from '../file/FileManager';
 import { Connection } from "@salesforce/core";
 import { Upsert } from '../repository/Upsert';
 import {Util} from "../Util";
+import {WorkflowSelector} from "../selector/WorkflowSelector";
 
 export class WorkflowImport {
 
-  private workflowIds:Array<String>;
   private workflowTaskDefs:Array<WorkflowTaskDef>;
   private workflowItems:Array<WorkflowItem>;
   private workflowItemRules:Array<WorkflowItemRule>;
   private workflowPlans:Array<WorkflowPlan>;
-  private workflowNames:Array<string>;
   private targetDirectory:string;
   private connection:Connection;
   private fileManager:FileManager;
   private fieldsToIgnore: any;
+  private recordTypes: any;
 
     constructor(targetDirectory:string, connection: Connection) {
         this.targetDirectory = targetDirectory;
@@ -32,6 +32,9 @@ export class WorkflowImport {
 
     public async import() {
 
+      const workflowSelector = new WorkflowSelector();
+      this.recordTypes = await workflowSelector.getRecordTypes(this.connection);
+
       await this.setFieldsToIgnore();
       await this.setWorkflowTaskDefImportScope();
       await this.setWorkflowPlanImportScope();
@@ -42,6 +45,11 @@ export class WorkflowImport {
 
       //  -- workflow task definitions import begins
       if (this.workflowTaskDefs.length) {
+        this.workflowTaskDefs.forEach(wtd => {
+          const recordTypeId = this.recordTypes.filter(e => e.Object === 'enxCPQ__WorkflowTaskDefinition__c').find(e => e.DeveloperName === wtd.record.RecordType.DeveloperName).id;
+          delete wtd.record.RecordType;
+          wtd.record.RecordTypeId = recordTypeId;
+        });
         const allWorkflowTaskDefs = this.workflowTaskDefs.map((a) => {return a.record});
         await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allWorkflowTaskDefs), 'enxCPQ__WorkflowTaskDefinition__c');
       }
