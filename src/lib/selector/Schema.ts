@@ -507,6 +507,7 @@ export class Schema {
       'enxCPQ__Description__c',
       'enxCPQ__Flow_Name__c',
       'enxCPQ__TECH_External_Id__c',
+      'enxCPQ__Default_Duration_Days__c',
       'RecordType.DeveloperName'
     ]
 
