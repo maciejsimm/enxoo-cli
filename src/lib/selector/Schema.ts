@@ -507,6 +507,7 @@ export class Schema {
       'enxCPQ__Description__c',
       'enxCPQ__Flow_Name__c',
       'enxCPQ__TECH_External_Id__c',
+      'enxCPQ__Default_Duration_Days__c',
       'RecordType.DeveloperName'
     ]
 
@@ -514,6 +515,7 @@ export class Schema {
       'Name',
       'CurrencyIsoCode',
       'enxCPQ__Criteria__c',
+      'enxCPQ__Assignment_Criteria__c',
       'enxCPQ__Order__c',
       'enxCPQ__Related_Object__c',
       'enxCPQ__TECH_External_Id__c',
@@ -523,6 +525,7 @@ export class Schema {
     public static WorkflowItem:Array<string> = [
       'CurrencyIsoCode',
       'enxCPQ__Criteria__c',
+      'enxCPQ__Assignment_Criteria__c',
       'enxCPQ__Order__c',
       'enxCPQ__TECH_External_Id__c'
     ]
