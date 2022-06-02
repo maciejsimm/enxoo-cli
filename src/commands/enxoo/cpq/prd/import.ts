@@ -20,7 +20,8 @@ export default class Org extends SfdxCommand {
     b2b: flags.boolean({char: 'b', required: false, description: messages.getMessage('b2bFlagDescription')}),
     related: flags.boolean({char: 'r', required: false, description: messages.getMessage('relatedFlagDescription')}),
     dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')}),
-    currencies: flags.array({char: 'c', required: false, description: messages.getMessage('currenciesFlagDescription')})
+    currencies: flags.array({char: 'c', required: false, description: messages.getMessage('currenciesFlagDescription')}),
+    retry: flags.array({char: 'a', required: false, description: messages.getMessage('retryFlagDescription')})
   };
 
   // Comment this out if your command does not require an org username
@@ -32,6 +33,8 @@ export default class Org extends SfdxCommand {
   // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
   protected static requiresProject = false;
 
+  protected static numberOfRetries = 0;
+
   public async run(): Promise<AnyJson> {
 
     const conn = this.org.getConnection();
@@ -42,10 +45,25 @@ export default class Org extends SfdxCommand {
     Util.log('*** Begin Importing ' + (products[0] === '*ALL' ? 'all' : products) + ' products ***');
 
     const importer = new ProductImport(dir, conn, b2b);
-    await importer.import(products, currencies);
-
+    try {
+      await importer.import(products, currencies);
+    } catch(error) {
+      this.handleError();
+      return null;
+    }
+    
     Util.log('*** Finished ***');
     
     return null;
   }
+
+  private handleError() {
+    const retryNo = this.flags.retry;
+    if (Org.numberOfRetries < retryNo) {
+      Org.numberOfRetries++;
+      Util.log('*** RETRY ' + Org.numberOfRetries + '/' + retryNo +  '***');
+      this.run();
+    }
+  }
+
 }

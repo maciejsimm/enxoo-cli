@@ -18,7 +18,8 @@ export default class Org extends SfdxCommand {
   protected static flagsConfig = {
     // TODO: Enable selection of specific workflows
     // workflows: flags.array({char: 'w', required: true, description: messages.getMessage('workflowsFlagDescription')}),
-    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')})
+    dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')}),
+    retry: flags.array({char: 'a', required: false, description: messages.getMessage('retryFlagDescription')})
   };
 
   // Comment this out if your command does not require an org username
@@ -29,6 +30,8 @@ export default class Org extends SfdxCommand {
 
   // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
   protected static requiresProject = false;
+
+  protected static numberOfRetries = 0;
 
   public async run(): Promise<AnyJson> {
 
@@ -41,10 +44,25 @@ export default class Org extends SfdxCommand {
     Util.log('*** Begin Importing ' + (workflows[0] === '*ALL' ? 'all' : workflows) + ' workflows ***');
 
     const importer = new WorkflowImport(dir, conn);
-    await importer.import();
+
+    try {
+      await importer.import();
+    } catch(error) {
+      this.handleError();
+      return null;
+    }
 
     Util.log('*** Finished ***');
 
     return null;
+  }
+
+  private handleError() {
+    const retryNo = this.flags.retry;
+    if (Org.numberOfRetries < retryNo) {
+      Org.numberOfRetries++;
+      Util.log('*** RETRY ' + Org.numberOfRetries + '/' + retryNo +  '***');
+      this.run();
+    }
   }
 }
