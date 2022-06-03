@@ -17,7 +17,7 @@ export default class Org extends SfdxCommand {
   protected static flagsConfig = {
     // flag with a value (-p, --product=VALUE)
     dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')}),
-    retry: flags.array({char: 'a', required: false, description: messages.getMessage('retryFlagDescription')})
+    retry: flags.array({char: 'a', required: false, description: messages.getMessage('retryFlagDescription')}),
   };
 
   // Comment this out if your command does not require an org username

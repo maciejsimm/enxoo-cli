@@ -21,7 +21,7 @@ export default class Org extends SfdxCommand {
     related: flags.boolean({char: 'r', required: false, description: messages.getMessage('relatedFlagDescription')}),
     dir: flags.string({char: 'd', required: true, description: messages.getMessage('dirFlagDescription')}),
     currencies: flags.array({char: 'c', required: false, description: messages.getMessage('currenciesFlagDescription')}),
-    retry: flags.array({char: 'a', required: false, description: messages.getMessage('retryFlagDescription')})
+    retry: flags.array({char: 'a', required: false, description: messages.getMessage('retryFlagDescription')}),
   };
 
   // Comment this out if your command does not require an org username
