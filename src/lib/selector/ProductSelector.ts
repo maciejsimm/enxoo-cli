@@ -183,7 +183,7 @@ export class ProductSelector {
                                         WHERE enxCPQ__Record_Type_Name__c = 'Resource' \
                                         AND Id NOT IN ('" + this.resourceRecordSFIDs.join('\',\'') + "')";
 
-        let resources = await Query.executeQuery(connection, queryUnrelatedResources, 'unrelated Resources');
+        let resources = await Query.executeQuery(connection, queryUnrelatedResources, 'unrelated Resources', 50000);
 
         return resources;
     }
