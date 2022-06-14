@@ -198,7 +198,7 @@ export class ProductSelector {
                           AND RecordType.Name = 'Charge' \
                      ORDER BY enxCPQ__Charge_Type__c, enxCPQ__Sorting_Order__c, enxCPQ__TECH_External_Id__c";
 
-      return await Query.executeQuery(connection, query, queryLabel);
+      return await Query.executeQuery(connection, query, queryLabel, 50000);
     }
 
     public async getBundleElements(connection: Connection, productIds: Array<String>) {
