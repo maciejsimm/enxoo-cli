@@ -183,7 +183,7 @@ export class ProductSelector {
                                         WHERE enxCPQ__Record_Type_Name__c = 'Resource' \
                                         AND Id NOT IN ('" + this.resourceRecordSFIDs.join('\',\'') + "')";
 
-        let resources = await Query.executeQuery(connection, queryUnrelatedResources, 'unrelated Resources', 50000);
+        let resources = await Query.executeQuery(connection, queryUnrelatedResources, 'unrelated Resources');
 
         return resources;
     }
@@ -198,7 +198,7 @@ export class ProductSelector {
                           AND RecordType.Name = 'Charge' \
                      ORDER BY enxCPQ__Charge_Type__c, enxCPQ__Sorting_Order__c, enxCPQ__TECH_External_Id__c";
 
-      return await Query.executeQuery(connection, query, queryLabel);
+      return await Query.executeQuery(connection, query, queryLabel, 50000);
     }
 
     public async getBundleElements(connection: Connection, productIds: Array<String>) {
