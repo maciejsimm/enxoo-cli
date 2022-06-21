@@ -24,8 +24,8 @@ export class Resource extends Serializable {
 
   public getChargeIds() {
     return this.charges.map((charge) => {
-      if (charge['enxCPQ__Charge_Reference__r'] !== null) {
-        return charge['enxCPQ__Charge_Reference__r']['enxCPQ__TECH_External_Id__c'];
+      if (charge['enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c']) {
+        return charge['enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c'];
       } else {
         return charge['enxCPQ__TECH_External_Id__c'];
       }

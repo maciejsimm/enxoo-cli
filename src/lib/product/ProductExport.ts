@@ -440,8 +440,11 @@ export class ProductExport {
           if(this.products && charge['enxCPQ__Root_Product__r']){
             product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c']);
           }
-          if(this.resources && charge['enxCPQ__Charge_Parent__r']){
-            resource = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c']);
+          if(this.products && charge['enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c']){
+            product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c']);
+          }
+          if(this.resources && charge['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c']){
+            resource = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c']);
           }
           if (product !== undefined) {
             product.charges.push(charge);
