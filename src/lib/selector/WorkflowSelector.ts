@@ -38,7 +38,7 @@ export class WorkflowSelector {
   public async getWorkflowTaskDefinitions(connection: Connection){
     const queryLabel = 'workflowTaskDefinition';
 
-    const queryWorkflowTaskDefinitions = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'WorkflowTaskDefinition').join(',') + " FROM enxCPQ__WorkflowTaskDefinition__c ";
+    const queryWorkflowTaskDefinitions = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'WorkflowTaskDefinition').join(',') + ", OwnerId FROM enxCPQ__WorkflowTaskDefinition__c ";
 
     return await Query.executeQuery(connection, queryWorkflowTaskDefinitions, 'Workflow Task Definitions');
   }
