@@ -40,7 +40,9 @@ export class WorkflowSelector {
 
     const queryWorkflowTaskDefinitions = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'WorkflowTaskDefinition').join(',') + ", OwnerId FROM enxCPQ__WorkflowTaskDefinition__c ";
 
-    return await Query.executeQuery(connection, queryWorkflowTaskDefinitions, 'Workflow Task Definitions');
+    const workflowTasks = await Query.executeQuery(connection, queryWorkflowTaskDefinitions, 'Workflow Task Definitions');
+    this.setOwnerFieldOnWorkflowTask(connection, workflowTasks);
+    return workflowTasks;
   }
 
   public async getRecordTypes(connection: Connection) {
@@ -62,6 +64,35 @@ export class WorkflowSelector {
     return queryFieldsDeduplicated.filter(e => {
       return this.fieldsToIgnore[queryLabel]?!this.fieldsToIgnore[queryLabel].includes(e) : true;
     });
+  }
+
+  private async setOwnerFieldOnWorkflowTask(connection: Connection, tasks: Array<any>) {
+    const ownerIds = new Set();
+    // @ts-ignore
+    tasks.forEach(task => ownerIds.add(task.OwnerId));
+    const userQuery = "SELECT Id, Email FROM User WHERE Id IN ('" + Array.from(ownerIds).join('\',\'') + "')";
+    const queueQuery = "SELECT Id, Name FROM Group WHERE Type = 'Queue' AND Id IN ('" + Array.from(ownerIds).join('\',\'') + "')";
+    const users = await Query.executeQuery(connection, userQuery, 'provisioning task user owner');
+    const queues = await Query.executeQuery(connection, queueQuery, 'provisioning task queue owner');
+    let usersMap = new Map();
+    // @ts-ignore
+    users.forEach(u => usersMap.set(u.Id, u.Email))
+    let queuesMap = new Map();
+    // @ts-ignore
+    queues.forEach(q => queuesMap.set(q.Id, q.Name))
+    for(let task of tasks){
+      // @ts-ignore
+      let email = usersMap.get(task.OwnerId);
+      let name = queuesMap.get(task.OwnerId);
+      if(email){
+        // @ts-ignore
+        task.OwnerEmail = email;
+      } else if(name){
+        // @ts-ignore
+        task.OwnerQueue = name;
+      }
+      delete task.OwnerId;
+    }
   }
 
 }
