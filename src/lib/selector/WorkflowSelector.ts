@@ -41,7 +41,7 @@ export class WorkflowSelector {
     const queryWorkflowTaskDefinitions = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'WorkflowTaskDefinition').join(',') + ", OwnerId FROM enxCPQ__WorkflowTaskDefinition__c ";
 
     const workflowTasks = await Query.executeQuery(connection, queryWorkflowTaskDefinitions, 'Workflow Task Definitions');
-    this.setOwnerFieldOnWorkflowTask(connection, workflowTasks);
+    await this.setOwnerFieldOnWorkflowTask(connection, workflowTasks);
     return workflowTasks;
   }
 
@@ -66,14 +66,14 @@ export class WorkflowSelector {
     });
   }
 
-  private async setOwnerFieldOnWorkflowTask(connection: Connection, tasks: Array<any>) {
+  public async setOwnerFieldOnWorkflowTask(connection: Connection, tasks: Array<any>) {
     const ownerIds = new Set();
     // @ts-ignore
     tasks.forEach(task => ownerIds.add(task.OwnerId));
     const userQuery = "SELECT Id, Email FROM User WHERE Id IN ('" + Array.from(ownerIds).join('\',\'') + "')";
     const queueQuery = "SELECT Id, Name FROM Group WHERE Type = 'Queue' AND Id IN ('" + Array.from(ownerIds).join('\',\'') + "')";
-    const users = await Query.executeQuery(connection, userQuery, 'workflow task user owner');
-    const queues = await Query.executeQuery(connection, queueQuery, 'workflow task queue owner');
+    const users = await Query.executeQuery(connection, userQuery, 'Workflow task user owner');
+    const queues = await Query.executeQuery(connection, queueQuery, 'Workflow task queue owner');
     let usersMap = new Map();
     // @ts-ignore
     users.forEach(u => usersMap.set(u.Id, u.Email))

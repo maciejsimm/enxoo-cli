@@ -202,8 +202,8 @@ export class WorkflowImport {
     });
     const queryUser = "SELECT Id, Email FROM User WHERE Email IN ('" + Array.from(userEmails).join('\',\'') + "')";
     const queryQueue = "SELECT Id, Name FROM Group WHERE Type = 'Queue' AND Name IN ('" + Array.from(queueNames).join('\',\'') + "')";
-    const users = await Query.executeQuery(this.connection, queryUser, 'workflow task user owner');
-    const queues = await Query.executeQuery(this.connection, queryQueue, 'workflow task queue owner');
+    const users = await Query.executeQuery(this.connection, queryUser, 'Workflow task user owner');
+    const queues = await Query.executeQuery(this.connection, queryQueue, 'Workflow task queue owner');
     users.forEach( (u) => {
       // @ts-ignore-start
       if(userIdEmails.get(u.Email)){
