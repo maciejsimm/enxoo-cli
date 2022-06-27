@@ -167,6 +167,10 @@ export class Util {
                 const recordType = recordTypes.find(e => e.Object === objectName && e.DeveloperName === elem.RecordType.DeveloperName);
                 delete elem['RecordType'];
                 elem['RecordTypeId'] = recordType.id;
+            } else if (elem['RecordType.DeveloperName']){
+                const recordType = recordTypes.find(e => e.Object === objectName && e.DeveloperName === elem['RecordType.DeveloperName']);
+                delete elem['RecordType.DeveloperName'];
+                elem['RecordTypeId'] = recordType.id;
             }
             result.push(elem);
         })
