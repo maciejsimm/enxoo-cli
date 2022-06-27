@@ -60,7 +60,7 @@ export default class Org extends SfdxCommand {
     const retryNo = this.flags.retry;
     if (Org.numberOfRetries < retryNo) {
       Org.numberOfRetries++;
-      Util.log('*** RETRY ' + Org.numberOfRetries + '/' + retryNo +  '***');
+      Util.log('*** RETRY ' + Org.numberOfRetries + '/' + retryNo +  ' ***');
       this.run();
     }
   }
