@@ -437,9 +437,7 @@ export class ProductExport {
         productCharges.forEach((charge) => {
           let product;
           let resource;
-          if(this.products && charge['enxCPQ__Root_Product__r']){
-            product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c']);
-          }
+
           if(this.products && charge['enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c']){
             product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c']);
           }
