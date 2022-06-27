@@ -72,8 +72,8 @@ export class WorkflowSelector {
     tasks.forEach(task => ownerIds.add(task.OwnerId));
     const userQuery = "SELECT Id, Email FROM User WHERE Id IN ('" + Array.from(ownerIds).join('\',\'') + "')";
     const queueQuery = "SELECT Id, Name FROM Group WHERE Type = 'Queue' AND Id IN ('" + Array.from(ownerIds).join('\',\'') + "')";
-    const users = await Query.executeQuery(connection, userQuery, 'provisioning task user owner');
-    const queues = await Query.executeQuery(connection, queueQuery, 'provisioning task queue owner');
+    const users = await Query.executeQuery(connection, userQuery, 'workflow task user owner');
+    const queues = await Query.executeQuery(connection, queueQuery, 'workflow task queue owner');
     let usersMap = new Map();
     // @ts-ignore
     users.forEach(u => usersMap.set(u.Id, u.Email))
