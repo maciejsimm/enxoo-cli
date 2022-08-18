@@ -242,7 +242,7 @@ export class ProductSelector {
         const queryLabel = 'attrValues';
         const query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'AttributeValue').join(',') + " , enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
                          FROM enxCPQ__AttributeValue__c \
-                        WHERE (enxCPQ__Exclusive_for_Product__c = null AND enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')) \
+                        WHERE (enxCPQ__Exclusive_for_Products__c = null AND enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')) \
                      ORDER BY enxCPQ__Order__c";
       return await Query.executeQuery(connection, query, 'Local ' + queryLabel, productIds.length);
     }

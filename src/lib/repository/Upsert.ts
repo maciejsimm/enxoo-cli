@@ -197,21 +197,32 @@ export class Upsert {
 
         await this.enableTriggers(connection, false);
 
-        const data = { Name: "G_CPQ_DISABLE_TRIGGERS_99",
-                        enxCPQ__Setting_Name__c: "CPQ_DISABLE_TRIGGERS",
-                        enxCPQ__Context__c: "Global",
-                        enxCPQ__Col1__c: connection.getUsername() };
-
         return new Promise ((resolve, reject) => {
-            connection.sobject("enxCPQ__CPQ_Settings__c").insert(data, function(err, rets) {
-                if (err) {
+            connection.query("SELECT Id FROM enxCPQ__CPQ_Settings__c WHERE enxCPQ__Setting_Name__c = 'CPQ_DISABLE_TRIGGERS'", {}, (err, res) => {
+                if(err) {
                     reject('error disabling triggers: ' + err);
                     return;
                 }
-
-            Util.hideSpinner(' done. Setting ID: ' + rets['id']);
-            //@ts-ignore
-            resolve();
+                const settingCounter = res.records.length + 1;
+                let settingName = "G_CPQ_DISABLE_TRIGGERS_" + settingCounter;
+                if(settingCounter < 10) { settingName = "G_CPQ_DISABLE_TRIGGERS_0" + settingCounter; }
+    
+                const data = { Name: settingName,
+                    enxCPQ__Setting_Name__c: "CPQ_DISABLE_TRIGGERS",
+                    enxCPQ__Context__c: "Global",
+                    enxCPQ__Col1__c: connection.getUsername(),
+                    enxCPQ__Col6__c: 'ENXOO_IMPORTER' };
+    
+                connection.sobject("enxCPQ__CPQ_Settings__c").insert(data, function(err, rets) {
+                    if(err) {
+                        reject('error disabling triggers: ' + err);
+                        return;
+                    }
+    
+                    Util.hideSpinner(' done. Setting ID: ' + rets['id']);
+                    //@ts-ignore
+                    resolve();
+                });
             });
         });
     }
@@ -220,7 +231,7 @@ export class Upsert {
         return new Promise ((resolve, reject) => {
             if (log) Util.showSpinner('-- Enabling Triggers');
 
-            connection.query("SELECT Id FROM enxCPQ__CPQ_Settings__c WHERE Name = 'G_CPQ_DISABLE_TRIGGERS_99'", {}, (err, res) => {
+            connection.query("SELECT Id FROM enxCPQ__CPQ_Settings__c WHERE enxCPQ__Setting_Name__c = 'CPQ_DISABLE_TRIGGERS' AND enxCPQ__Col6__c = 'ENXOO_IMPORTER'", {}, (err, res) => {
                 if (res.records.length == 0) {
                     if (log) Util.hideSpinner(' done.');
                     //@ts-ignore
