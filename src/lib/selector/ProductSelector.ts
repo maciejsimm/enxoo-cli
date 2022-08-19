@@ -240,10 +240,16 @@ export class ProductSelector {
 
     public async getLocalAttributeValues(connection: Connection, productIds: Array<String>) {
         const queryLabel = 'attrValues';
-        const query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'AttributeValue').join(',') + " , enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
-                         FROM enxCPQ__AttributeValue__c \
-                        WHERE (enxCPQ__Exclusive_for_Products__c = null AND enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')) \
-                     ORDER BY enxCPQ__Order__c";
+        let query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'AttributeValue').join(',') + " , enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
+                    FROM enxCPQ__AttributeValue__c";
+        const incompatibleExclusiveField = this.filterIncompatibleFields(['enxCPQ__Exclusive_for_Products__c'], queryLabel);
+        if(incompatibleExclusiveField.length > 0) {
+          query += " WHERE enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
+                  ORDER BY enxCPQ__Order__c";
+        } else {
+          query += " WHERE (enxCPQ__Exclusive_for_Products__c = null AND enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')) \
+                  ORDER BY enxCPQ__Order__c";
+        }
       return await Query.executeQuery(connection, query, 'Local ' + queryLabel, productIds.length);
     }
 
@@ -404,11 +410,18 @@ export class ProductSelector {
 
     public async getGlobalAttributeValues(connection: Connection, attributeIds: Array<String>) {
         const queryLabel = 'attrValues';
-        const query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'AttributeValue').join(',') + " , enxCPQ__Exclusive_for_Product__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
-                         FROM enxCPQ__AttributeValue__c \
-                        WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "') \
-                          AND (enxCPQ__Global__c = true OR enxCPQ__Exclusive_for_Products__c != null) \
-                     ORDER BY enxCPQ__Order__c";
+        let query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'AttributeValue').join(',') + " , enxCPQ__Exclusive_for_Product__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
+                    FROM enxCPQ__AttributeValue__c";
+        const incompatibleExclusiveField = this.filterIncompatibleFields(['enxCPQ__Exclusive_for_Products__c'], queryLabel);
+        if(incompatibleExclusiveField.length > 0) {
+          query += " WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "') \
+                  AND enxCPQ__Exclusive_for_Product__c = null \
+                  ORDER BY enxCPQ__Order__c";
+        } else {
+          query += " WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "') \
+                  AND (enxCPQ__Global__c = true OR enxCPQ__Exclusive_for_Products__c != null) \
+                  ORDER BY enxCPQ__Order__c";
+        }
       return await Query.executeQuery(connection, query, 'Global ' + queryLabel, attributeIds.length);
     }
 
