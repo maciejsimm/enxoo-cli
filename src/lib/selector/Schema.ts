@@ -238,6 +238,7 @@ export class Schema {
         'CurrencyIsoCode',
         'enxCPQ__Active__c',
         'enxCPQ__Decimal_Places__c',
+        'enxCPQ__Exclusive_for_Products__c',
         'enxCPQ__Manual_Attribute_Value_Entry__c',
         'enxCPQ__Manual_Entry_Attribute_Type__c',
         'enxCPQ__Name_CN__c',
