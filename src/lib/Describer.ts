@@ -21,6 +21,7 @@ export class Describer {
         queryFields.pricebookFieldNames = await this.describePricebook(conn);
         queryFields.pbeFieldNames = await this.describePricebookEntry(conn);
         queryFields.productAttrFieldNames = await this.describeProductAttr(conn);
+        queryFields.productResourceFieldNames = await this.describeProductResource(conn);
         queryFields.attrSetAttrFieldNames = await this.describeAttrSetAttr(conn);
         queryFields.attrFieldNames = await this.describeAttr(conn);
         queryFields.attrValuesFieldNames = await this.describeAttrValues(conn);
@@ -69,6 +70,13 @@ export class Describer {
         let productFieldNames = this.retrieveFieldNames(productFields);
 
         return productFieldNames;
+    }
+
+    public async describeProductResource(conn: core.Connection){
+        let productResourceFields = await Queries.describeAllFields(conn, 'enxCPQ__ProductResource__c');
+        let productResourceFieldNames = this.retrieveFieldNames(productResourceFields);
+
+        return productResourceFieldNames;
     }
 
     public async describePricebook(conn: core.Connection){

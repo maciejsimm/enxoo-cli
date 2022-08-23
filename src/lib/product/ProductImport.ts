@@ -138,6 +138,13 @@ export class ProductImport {
         this.products.forEach((product) => {
             if(product.resources.length > 0) allProductResources.push(...product.resources);
         });
+        allProductResources.map(prodRes => {
+          if (this.fieldsToIgnore['productRes']) {
+              this.fieldsToIgnore['productRes'].forEach( field => {
+              delete prodRes[field];
+            });
+          }
+        });
         // @TO-DO handle array > 200 items
         if (allProductResources.length > 0)
             await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allProductResources), 'enxCPQ__ProductResource__c', 'Product Resource Objects');
