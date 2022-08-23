@@ -128,8 +128,8 @@ export class ProductSelector {
 
     public async getResourceJunctionObjects(connection: Connection, productIds: Array<String>) {
       try{
-        const queryLabel = 'productRes';
-        const productResourceQuery = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'ProductResource', 'productResource').join(',') + ", enxCPQ__Resource__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c \
+        const queryLabel = 'productResource';
+        const productResourceQuery = "SELECT " + this.getQueryFieldsReduced('productRes', 'ProductResource', queryLabel).join(',') + ", enxCPQ__Resource__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c \
                                         FROM enxCPQ__ProductResource__c\
                                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')\
                                           OR enxCPQ__Product__r.RecordType.name = 'option'";
