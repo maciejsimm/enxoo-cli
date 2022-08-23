@@ -138,7 +138,7 @@ export class ProductImport {
         this.products.forEach((product) => {
             if(product.resources.length > 0) allProductResources.push(...product.resources);
         });
-        allProductResources.map(prodRes => {
+        allProductResources.forEach(prodRes => {
           if (this.fieldsToIgnore['productRes']) {
               this.fieldsToIgnore['productRes'].forEach( field => {
               delete prodRes[field];
