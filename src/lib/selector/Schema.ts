@@ -52,6 +52,7 @@ export class Schema {
         'enxCPQ__Dimension_5_Numeric__c',
         'enxCPQ__Dimension_5_Value__c',
         'enxCPQ__Dimension_5__c',
+        'enxCPQ__Hide_for_Request_Specification__c',
         'enxCPQ__Hide_for_User_Context__c',
         'enxCPQ__Hide_in_Product_Catalogue__c',
         'enxCPQ__Ignore_Inventory_Management__c',
@@ -84,12 +85,14 @@ export class Schema {
     ]
 
     public static ProductResource:Array<string> = [
-        'enxB2B__Product__c',
-        'enxB2B__Product_Attribute__c',
-        'enxB2B__Product_Attribute_Value__c',
-        'enxB2B__Resource__c',
-        'enxB2B__Resource_Attribute__c',
-        'enxB2B__Resource_Attribute_Value__c'
+        'CurrencyIsoCode',
+        'enxCPQ__Applicable_Solution_Variants__c',
+        'enxCPQ__Assignment_Criteria__c',
+        'enxCPQ__Criteria__c',
+        'enxCPQ__Location_Network_Status__c',
+        'enxCPQ__Location_Type__c',
+        'enxCPQ__TECH_External_Id__c',
+        'enxCPQ__Resource_Location_Type__c'
     ]
 
     public static Resource:Array<string> = [
@@ -219,6 +222,7 @@ export class Schema {
         'CurrencyIsoCode',
         'enxCPQ__Active__c',
         'enxCPQ__Option_Affecting__c',
+        'enxCPQ__Enabled_for_Request__c',
         'enxCPQ__Feasibility_Affecting__c',
         'enxCPQ__Order__c',
         'enxCPQ__Product_Field_to_Update__c',

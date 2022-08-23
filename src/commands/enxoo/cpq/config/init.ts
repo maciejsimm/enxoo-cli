@@ -84,7 +84,8 @@ export default class Org extends SfdxCommand {
       workflowPlan: [],
       workflowItem: [],
       workflowItemRule: [],
-      workflowTaskDefinition: []
+      workflowTaskDefinition: [],
+      productRes: []
     },
     fieldsToIgnore: {
       product: [],
@@ -114,7 +115,8 @@ export default class Org extends SfdxCommand {
       workflowPlan: [],
       workflowItem: [],
       workflowItemRule: [],
-      workflowTaskDefinition: []
+      workflowTaskDefinition: [],
+      productRes: []
     },
     settingsToIgnore: {
       settingName: ["B2B_VENDOR_SCREEN_PUBLIC_SITE_URL", "LAST_OLI_NUMBER", "MAP_PROVIDER_API_KEY"]

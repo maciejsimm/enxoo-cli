@@ -127,14 +127,14 @@ export class ProductSelector {
     }
 
     public async getResourceJunctionObjects(connection: Connection, productIds: Array<String>) {
-        //todo: add the productResource to schema class
       try{
-        const productResourcequery = "SELECT enxCPQ__Resource__r.enxCPQ__TECH_External_Id__c, enxCPQ__Criteria__c, enxCPQ__Assignment_Criteria__c, enxCPQ__Applicable_Solution_Variants__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c, CurrencyIsoCode, enxCPQ__Product__c, enxCPQ__TECH_External_Id__c, enxCPQ__Resource__c, enxCPQ__Resource_Location_Type__c \
+        const queryLabel = 'productResource';
+        const productResourceQuery = "SELECT " + this.getQueryFieldsReduced('productRes', 'ProductResource', queryLabel).join(',') + ", enxCPQ__Resource__r.enxCPQ__TECH_External_Id__c, enxCPQ__Product__r.enxCPQ__TECH_External_Id__c \
                                         FROM enxCPQ__ProductResource__c\
                                        WHERE enxCPQ__Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')\
                                           OR enxCPQ__Product__r.RecordType.name = 'option'";
 
-        const productResources = await Query.executeQuery(connection, productResourcequery, 'productResource');
+        const productResources = await Query.executeQuery(connection, productResourceQuery, queryLabel);
         return productResources;
       } catch (e){
         if(e.errorCode === 'INVALID_TYPE'){
