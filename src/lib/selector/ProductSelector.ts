@@ -190,8 +190,8 @@ export class ProductSelector {
 
     public async getCharges(connection: Connection, productIds: Array<String>) {
         const queryLabel = 'charge';
-        const query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'Charge','product').join(',') + ", enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, \
-        enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c \
+        const query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'Charge', 'product').join(',') + ", enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, \
+        enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
                          FROM Product2 \
                         WHERE (enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')\
                         \ OR enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')) \

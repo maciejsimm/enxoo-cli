@@ -184,8 +184,7 @@ export class Schema {
         'enxCPQ__TECH_Option_JSON__c',
         'enxCPQ__Unit_of_Measure__c',
         'enxCPQ__Value_From__c',
-        'enxCPQ__Value_To__c',
-        'enxCPQ__Resource_Location_Type__c'
+        'enxCPQ__Value_To__c'
     ]
 
     public static Charge:Array<string> = [
@@ -197,7 +196,6 @@ export class Schema {
       'enxCPQ__Charge_Model__c',
       'enxCPQ__Charge_Type__c',
       'enxCPQ__TECH_External_Id__c',
-      'RecordType.DeveloperName',
       'enxCPQ__Sorting_Order__c',
       'IsActive',
       'enxCPQ__Billing_Frequency__c',
