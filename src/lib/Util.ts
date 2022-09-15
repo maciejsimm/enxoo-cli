@@ -136,7 +136,7 @@ export class Util {
 
                 if (prop.indexOf('__r') !== -1) {
                     // 20/05/28 - MASIM - Product2 -> Multiplier Attribute must be present because otherwise validation rule will kick in
-                    if (prop !== 'enxCPQ__Multiplier_Attribute__r') {
+                    if (prop !== 'enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c') {
                         continue;
                     }
                 } 
