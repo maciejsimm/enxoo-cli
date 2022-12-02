@@ -101,22 +101,22 @@ export class ProductExport {
         this.wrapProductCharges(charges);
 
         const productAttributes = await productSelector.getProductAttributes(this.connection, productAndResourceIds);
-        this.wrapProductObject(productAttributes, 'productAttributes', null,true);
+        this.wrapProductObject(productAttributes, 'productAttributes', null, true);
 
-        const localAttributeValues = await productSelector.getLocalAttributeValues(this.connection, [...this.productIds, ...resourceIds]);
+        const localAttributeValues = await productSelector.getLocalAttributeValues(this.connection, productAndResourceIds);
         this.wrapAttributeValues(localAttributeValues);
 
-        const attributeRules = await productSelector.getAttributeRules(this.connection, this.productIds);
-        this.wrapProductObject(attributeRules, 'attributeRules');
+        const attributeRules = await productSelector.getAttributeRules(this.connection, productAndResourceIds);
+        this.wrapProductObject(attributeRules, 'attributeRules', null, true);
 
         const productRelationships = await productSelector.getProductRelationships(this.connection, this.productIds);
         this.wrapProductObject(productRelationships, 'productRelationships', 'enxCPQ__Primary_Product__r');
 
-        const attributeDefaultValues = await productSelector.getAttributeDefaultValues(this.connection, this.productIds);
-        this.wrapProductObject(attributeDefaultValues, 'attributeDefaultValues');
+        const attributeDefaultValues = await productSelector.getAttributeDefaultValues(this.connection, productAndResourceIds);
+        this.wrapProductObject(attributeDefaultValues, 'attributeDefaultValues', null, true);
 
-        const attributeValueDependencies = await productSelector.getAttributeValueDependencies(this.connection, this.productIds);
-        this.wrapProductObject(attributeValueDependencies, 'attributeValueDependencies');
+        const attributeValueDependencies = await productSelector.getAttributeValueDependencies(this.connection, productAndResourceIds);
+        this.wrapProductObject(attributeValueDependencies, 'attributeValueDependencies', null, true);
 
         const bundleElements = await productSelector.getBundleElements(this.connection, this.productIds);
         this.wrapProductObject(bundleElements, 'bundleElements', 'enxCPQ__Bundle__r');
