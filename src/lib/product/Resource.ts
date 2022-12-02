@@ -7,6 +7,9 @@ export class Resource extends Serializable {
     public productResources:Array<any>;
     public productAttributes:Array<any>;
     public attributeValues:Array<any>;
+    public attributeRules:Array<any>;
+    public attributeDefaultValues:Array<any>;
+    public attributeValueDependencies:Array<any>;
 
     constructor(resource:any) {
         super();
@@ -16,6 +19,9 @@ export class Resource extends Serializable {
         this.RecordTypeId = '';
         this.productAttributes = [];
         this.attributeValues = [];
+        this.attributeRules = [];
+        this.attributeDefaultValues = [];
+        this.attributeValueDependencies = [];
     }
 
     public getFileName() {

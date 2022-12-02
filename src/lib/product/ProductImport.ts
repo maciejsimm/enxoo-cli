@@ -379,6 +379,9 @@ export class ProductImport {
     private async importElements(objName: string, objLabel: string, sObjectName :string){
       let allElements = [];
       this.products.forEach((prod) => { allElements = [...allElements, ...prod[objName]] });
+      if(objName === 'attributeRules' || objName === 'attributeDefaultValues' || objName === 'attributeValueDependencies') {
+        this.resources.forEach((res) => { allElements = [...allElements, ...res[objName]] });
+      }
       if(objName === 'attributeRules'){
         allElements = Util.fixRecordTypes(allElements, this.recordTypes, sObjectName);
       }
