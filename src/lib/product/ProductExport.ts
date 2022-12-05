@@ -461,7 +461,7 @@ export class ProductExport {
             let product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === currentAttrValueTechId);
             if(product == null){
               // @ts-ignore
-              product = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
+              product = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === currentAttrValueTechId);
             }
             if (product !== undefined) {
                 product.attributeValues.push(ava);

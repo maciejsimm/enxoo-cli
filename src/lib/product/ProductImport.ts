@@ -154,6 +154,7 @@ export class ProductImport {
         let allAttributeValues = [];
         this.attributes.forEach((attr) => { allAttributeValues = [...allAttributeValues, ...attr.attributeValues] });
         this.products.forEach((prod) => { allAttributeValues = [...allAttributeValues, ...prod.attributeValues] });
+        this.resources.forEach((res) => { allAttributeValues = [...allAttributeValues, ...res.attributeValues] });
         // @TO-DO handle array > 200 items
         if (allAttributeValues.length > 0) {
             let attrUniqueValues = [];
