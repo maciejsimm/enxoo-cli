@@ -112,7 +112,8 @@ export class ProductImport {
 
         // -- resources import begin
       if (this.resources.length) {
-        const recordTypeId = this.recordTypes.filter(e => e.Object === 'Product2').find(e => e.DeveloperName === 'Resource').id;
+        let recordTypeId = this.recordTypes.filter(e => e.Object === 'Product2').find(e => e.DeveloperName === 'Resource' && e.NamespacePrefix === 'enxCPQ').id;
+        if(this.exportB2BObjects || !recordTypeId) { recordTypeId = this.recordTypes.filter(e => e.Object === 'Product2').find(e => e.DeveloperName === 'Resource' && e.NamespacePrefix === 'enxB2B').id; }
         this.resources.forEach(res => {
             res.record.RecordTypeId = recordTypeId;
         })
