@@ -20,13 +20,13 @@ export class ProductSelector {
 
     public async getRecordTypes(connection: Connection) {
         const queryLabel = 'recordTypes';
-        const query = "SELECT Id, Name, DeveloperName, SObjectType \
+        const query = "SELECT Id, Name, DeveloperName, SObjectType, NamespacePrefix \
                          FROM RecordType";
 
         const recordTypes = await Query.executeQuery(connection, query, queryLabel);
 
         return recordTypes.map((rt) => {
-            return { Object: rt['SobjectType'], DeveloperName: rt['DeveloperName'], id: rt['Id'] };
+            return { Object: rt['SobjectType'], DeveloperName: rt['DeveloperName'], id: rt['Id'], NamespacePrefix: rt['NamespacePrefix'] };
         });
     }
 
