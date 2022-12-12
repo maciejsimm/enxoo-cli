@@ -112,13 +112,18 @@ export class ProductImport {
 
         // -- resources import begin
       if (this.resources.length) {
-        let recordTypeId = this.recordTypes.filter(e => e.Object === 'Product2').find(e => e.DeveloperName === 'Resource' && e.NamespacePrefix === 'enxCPQ').id;
-        if(this.exportB2BObjects || !recordTypeId) { recordTypeId = this.recordTypes.filter(e => e.Object === 'Product2').find(e => e.DeveloperName === 'Resource' && e.NamespacePrefix === 'enxB2B').id; }
-        this.resources.forEach(res => {
-            res.record.RecordTypeId = recordTypeId;
-        })
-            const allResources = this.resources.map((a) => {return a.record});
-            await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allResources), 'Product2', 'Resource Product2 Objects');
+          const productRecordTypes = this.recordTypes.filter(e => e.Object === 'Product2');
+          const defaultResourceRT = productRecordTypes.find(e => e.DeveloperName === 'Resource').id;
+          this.resources.forEach(res => {
+            res.record.RecordTypeId = defaultResourceRT;
+            if(res.record.RecordType && res.record.RecordType.NamespacePrefix) {
+              res.record.RecordTypeId = productRecordTypes.find(e => e.DeveloperName === 'Resource' && e.NamespacePrefix === res.record.RecordType.NamespacePrefix).id;
+              delete res.record['RecordType'];
+            }
+          })
+
+          const allResources = this.resources.map((a) => {return a.record});
+          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allResources), 'Product2', 'Resource Product2 Objects');
         }
         // -- resources import end
 

@@ -2,7 +2,6 @@ import { Serializable } from "./Serializable";
 export class Resource extends Serializable {
 
     public record:any;
-    public RecordTypeId:any;
     public charges:Array<any>;
     public productResources:Array<any>;
     public productAttributes:Array<any>;
@@ -16,7 +15,6 @@ export class Resource extends Serializable {
         this.record = resource;
         this.productResources = [];
         this.charges = [];
-        this.RecordTypeId = '';
         this.productAttributes = [];
         this.attributeValues = [];
         this.attributeRules = [];

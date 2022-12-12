@@ -168,7 +168,7 @@ export class ProductSelector {
 
         this.resourceRecordSFIDs = this.getResourceSFIDs(productResource);
 
-        const queryProductResources = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'Resource', 'product').join(',') + ", enxCPQ__Category__r.enxCPQ__TECH_External_Id__c \
+        const queryProductResources = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'Resource', 'product').join(',') + ", enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, RecordType.NamespacePrefix \
                                          FROM Product2 \
                                         WHERE Id IN ('" + this.resourceRecordSFIDs.join('\',\'') + "')";
 
@@ -178,7 +178,7 @@ export class ProductSelector {
     public async getUnrelatedResources(connection: Connection) {
         const queryLabel = 'productResources';
 
-        const queryUnrelatedResources = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'Resource', 'product').join(',') + ", enxCPQ__Category__r.enxCPQ__TECH_External_Id__c \
+        const queryUnrelatedResources = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'Resource', 'product').join(',') + ", enxCPQ__Category__r.enxCPQ__TECH_External_Id__c, RecordType.NamespacePrefix \
                                         FROM Product2 \
                                         WHERE enxCPQ__Record_Type_Name__c = 'Resource' \
                                         AND Id NOT IN ('" + this.resourceRecordSFIDs.join('\',\'') + "')";
