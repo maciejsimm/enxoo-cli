@@ -44,7 +44,9 @@ export class Product extends Serializable {
 
     public getAttributeIds() {
         return this.productAttributes.map((attr) => {
-            return attr['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'];
+            if(attr['enxCPQ__Attribute__r']){
+                return attr['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'];
+            }
         });
     }
 
@@ -87,8 +89,8 @@ export class Product extends Serializable {
 
     public getChargeIds() {
         return this.charges.map((charge) => {
-            if (charge['enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c']) {
-                return charge['enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c'];
+            if (charge['enxCPQ__Charge_Reference__r'] !== null) {
+                return charge['enxCPQ__Charge_Reference__r']['enxCPQ__TECH_External_Id__c'];
             } else {
                 return charge['enxCPQ__TECH_External_Id__c'];
             }

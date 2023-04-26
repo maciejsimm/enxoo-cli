@@ -438,11 +438,11 @@ export class ProductExport {
           let product;
           let resource;
 
-          if(this.products && charge['enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c']){
-            product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c']);
+          if(this.products && charge['enxCPQ__Root_Product__r']){
+            product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c']);
           }
-          if(this.resources && charge['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c']){
-            resource = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c']);
+          if(this.resources && charge['enxCPQ__Charge_Parent__r']){
+            resource = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === charge['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c']);
           }
           if (product !== undefined) {
             product.charges.push(charge);
@@ -457,15 +457,16 @@ export class ProductExport {
     private wrapAttributeValues(productAttributeValues:Array<any>) {
         this.attributeLocalValues = productAttributeValues;
         productAttributeValues.forEach((ava) => {
-            const currentAttrValueTechId = ava['enxCPQ__Exclusive_for_Product__r'] ? ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c'] : ava['enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c'];
-            let product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === currentAttrValueTechId);
-            if(product == null){
-              // @ts-ignore
-              product = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === currentAttrValueTechId);
-            }
-            if (product !== undefined) {
-                product.attributeValues.push(ava);
-                product.attributeValues.sort((a, b) => (a.Name > b.Name) ? 1 : -1);
+            if(ava['enxCPQ__Exclusive_for_Product__r']) {
+                let product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
+                if(product == null){
+                  // @ts-ignore
+                  product = this.resources.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c']);
+                }
+                if (product !== undefined) {
+                    product.attributeValues.push(ava);
+                    product.attributeValues.sort((a, b) => (a.Name > b.Name) ? 1 : -1);
+                }
             }
         });
     }
@@ -549,8 +550,7 @@ export class ProductExport {
         attributes.forEach((a) => {
             let attributeTyped = new Attribute(a);
             const attributesFiltered = this.attributeLocalValues.filter(e => {
-                const currentAttrTechId = e['enxCPQ__Exclusive_for_Product__r'] ? e['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c'] : e['enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c'];
-                return currentAttrTechId === a['enxCPQ__TECH_External_Id__c'];
+                return (e['enxCPQ__Exclusive_for_Product__r'] ? e['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c'] : null) === a['enxCPQ__TECH_External_Id__c'];
             });
             if (attributesFiltered !== undefined && attributesFiltered.length > 0) {
                 attributeTyped.attributeValues.push(...attributesFiltered);
@@ -578,25 +578,12 @@ export class ProductExport {
 
     private wrapGlobalAttributeValues(globalAttributeValues:Array<any>) {
         globalAttributeValues.forEach((ava) => {
-            let attribute;
-            let isFileSystemBroken;
-            try {
-                attribute = this.attributes.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c']);
-                isFileSystemBroken = false;
-            } catch (error) {
-                attribute = this.attributes.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c']);
-                isFileSystemBroken = true;
-            }
-            if (attribute !== undefined) {
-                if (isFileSystemBroken) {
-                    ava.enxCPQ__Attribute__r = {};
-                    ava.enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c = ava['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c'];
-                    delete ava['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c'];
+            if(ava['enxCPQ__Attribute__r']) {
+                const attribute = this.attributes.find(e => e.record['enxCPQ__TECH_External_Id__c'] === ava['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c']);
+                if (attribute !== undefined) {
                     attribute.attributeValues.push(ava);
-                } else {
-                    attribute.attributeValues.push(ava);
+                    attribute.attributeValues.sort((a, b) => (a.Name > b.Name) ? 1 : -1);
                 }
-                attribute.attributeValues.sort((a, b) => (a.Name > b.Name) ? 1 : -1);
             }
         });
     }
@@ -610,22 +597,9 @@ export class ProductExport {
 
     private wrapChargeElements(elements:Array<any>) {
         elements.forEach((elem) => {
-            let charge;
-            let isFileSystemBroken;
-            try {
-                charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c']);
-                isFileSystemBroken = false;
-            } catch (error) {
-                charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c']);
-                isFileSystemBroken = true;
-            }
-            if (charge !== undefined) {
-                if (isFileSystemBroken) {
-                    elem.enxCPQ__Attribute__r = {};
-                    elem.enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c = elem['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c'];
-                    delete elem['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c'];
-                    charge.attributeValues.push(elem);
-                } else {
+            if(elem['enxCPQ__Charge_Parent__r']) {
+                const charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === elem['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c']);
+                if (charge !== undefined) {
                     charge.chargeElements.push(elem);
                 }
             }
@@ -634,9 +608,11 @@ export class ProductExport {
 
     private wrapChargeTiers(tiers:Array<any>) {
         tiers.forEach((tier) => {
-            const charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === tier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c']);
-            if (charge !== undefined) {
-                charge.chargeTiers.push(tier);
+            if(tier['enxCPQ__Charge_Parent__r']) {
+                const charge = this.charges.find(e => e.record['enxCPQ__TECH_External_Id__c'] === tier['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c']);
+                if (charge !== undefined) {
+                    charge.chargeTiers.push(tier);
+                }
             }
         });
     }
@@ -666,20 +642,22 @@ export class ProductExport {
         pricebookEntries.forEach((pbe) => {
             const pricebook = this.pricebooks.find(e => e.isStandard);
             if (pricebook !== undefined) {
-                let productTechId = pbe['Product2']['enxCPQ__TECH_External_Id__c'];
+                let productTechId = pbe['Product2'] ? pbe['Product2']['enxCPQ__TECH_External_Id__c'] : null;
                 let currencyCode = pbe['CurrencyIsoCode'];
-                if (pricebook.stdPricebookEntries.hasOwnProperty(productTechId)) {
-                    const entriesArray = pricebook.stdPricebookEntries[productTechId];
-                    const elementIndex = entriesArray.findIndex(elem => {return elem['Product2']['enxCPQ__TECH_External_Id__c'] === productTechId && elem['CurrencyIsoCode'] === currencyCode});
-                    if (elementIndex !== -1) {
-                        pricebook.stdPricebookEntries[productTechId].splice(elementIndex, 1);
-                        pricebook.stdPricebookEntries[productTechId] = [...pricebook.stdPricebookEntries[productTechId], pbe];
+                if (productTechId) {
+                    if (pricebook.stdPricebookEntries.hasOwnProperty(productTechId)) {
+                        const entriesArray = pricebook.stdPricebookEntries[productTechId];
+                        const elementIndex = entriesArray.findIndex(elem => {return (elem['Product2'] ? elem['Product2']['enxCPQ__TECH_External_Id__c'] : null) === productTechId && elem['CurrencyIsoCode'] === currencyCode});
+                        if (elementIndex !== -1) {
+                            pricebook.stdPricebookEntries[productTechId].splice(elementIndex, 1);
+                            pricebook.stdPricebookEntries[productTechId] = [...pricebook.stdPricebookEntries[productTechId], pbe];
+                        } else {
+                            pricebook.stdPricebookEntries[productTechId] = [...pricebook.stdPricebookEntries[productTechId], pbe];
+                        }
+                        pricebook.stdPricebookEntries[productTechId].sort((elem1, elem2) => { return elem1['CurrencyIsoCode'] > elem2['CurrencyIsoCode'] });
                     } else {
-                        pricebook.stdPricebookEntries[productTechId] = [...pricebook.stdPricebookEntries[productTechId], pbe];
+                        pricebook.stdPricebookEntries[productTechId] = [pbe];
                     }
-                    pricebook.stdPricebookEntries[productTechId].sort((elem1, elem2) => { return elem1['CurrencyIsoCode'] > elem2['CurrencyIsoCode'] });
-                } else {
-                    pricebook.stdPricebookEntries[productTechId] = [pbe];
                 }
             }
         });
@@ -687,22 +665,26 @@ export class ProductExport {
 
     private wrapPricebookEntries(pricebookEntries:Array<any>) {
         pricebookEntries.forEach((pbe) => {
-            const pricebook = this.pricebooks.find(e => e.record['enxCPQ__TECH_External_Id__c'] === pbe['Pricebook2']['enxCPQ__TECH_External_Id__c']);
-            if (pricebook !== undefined) {
-                let productTechId = pbe['Product2']['enxCPQ__TECH_External_Id__c'];
-                let currencyCode = pbe['CurrencyIsoCode'];
-                if (pricebook.pricebookEntries.hasOwnProperty(productTechId)) {
-                    const entriesArray = pricebook.pricebookEntries[productTechId];
-                    const elementIndex = entriesArray.findIndex(elem => {return elem['Product2']['enxCPQ__TECH_External_Id__c'] === productTechId && elem['CurrencyIsoCode'] === currencyCode});
-                    if (elementIndex !== -1) {
-                        pricebook.pricebookEntries[productTechId].splice(elementIndex, 1);
-                        pricebook.pricebookEntries[productTechId] = [...pricebook.pricebookEntries[productTechId], pbe];
-                    } else {
-                        pricebook.pricebookEntries[productTechId] = [...pricebook.pricebookEntries[productTechId], pbe];
+            if(pbe['Pricebook2']) {
+                const pricebook = this.pricebooks.find(e => e.record['enxCPQ__TECH_External_Id__c'] === pbe['Pricebook2']['enxCPQ__TECH_External_Id__c']);
+                if (pricebook !== undefined) {
+                    let productTechId = pbe['Product2'] ? pbe['Product2']['enxCPQ__TECH_External_Id__c'] : null;
+                    let currencyCode = pbe['CurrencyIsoCode'];
+                    if (productTechId) {
+                        if (pricebook.pricebookEntries.hasOwnProperty(productTechId)) {
+                            const entriesArray = pricebook.pricebookEntries[productTechId];
+                            const elementIndex = entriesArray.findIndex(elem => {return (elem['Product2'] ? elem['Product2']['enxCPQ__TECH_External_Id__c'] : null) === productTechId && elem['CurrencyIsoCode'] === currencyCode});
+                            if (elementIndex !== -1) {
+                                pricebook.pricebookEntries[productTechId].splice(elementIndex, 1);
+                                pricebook.pricebookEntries[productTechId] = [...pricebook.pricebookEntries[productTechId], pbe];
+                            } else {
+                                pricebook.pricebookEntries[productTechId] = [...pricebook.pricebookEntries[productTechId], pbe];
+                            }
+                            pricebook.pricebookEntries[productTechId].sort((elem1, elem2) => { return elem1['CurrencyIsoCode'] > elem2['CurrencyIsoCode'] });
+                        } else {
+                            pricebook.pricebookEntries[productTechId] = [pbe];
+                        }
                     }
-                    pricebook.pricebookEntries[productTechId].sort((elem1, elem2) => { return elem1['CurrencyIsoCode'] > elem2['CurrencyIsoCode'] });
-                } else {
-                    pricebook.pricebookEntries[productTechId] = [pbe];
                 }
             }
         });
