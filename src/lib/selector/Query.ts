@@ -52,14 +52,76 @@ export class Query {
     private static fixIdsForBulk(record: any) {
         // Bulk API query doesn't return objects, nested properties are one string
         if (record.hasOwnProperty('Product2.enxCPQ__TECH_External_Id__c')) {
-            record['Product2'] = {};
-            record['Product2']['enxCPQ__TECH_External_Id__c'] = record['Product2.enxCPQ__TECH_External_Id__c'];
+            if(record['Product2.enxCPQ__TECH_External_Id__c'] === '') {
+                record['Product2'] = null;
+            } else {
+                record['Product2'] = {};
+                record['Product2']['enxCPQ__TECH_External_Id__c'] = record['Product2.enxCPQ__TECH_External_Id__c'];
+            }
             delete record['Product2.enxCPQ__TECH_External_Id__c'];
         }
         if (record.hasOwnProperty('Pricebook2.enxCPQ__TECH_External_Id__c')) {
-            record['Pricebook2'] = {};
-            record['Pricebook2']['enxCPQ__TECH_External_Id__c'] = record['Pricebook2.enxCPQ__TECH_External_Id__c'];
+            if(record['Pricebook2.enxCPQ__TECH_External_Id__c'] === '') {
+                record['Pricebook2'] = null;
+            } else {
+                record['Pricebook2'] = {};
+                record['Pricebook2']['enxCPQ__TECH_External_Id__c'] = record['Pricebook2.enxCPQ__TECH_External_Id__c'];
+            }
             delete record['Pricebook2.enxCPQ__TECH_External_Id__c'];
+        }
+        if (record.hasOwnProperty('enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c')) {
+            if(record['enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c'] === '') {
+                record['enxCPQ__Root_Product__r'] = null;
+            } else {
+                record['enxCPQ__Root_Product__r'] = {};
+                record['enxCPQ__Root_Product__r']['enxCPQ__TECH_External_Id__c'] = record['enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c'];
+            }
+            delete record['enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c'];
+        }
+        if (record.hasOwnProperty('enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c')) {
+            if(record['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c'] === '') {
+                record['enxCPQ__Charge_Parent__r'] = null;
+            } else {
+                record['enxCPQ__Charge_Parent__r'] = {};
+                record['enxCPQ__Charge_Parent__r']['enxCPQ__TECH_External_Id__c'] = record['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c'];
+            }
+            delete record['enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c'];
+        }
+        if (record.hasOwnProperty('enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c')) {
+            if(record['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c'] === '') {
+                record['enxCPQ__Attribute__r'] = null;
+            } else {
+                record['enxCPQ__Attribute__r'] = {};
+                record['enxCPQ__Attribute__r']['enxCPQ__TECH_External_Id__c'] = record['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c'];
+            }
+            delete record['enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c'];
+        }
+        if (record.hasOwnProperty('enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c')) {
+            if(record['enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c'] === '') {
+                record['enxCPQ__Exclusive_for_Product__r'] = null;
+            } else {
+                record['enxCPQ__Exclusive_for_Product__r'] = {};
+                record['enxCPQ__Exclusive_for_Product__r']['enxCPQ__TECH_External_Id__c'] = record['enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c'];
+            }
+            delete record['enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c'];
+        }
+        if (record.hasOwnProperty('enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c')) {
+            if(record['enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c'] === '') {
+                record['enxCPQ__Charge_Reference__r'] = null;
+            } else {
+                record['enxCPQ__Charge_Reference__r'] = {};
+                record['enxCPQ__Charge_Reference__r']['enxCPQ__TECH_External_Id__c'] = record['enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c'];
+            }
+            delete record['enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c'];
+        }
+        if (record.hasOwnProperty('enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c')) {
+            if(record['enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c'] === '') {
+                record['enxCPQ__Multiplier_Attribute__r'] = null;
+            } else {
+                record['enxCPQ__Multiplier_Attribute__r'] = {};
+                record['enxCPQ__Multiplier_Attribute__r']['enxCPQ__TECH_External_Id__c'] = record['enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c'];
+            }
+            delete record['enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c'];
         }
         // Bulk API query doesn't return null values, it returns empty string instead
         for (let prop in record) {
