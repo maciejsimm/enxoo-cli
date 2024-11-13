@@ -71,10 +71,11 @@ export class Upsert {
 
     }
 
-    public static async upsertBulkData(connection: Connection, records: Array<any>, sObjectName: string) {
+    public static async upsertBulkData(sfdxConnection: Connection, records: Array<any>, sObjectName: string) {
         let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
         const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
         const dataToImport = Util.sanitizeForBulkImport(records);
+        const jsforceConn = await Util.getJsforceConnection(sfdxConnection);
 
         // @TO-DO - proposed by Łuki - it's a better implementation of handling callbacks
 
@@ -88,21 +89,34 @@ export class Upsert {
 
         // await someFunc();
 
-        return new Promise<String[]>((resolve: Function, reject: Function) => {
-            connection.bulk.pollTimeout = 250000;
-            connection.bulk.load(sObjectName, "upsert", {"extIdField": externalIdString}, dataToImport, async (err:any, rets:RecordResult[]) => {
-                if (err) {
-                    Util.log(err);
-                    rets = [];
-                }
+        try {
+            const {
+                successfulResults,
+                failedResults,
+              } = await jsforceConn.bulk2.loadAndWaitForResults({
+                object: sObjectName,
+                operation: 'upsert',
+                externalIdFieldName: externalIdString,
+                pollTimeout : 250000,
+                input: dataToImport
+              });
 
-                await rets.forEach(async (ret) => {
-                    sobjectsResult.push(ret);
-                })
+            const successRecords = successfulResults.map(res => ({
+                success: true,
+                id: res.sf__Id,
+            }));
 
-                resolve(sobjectsResult);
-            });
-        });
+            const failedRecords = failedResults.map(res => ({
+                success: false,
+                errors: [{ message: res.sf__Error }],
+            }));
+
+            sobjectsResult.push(...successRecords, ...failedRecords);  
+        } catch (err) {
+            Util.log(err);
+        }
+        
+        return sobjectsResult;
     }
 
     public static async insertData(connection: Connection, records: Array<any>, sObjectName: string) {
