@@ -109,11 +109,22 @@ export class ProductSelector {
     }
 
     public async getProductIds(connection: Connection, productIds: Array<String>) {
-        const queryLabel = 'Product Ids';
-        const query = "SELECT Id, enxCPQ__TECH_External_Id__c \
-                         FROM Product2 \
-                        WHERE enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')";
-      return await Query.executeQuery(connection, query, queryLabel, productIds.length);
+      const queryLabel = 'Product Ids';
+      const splittedProductIds = Utils.splitArrayForQueryBatches(this.getProductIdsQuery(productIds), productIds);
+      const queries = [];
+      splittedProductIds.forEach(productIdsBatch => {
+        queries.push(this.getProductIdsQuery(productIdsBatch));
+      });
+      return await Query.executeQueries(connection, queries, queryLabel, productIds.length);
+    }
+
+    private getProductIdsQuery(productIds: Array<String>): string {
+      return `
+        SELECT 
+          Id, enxCPQ__TECH_External_Id__c
+        FROM Product2
+        WHERE enxCPQ__TECH_External_Id__c IN ('${productIds.join("','")}')
+      `;
     }
 
     public async getProductOptions(connection: Connection, productIds: Array<String>) {
@@ -188,17 +199,37 @@ export class ProductSelector {
         return resources;
     }
 
-    public async getCharges(connection: Connection, productIds: Array<String>) {
-        const queryLabel = 'charge';
-        const query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'Charge', 'product').join(',') + ", enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, \
-        enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName \
-                         FROM Product2 \
-                        WHERE (enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')\
-                        \ OR enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')) \
-                          AND RecordType.Name = 'Charge' \
-                     ORDER BY enxCPQ__Charge_Type__c, enxCPQ__Sorting_Order__c, enxCPQ__TECH_External_Id__c";
+    public async getCharges(connection: Connection, productIds: Array<string>) {
+      const queryLabel = 'charge';
+      const splittedProductIds = Utils.splitArrayForQueryBatches(
+        this.getChargesQuery(productIds, queryLabel),
+        productIds
+      );
 
-      return await Query.executeQuery(connection, query, queryLabel, 50000);
+      const queries = [];
+      splittedProductIds.forEach(productIdsBatch => {
+        queries.push(this.getChargesQuery(productIdsBatch, queryLabel));
+      });
+      
+      return await Query.executeQueries(connection, queries, queryLabel, 50000);
+    }
+
+    private getChargesQuery(productIds: Array<string>, queryLabel: string): string {
+      const fields = this.getQueryFieldsReduced(queryLabel, 'Charge', 'product').join(',');
+
+      return `
+        SELECT 
+          ${fields}, enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Reference__r.enxCPQ__TECH_External_Id__c, 
+          enxCPQ__Multiplier_Attribute__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, 
+          RecordType.DeveloperName 
+        FROM Product2
+        WHERE 
+          (enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c IN ('${productIds.join("','")}')
+          OR enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c IN ('${productIds.join("','")}'))
+          AND RecordType.Name = 'Charge'
+        ORDER BY 
+          enxCPQ__Charge_Type__c, enxCPQ__Sorting_Order__c, enxCPQ__TECH_External_Id__c
+      `;
     }
 
     public async getBundleElements(connection: Connection, productIds: Array<String>) {
@@ -238,19 +269,36 @@ export class ProductSelector {
         return attributes;
     }
 
-    public async getLocalAttributeValues(connection: Connection, productIds: Array<String>) {
-        const queryLabel = 'attrValues';
-        let query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'AttributeValue').join(',') + " , enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
-                    FROM enxCPQ__AttributeValue__c";
-        const incompatibleExclusiveField = this.filterIncompatibleFields(['enxCPQ__Exclusive_for_Products__c'], queryLabel);
-        if(incompatibleExclusiveField.length > 0) {
-          query += " WHERE enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
-                  ORDER BY enxCPQ__Order__c";
-        } else {
-          query += " WHERE (enxCPQ__Exclusive_for_Products__c = null AND enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "')) \
-                  ORDER BY enxCPQ__Order__c";
+    public async getLocalAttributeValues(connection: Connection, productIds: Array<string>) {
+      const queryLabel = 'attrValues';
+      const incompatibleExclusiveField = this.filterIncompatibleFields(['enxCPQ__Exclusive_for_Products__c'], queryLabel);
+      const hasIncompatibleExcFields = incompatibleExclusiveField.length > 0;
+      const fullQuery = this.getLocalAttributeValuesQuery(productIds, queryLabel, hasIncompatibleExcFields);
+    
+      const splittedProductIds = Utils.splitArrayForQueryBatches(fullQuery, productIds);
+      const queries = [];
+    
+      splittedProductIds.forEach(productIdsBatch => {
+        queries.push(this.getLocalAttributeValuesQuery(productIdsBatch, queryLabel, hasIncompatibleExcFields));
+      });
+    
+      return await Query.executeQueries(connection, queries, 'Local ' + queryLabel, productIds.length);
+    }
+    
+    private getLocalAttributeValuesQuery(productIds: Array<string>, queryLabel: string, hasIncompatibleExcFields: Boolean) {
+      const fields = this.getQueryFieldsReduced(queryLabel, 'AttributeValue').join(',');
+      return `
+        SELECT 
+          ${fields},  
+          enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c
+        FROM enxCPQ__AttributeValue__c
+        WHERE ${hasIncompatibleExcFields ? 
+          `enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('${productIds.join("','")}')` :
+          `(enxCPQ__Exclusive_for_Products__c = null 
+            AND enxCPQ__Exclusive_for_Product__r.enxCPQ__TECH_External_Id__c IN ('${productIds.join("','")}'))`
         }
-      return await Query.executeQuery(connection, query, 'Local ' + queryLabel, productIds.length);
+        ORDER BY enxCPQ__Order__c
+      `;
     }
 
     public async getAttributeRules(connection: Connection, productIds: Array<String>) {
@@ -400,29 +448,61 @@ export class ProductSelector {
     return await Query.executeQuery(connection, query, queryLabel);
   }
 
-    public async getAttributeDefinitions(connection: Connection, attributeIds: Array<String>) {
-        const queryLabel = 'attr';
-        const query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'Attribute').join(',') + " \
-                         FROM enxCPQ__Attribute__c \
-                        WHERE enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "')";
-      return await Query.executeQuery(connection, query, queryLabel, attributeIds.length);
+    public async getAttributeDefinitions(connection: Connection, attributeIds: Array<string>) {
+      const queryLabel = 'attr';
+      const splittedAttributeIds = Utils.splitArrayForQueryBatches(
+        this.getAttributeDefinitionsQuery(attributeIds),
+        attributeIds
+      );
+
+      const queries = [];
+      splittedAttributeIds.forEach(attributeIdsBatch => {
+        queries.push(this.getAttributeDefinitionsQuery(attributeIdsBatch));
+      });
+    
+      return await Query.executeQueries(connection, queries, queryLabel, attributeIds.length);
+    }
+    
+    private getAttributeDefinitionsQuery(attributeIds: Array<string>) {
+      return `
+        SELECT ${this.getQueryFieldsReduced('attr', 'Attribute').join(',')} 
+        FROM enxCPQ__Attribute__c 
+        WHERE enxCPQ__TECH_External_Id__c IN ('${attributeIds.join("','")}')
+      `;
     }
 
-    public async getGlobalAttributeValues(connection: Connection, attributeIds: Array<String>) {
-        const queryLabel = 'attrValues';
-        let query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'AttributeValue').join(',') + " , enxCPQ__Exclusive_for_Product__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c \
-                    FROM enxCPQ__AttributeValue__c";
-        const incompatibleExclusiveField = this.filterIncompatibleFields(['enxCPQ__Exclusive_for_Products__c'], queryLabel);
-        if(incompatibleExclusiveField.length > 0) {
-          query += " WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "') \
-                  AND enxCPQ__Exclusive_for_Product__c = null \
-                  ORDER BY enxCPQ__Order__c";
-        } else {
-          query += " WHERE enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN ('" + attributeIds.join('\',\'') + "') \
-                  AND (enxCPQ__Global__c = true OR enxCPQ__Exclusive_for_Products__c != null) \
-                  ORDER BY enxCPQ__Order__c";
-        }
-      return await Query.executeQuery(connection, query, 'Global ' + queryLabel, attributeIds.length);
+    public async getGlobalAttributeValues(connection: Connection, attributeIds: Array<string>) {
+      const queryLabel = 'attrValues';
+    
+      const incompatibleExclusiveField = this.filterIncompatibleFields(['enxCPQ__Exclusive_for_Products__c'], queryLabel);
+      const hasIncompatibleExcFields = incompatibleExclusiveField.length > 0;
+    
+      const fullQuery = this.getGlobalAttributeValuesQuery(attributeIds, queryLabel, hasIncompatibleExcFields);
+      const splittedAttributeIds = Utils.splitArrayForQueryBatches(fullQuery, attributeIds);    
+      const queries = [];
+    
+      splittedAttributeIds.forEach(attributeIdsBatch => {
+        queries.push(this.getGlobalAttributeValuesQuery(attributeIdsBatch, queryLabel, hasIncompatibleExcFields));
+      });
+    
+      return await Query.executeQueries(connection, queries, 'Global ' + queryLabel, attributeIds.length);
+    }
+    
+    private getGlobalAttributeValuesQuery(attributeIds: Array<string>, queryLabel: string, hasIncompatibleExcFields: boolean) {
+      const whereClause = hasIncompatibleExcFields
+        ? `enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN ('${attributeIds.join("','")}')
+           AND enxCPQ__Exclusive_for_Product__c = null`
+        : `enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c IN ('${attributeIds.join("','")}')
+           AND (enxCPQ__Global__c = true OR enxCPQ__Exclusive_for_Products__c != null)`;
+      
+      const fields = this.getQueryFieldsReduced(queryLabel, 'AttributeValue').join(',');
+      return `
+        SELECT 
+          ${fields}, enxCPQ__Exclusive_for_Product__c, enxCPQ__Attribute__r.enxCPQ__TECH_External_Id__c
+        FROM enxCPQ__AttributeValue__c
+        WHERE ${whereClause}
+        ORDER BY enxCPQ__Order__c
+      `;
     }
 
     public async getAttributeSets(connection: Connection, attributeSetIds: Array<String>) {
@@ -452,17 +532,33 @@ export class ProductSelector {
         return await Query.executeQuery(connection, query, 'charge');
     }
 
-    public async getChargeElements(connection: Connection, chargeIds: Array<String>) {
-        const queryLabel = 'charge element';
-        const query = "SELECT Name, enxCPQ__TECH_External_Id__c, enxCPQ__Dimension_1_Value__c, enxCPQ__Dimension_2_Value__c, enxCPQ__Dimension_3_Value__c, \
-                              enxCPQ__Dimension_4_Value__c, enxCPQ__Dimension_5_Value__c, \
-                              enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c, enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c, RecordType.DeveloperName  \
-                         FROM Product2 \
-                        WHERE enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c IN ('" + chargeIds.join('\',\'') + "') \
-                          AND RecordType.Name = 'Charge Element' \
-                     ORDER BY enxCPQ__TECH_External_Id__c";
-      return await Query.executeQuery(connection, query, queryLabel, chargeIds.length);
+    public async getChargeElements(connection: Connection, chargeIds: Array<string>) {
+      const queryLabel = 'charge element';
+      const fullQuery = this.getChargeElementsQuery(chargeIds);
+    
+      const splittedChargeIds = Utils.splitArrayForQueryBatches(fullQuery, chargeIds);
+      const queries = [];
+      splittedChargeIds.forEach(chargeIdsBatch => {
+        queries.push(this.getChargeElementsQuery(chargeIdsBatch));
+      });
+    
+      return await Query.executeQueries(connection, queries, queryLabel, chargeIds.length);
     }
+    
+    private getChargeElementsQuery(chargeIds: Array<string>) {
+      return `
+        SELECT Name,
+          enxCPQ__TECH_External_Id__c, enxCPQ__Dimension_1_Value__c, enxCPQ__Dimension_2_Value__c,
+          enxCPQ__Dimension_3_Value__c, enxCPQ__Dimension_4_Value__c, enxCPQ__Dimension_5_Value__c,
+          enxCPQ__Root_Product__r.enxCPQ__TECH_External_Id__c,enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c,
+          RecordType.DeveloperName
+        FROM Product2
+        WHERE enxCPQ__Charge_Parent__r.enxCPQ__TECH_External_Id__c IN ('${chargeIds.join("','")}')
+          AND RecordType.Name = 'Charge Element'
+        ORDER BY enxCPQ__TECH_External_Id__c
+      `;
+    }
+    
 
     public async getChargeTiers(connection: Connection, chargeIds: Array<String>) {
         const queryLabel = 'charge tier';
@@ -496,49 +592,99 @@ export class ProductSelector {
         return await Query.executeQuery(connection, query, queryLabel);
     }
 
-    public async getStandardPricebookEntries(connection: Connection, productIds: Array<String>) {
+      public async getStandardPricebookEntries(connection: Connection, productIds: Array<string>) {
         const queryLabel = 'std pbe';
-        const query = "SELECT UnitPrice, IsActive, UseStandardPrice, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode \
-                         FROM PricebookEntry \
-                         WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
-                           AND Pricebook2.IsStandard = true \
-                      ORDER BY CurrencyIsoCode, Product2Id, Id";
-        const pricebookEntries = await Query.executeQuery(connection, query, queryLabel, productIds.length);
-        return pricebookEntries;
+        const fullQuery = this.getStandardPricebookEntriesQuery(productIds);
+
+        const splittedProductIds = Utils.splitArrayForQueryBatches(fullQuery, productIds);
+        const queries = [];
+        splittedProductIds.forEach(productIdsBatch => {
+          queries.push(this.getStandardPricebookEntriesQuery(productIdsBatch));
+        });
+      
+        return await Query.executeQueries(connection, queries, queryLabel, productIds.length);
+      }
+      
+      private getStandardPricebookEntriesQuery(productIds: Array<string>) {
+        return `
+          SELECT 
+            UnitPrice, IsActive, UseStandardPrice, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode 
+          FROM PricebookEntry 
+          WHERE Product2.enxCPQ__TECH_External_Id__c IN ('${productIds.join("','")}')
+            AND Pricebook2.IsStandard = true
+          ORDER BY CurrencyIsoCode, Product2Id, Id
+        `;
+      }
+
+    public async getStandardPricebookEntryIds(connection: Connection, productIds: Array<string>) {
+      const queryLabel = 'std pbe ids';
+      const fullQuery = this.getStandardPricebookEntryIdsQuery(productIds);
+      const splittedProductIds = Utils.splitArrayForQueryBatches(fullQuery, productIds);
+      const queries = [];
+    
+      splittedProductIds.forEach(productIdsBatch => {
+        queries.push(this.getStandardPricebookEntryIdsQuery(productIdsBatch));
+      });
+    
+      return await Query.executeQueries(connection, queries, queryLabel, productIds.length);
+    }
+    
+    private getStandardPricebookEntryIdsQuery(productIds: Array<string>) {
+      return `
+        SELECT 
+          Id, Product2Id, Pricebook2Id, CurrencyIsoCode
+        FROM PricebookEntry
+        WHERE Product2.enxCPQ__TECH_External_Id__c IN ('${productIds.join("','")}')
+      `;
     }
 
-    public async getStandardPricebookEntryIds(connection: Connection, productIds: Array<String>) {
-        const queryLabel = 'std pbe ids';
-        const query = "SELECT Id, Product2Id, Pricebook2Id, CurrencyIsoCode \
-                         FROM PricebookEntry \
-                         WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
-                           AND Pricebook2.IsStandard = true";
-        //    AND Pricebook2.IsActive = true";
-        const pricebookEntries = await Query.executeQuery(connection, query, queryLabel, productIds.length);
-        return pricebookEntries;
+    public async getPricebookEntries(connection: Connection, productIds: Array<string>, pricebookIds: Array<string>) {
+      const queryLabel = 'pbe';
+      const fullQuery = this.getPricebookEntriesQuery(productIds, pricebookIds, queryLabel);
+      const splittedProductIds = Utils.splitArrayForQueryBatches(fullQuery, productIds);
+      const queries = [];
+    
+      splittedProductIds.forEach(productIdsBatch => {
+        queries.push(this.getPricebookEntriesQuery(productIdsBatch, pricebookIds, queryLabel));
+      });
+    
+      return await Query.executeQueries(connection, queries, queryLabel, productIds.length);
+    }
+    
+    private getPricebookEntriesQuery(productIds: Array<string>, pricebookIds: Array<string>, queryLabel: string) {
+      const fields = this.getQueryFieldsReduced(queryLabel, 'PricebookEntry').join(',');
+      return `
+        SELECT 
+          ${fields}, Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode
+        FROM PricebookEntry
+        WHERE Product2.enxCPQ__TECH_External_Id__c IN ('${productIds.join("','")}')
+          AND Pricebook2.enxCPQ__TECH_External_Id__c IN ('${pricebookIds.join("','")}')
+          AND Pricebook2.IsStandard = false
+        ORDER BY CurrencyIsoCode, Product2Id, Id
+      `;
     }
 
-    public async getPricebookEntries(connection: Connection, productIds: Array<String>, pricebookIds: Array<String>) {
-        const queryLabel = 'pbe';
-        const query = "SELECT " + this.getQueryFieldsReduced(queryLabel, 'PricebookEntry').join(',') + ", Product2.enxCPQ__TECH_External_Id__c, Pricebook2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode \
-                         FROM PricebookEntry \
-                         WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
-                           AND Pricebook2.enxCPQ__TECH_External_Id__c IN ('" + pricebookIds.join('\',\'') + "') \
-                           AND Pricebook2.IsStandard = false \
-                      ORDER BY CurrencyIsoCode, Product2Id, Id";
-        return await Query.executeQuery(connection, query, queryLabel, productIds.length);
+    public async getPricebookEntryIds(connection: Connection, productIds: Array<string>) {
+      const queryLabel = 'pbe ids';    
+      const fullQuery = this.getPricebookEntryIdsQuery(productIds);
+      const splittedProductIds = Utils.splitArrayForQueryBatches(fullQuery, productIds);
+      const queries = [];    
+      splittedProductIds.forEach(productIdsBatch => {
+        queries.push(this.getPricebookEntryIdsQuery(productIdsBatch));
+      });
+    
+      return await Query.executeQueries(connection, queries, queryLabel, productIds.length);
     }
-
-    public async getPricebookEntryIds(connection: Connection, productIds: Array<String>) {
-        const queryLabel = 'pbe ids';
-        const query = "SELECT Id, Product2Id, Pricebook2Id, CurrencyIsoCode \
-                         FROM PricebookEntry \
-                         WHERE Product2.enxCPQ__TECH_External_Id__c IN ('" + productIds.join('\',\'') + "') \
-                           AND Pricebook2.IsStandard = false";
-        //AND Pricebook2.IsActive = true";
-      return await Query.executeQuery(connection, query, queryLabel, productIds.length);
+    
+    private getPricebookEntryIdsQuery(productIds: Array<string>) {
+      return `
+        SELECT 
+          Id, Product2Id, Pricebook2Id, CurrencyIsoCode
+        FROM PricebookEntry
+        WHERE Product2.enxCPQ__TECH_External_Id__c IN ('${productIds.join("','")}')
+          AND Pricebook2.IsStandard = false
+      `;
     }
-
     private filterFields(fieldNames: Array<string>) {
         if (this.exportB2BObjects) {
             return fieldNames;

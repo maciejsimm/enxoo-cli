@@ -1,6 +1,8 @@
 // Class collecting all utilities 
 
 import { core, UX } from "@salesforce/command";
+import { Connection } from "@salesforce/core";
+import * as jsforce from 'jsforce';
 
 export class Util {
     
@@ -223,4 +225,10 @@ export class Util {
             return objs.map(obj=>({...template, ...obj}));
     }
 
+    public static async getJsforceConnection(sfdxCoreConnection: Connection) {
+        return new jsforce.Connection({
+          instanceUrl: sfdxCoreConnection.instanceUrl,
+          accessToken: sfdxCoreConnection.accessToken
+        });
+    }
 }

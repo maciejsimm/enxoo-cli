@@ -29,6 +29,20 @@ export class Query {
         }
     }
 
+    public static async executeQueries(connection: Connection, queries: string[], logLabel: string, recordsCount?: number) {
+        const recordResults = [];
+        for (const query of queries) {
+            try {
+                const result = await this.executeQuery(connection, query, logLabel, recordsCount);
+                recordResults.push(result);
+            } catch (error) {
+                Logs.displayError(Logs.addEnxooMessages(error));
+                throw new Error('Error during query execution. Importer will now exit the operation.');
+            }
+        }
+        return recordResults.flat();
+    }
+
     public static async executeBulkQuery(connection: Connection, query: string, logLabel: string) {
         return new Promise<String[]>(async (resolve: Function, reject: Function) => {
             const messageString = '-- Querying bulk ' + logLabel;
