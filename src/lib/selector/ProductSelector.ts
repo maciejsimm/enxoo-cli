@@ -635,6 +635,7 @@ export class ProductSelector {
           Id, Product2Id, Pricebook2Id, CurrencyIsoCode
         FROM PricebookEntry
         WHERE Product2.enxCPQ__TECH_External_Id__c IN ('${productIds.join("','")}')
+            AND Pricebook2.IsStandard = true
       `;
     }
 
