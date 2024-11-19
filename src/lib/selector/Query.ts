@@ -40,7 +40,14 @@ export class Query {
                 throw new Error('Error during query execution. Importer will now exit the operation.');
             }
         }
-        return recordResults.flat();
+        const flattenedResults = recordResults.flat();
+
+        const uniqueRecordsMap = new Map();
+        for (const record of flattenedResults) {
+            uniqueRecordsMap.set(record.Id, record);
+        }
+    
+        return Array.from(uniqueRecordsMap.values());
     }
 
     public static async executeBulkQuery(connection: Connection, query: string, logLabel: string) {
