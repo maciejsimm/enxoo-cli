@@ -45,6 +45,7 @@ export class ProductExport {
     private exportB2BObjects:boolean;
     private connection:Connection;
     private fileManager:FileManager;
+    private exportAllProducts:boolean;
 
     constructor(targetDirectory:string, connection: Connection, exportB2BObjects: boolean) {
         this.targetDirectory = targetDirectory;
@@ -261,7 +262,7 @@ export class ProductExport {
         // -- price rules begin
         this.priceRuleIds = [];
         this.priceRules = [];
-        const priceRules = await productSelector.getPriceRules(this.connection, this.productIds);
+        const priceRules = await productSelector.getPriceRules(this.connection, this.exportAllProducts ? null : this.productIds);
         this.wrapPriceRules(priceRules);
 
         const priceRuleConditions = await productSelector.getPriceRuleConditions(this.connection, this.priceRuleIds);
@@ -337,8 +338,10 @@ export class ProductExport {
     private setProductExportScope(productToExportNames: Array<string>, allProducts: Array<any>) {
         if (productToExportNames[0] === '*ALL') {
             this.productIds = allProducts.map((p) => { return p.id; });
+            this.exportAllProducts = true;
         } else {
             this.productIds = [];
+            this.exportAllProducts = false;
             productToExportNames.forEach((name) => {
                 const elem = allProducts.find(e => e.name === name);
                 if (elem === undefined) {
@@ -473,9 +476,11 @@ export class ProductExport {
 
     private wrapPriceRules(priceRules:Array<any>) {
       priceRules.forEach((pr) => {
-        const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === pr['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
-        if (product !== undefined) {
-          product.priceRules.push(pr);
+        if (pr['enxCPQ__Product__r']) {
+          const product = this.products.find(e => e.record['enxCPQ__TECH_External_Id__c'] === pr['enxCPQ__Product__r']['enxCPQ__TECH_External_Id__c']);
+          if (product !== undefined) {
+            product.priceRules.push(pr);
+          }
         }
         this.priceRules.push(new PriceRule(pr));
         this.priceRuleIds.push(pr['enxCPQ__TECH_External_Id__c']);
