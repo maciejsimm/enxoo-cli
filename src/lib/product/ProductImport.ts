@@ -334,7 +334,8 @@ export class ProductImport {
         // -- price rules import begin
         if(this.priceRules && this.priceRules.length){
           const allPriceRules =  this.priceRules.map((priceRule) => {return priceRule.record});
-          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allPriceRules), 'enxCPQ__PriceRule__c');
+          const allPriceRulesRTfix = Util.fixRecordTypes(allPriceRules, this.recordTypes, 'enxCPQ__PriceRule__c');
+          await Upsert.upsertData(this.connection, Util.sanitizeForUpsert(allPriceRulesRTfix), 'enxCPQ__PriceRule__c');
           if(this.priceRuleConditions && this.priceRuleConditions.length){
             const allPriceRuleConditions =  this.priceRuleConditions.map((prc) => {return prc.record});
             if(allPriceRuleConditions.length){
