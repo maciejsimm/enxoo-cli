@@ -4,7 +4,10 @@
     "outDir": "./lib",
     "rootDir": "./src",
     "noUnusedLocals": false,
-    "noUnusedParameters": false
+    "noUnusedParameters": false,
+    "skipLibCheck": true // Skips type-checking of all declaration files (.d.ts) from dependencies.
+    // This is necessary to ignore errors in old/incompatible typings
+    // (e.g., in @salesforce/kit) that are not compatible with this project.
   },
   "include": [
     "./src/**/*"

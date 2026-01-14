@@ -71,53 +71,89 @@ export class Upsert {
 
     }
 
-    public static async upsertBulkData(sfdxConnection: Connection, records: Array<any>, sObjectName: string) {
-        let sobjectsResult:Array<RecordResult> = new Array<RecordResult>();
-        const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
-        const dataToImport = Util.sanitizeForBulkImport(records);
-        const jsforceConn = await Util.getJsforceConnection(sfdxConnection);
+  public static async upsertBulkData(sfdxConnection: Connection, records: Array<any>, sObjectName: string) {
+    // We use Array<any> instead of RecordResult to match the return type from our new logic
+    let allResults: Array<any> = new Array<any>();
+    const externalIdString = (sObjectName.startsWith('enxB2B__') ? 'enxB2B__TECH_External_Id__c' : 'enxCPQ__TECH_External_Id__c');
+    const dataToImport = Util.sanitizeForBulkImport(records);
+    const jsforceConn = await Util.getJsforceConnection(sfdxConnection);
 
-        // @TO-DO - proposed by Łuki - it's a better implementation of handling callbacks
+    // Set a safe batch limit (Salesforce limit is 10k)
+    const BATCH_SIZE = 9500;
 
-        // const someFunc = () => {
-        //     return new Promise<String[]>((resolve: Function, reject: Function) => {
-        //         connection.bulk.load(sObjectName, "upsert", {"extIdField": externalIdString}, dataToImport, (err:any, rets:RecordResult[]) => {
-        //             resolve();
-        //         });
-        //     });
-        // };
+    // Loop to split data into chunks (batching)
+    for (let i = 0; i < dataToImport.length; i += BATCH_SIZE) {
+      const batchRecords = dataToImport.slice(i, i + BATCH_SIZE);
 
-        // await someFunc();
+      Logs.showSpinner(`-- Upserting ${sObjectName} (Batch ${Math.floor(i / BATCH_SIZE) + 1} / ${Math.ceil(dataToImport.length / BATCH_SIZE)})`);
 
-        try {
-            const {
-                successfulResults,
-                failedResults,
-              } = await jsforceConn.bulk2.loadAndWaitForResults({
-                object: sObjectName,
-                operation: 'upsert',
-                externalIdFieldName: externalIdString,
-                pollTimeout : 250000,
-                input: dataToImport
-              });
+      try {
+        // The Promise logic is now INSIDE the loop, one for each batch
+        const {
+          successfulResults,
+          failedResults,
+        }: any = await new Promise((resolve, reject) => {
 
-            const successRecords = successfulResults.map(res => ({
-                success: true,
-                id: res.sf__Id,
-            }));
+          jsforceConn.bulk.pollTimeout = 250000;
 
-            const failedRecords = failedResults.map(res => ({
-                success: false,
-                errors: [{ message: res.sf__Error }],
-            }));
+          const batch = jsforceConn.bulk.load(
+            sObjectName,         // type
+            'upsert',            // operation
+            {                    // options
+              extIdField: externalIdString
+            },
+            batchRecords         // input (this chunk only)
+          );
 
-            sobjectsResult.push(...successRecords, ...failedRecords);  
-        } catch (err) {
-            Util.log(err);
-        }
-        
-        return sobjectsResult;
-    }
+          batch.on('response', (rets: any[]) => {
+            const successfulResults: any[] = [];
+            const failedResults: any[] = [];
+
+            (rets || []).forEach(ret => {
+              if (ret.success) {
+                successfulResults.push({sf__Id: ret.id});
+              } else {
+                failedResults.push({sf__Error: (ret.errors || []).join('; ')});
+              }
+            });
+
+            resolve({successfulResults, failedResults});
+          });
+
+          batch.on('error', (err: any) => {
+            reject(err);
+          });
+
+        });
+
+        // This logic is also moved inside the loop to process batch results immediately
+        const successRecords = successfulResults.map(res => ({
+          success: true,
+          id: res.sf__Id,
+        }));
+
+        const failedRecords = failedResults.map(res => ({
+          success: false,
+          errors: [{message: res.sf__Error}],
+        }));
+
+        // Add results from this chunk to the main 'allResults' array
+        allResults.push(...successRecords, ...failedRecords);
+
+      } catch (err) {
+        Util.log(err);
+        // If the entire batch fails, create error objects for its records
+        const failedBatchResults = batchRecords.map(() => ({
+          success: false,
+          errors: [{message: err.message || 'Batch failed'}]
+        }));
+        allResults.push(...failedBatchResults);
+      }
+    } // End of for loop (batch processing)
+
+    // Return the combined results from all processed batches
+    return allResults;
+  }
 
     public static async insertData(connection: Connection, records: Array<any>, sObjectName: string) {
         const messageString = '-- Inserting ' + sObjectName;
@@ -220,19 +256,19 @@ export class Upsert {
                 const settingCounter = res.records.length + 1;
                 let settingName = "G_CPQ_DISABLE_TRIGGERS_" + settingCounter;
                 if(settingCounter < 10) { settingName = "G_CPQ_DISABLE_TRIGGERS_0" + settingCounter; }
-    
+
                 const data = { Name: settingName,
                     enxCPQ__Setting_Name__c: "CPQ_DISABLE_TRIGGERS",
                     enxCPQ__Context__c: "Global",
                     enxCPQ__Col1__c: connection.getUsername(),
                     enxCPQ__Col6__c: 'ENXOO_IMPORTER' };
-    
+
                 connection.sobject("enxCPQ__CPQ_Settings__c").insert(data, function(err, rets) {
                     if(err) {
                         reject('error disabling triggers: ' + err);
                         return;
                     }
-    
+
                     Util.hideSpinner(' done. Setting ID: ' + rets['id']);
                     //@ts-ignore
                     resolve();

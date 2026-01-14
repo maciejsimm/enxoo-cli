@@ -12,6 +12,10 @@ enxoo sfdx cli extensions
 [![Downloads/week](https://img.shields.io/npm/dw/enxoo.svg)](https://npmjs.org/package/enxoo)
 [![License](https://img.shields.io/npm/l/enxoo.svg)](https://github.com/maciejsimm/enxoo-cli/blob/master/package.json)
 
+## Requirements [![Node.js](https://img.shields.io/badge/node-v14.21.3-blue.svg)](https://nodejs.org/) [![npm](https://img.shields.io/badge/npm-v6.14.18-red.svg)](https://www.npmjs.com/) [![nvm](https://img.shields.io/badge/nvm-v1.1.12-lightgrey.svg)](https://github.com/nvm-sh/nvm)
+
+Make sure these versions are installed before using or contributing to this project.
+
 <!-- toc -->
 * [Debugging your plugin](#debugging-your-plugin)
 <!-- tocstop -->

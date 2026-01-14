@@ -40,13 +40,13 @@ export class Query {
                 throw new Error('Error during query execution. Importer will now exit the operation.');
             }
         }
-        const flattenedResults = recordResults.flat();
+        const flattenedResults = [].concat.apply([], recordResults);
 
         const uniqueRecordsMap = new Map();
         for (const record of flattenedResults) {
             uniqueRecordsMap.set(record.enxCPQ__TECH_External_Id__c ?? record.Id, record);
         }
-    
+
         return Array.from(uniqueRecordsMap.values());
     }
 

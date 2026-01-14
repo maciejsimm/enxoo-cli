@@ -170,10 +170,10 @@ export class ProductExport {
         this.products.forEach(product => { this.attributeIds = [...this.attributeIds, ...product.getAttributeIds()] });
         this.resources.forEach(res => { this.attributeIds = [...this.attributeIds, ...res.getAttributeIds()] });
 
-        const attributes = await productSelector.getAttributeDefinitions(this.connection, this.attributeIds);
+        const attributes = await productSelector.getAttributeDefinitions(this.connection, this.attributeIds.map(String));
         this.wrapAttributes(attributes);
 
-        const globalAttributeValues = await productSelector.getGlobalAttributeValues(this.connection, this.attributeIds);
+        const globalAttributeValues = await productSelector.getGlobalAttributeValues(this.connection, this.attributeIds.map(String));
         this.wrapGlobalAttributeValues(globalAttributeValues);
         // -- attributes end
 
@@ -199,7 +199,7 @@ export class ProductExport {
         const chargeDefinitions = await productSelector.getChargeDefinitions(this.connection, this.chargeIds);
         this.wrapChargeDefinitions(chargeDefinitions);
 
-        const chargeElements = await productSelector.getChargeElements(this.connection, this.chargeIds);
+        const chargeElements = await productSelector.getChargeElements(this.connection, this.chargeIds.map(String));
         this.wrapChargeElements(chargeElements);
 
         const chargeTiers = await productSelector.getChargeTiers(this.connection, this.chargeIds);

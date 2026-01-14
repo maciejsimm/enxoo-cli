@@ -1,14 +1,14 @@
 {
   "name": "enxoo",
   "description": "enxoo sfdx cli extensions",
-  "version": "0.2.31",
+  "version": "0.2.33",
   "dependencies": {
     "@oclif/command": "1",
     "@oclif/config": "^1.14.0",
     "@oclif/errors": "1",
     "@salesforce/command": "^3.0.0",
     "@salesforce/core": "^2.3.0",
-    "jsforce": "^3.6.2",
+    "jsforce": "1.11.1",
     "tslib": "^1.11.1"
   },
   "devDependencies": {
@@ -17,6 +17,8 @@
     "@oclif/test": "^1",
     "@salesforce/dev-config": "^1.1.4",
     "@types/chai": "^4.2.11",
+    "@types/lodash": "4.14.170",
+    "@types/minimatch": "3.0.4",
     "@types/mocha": "^5",
     "@types/node": "^10.17.19",
     "chai": "^4",
