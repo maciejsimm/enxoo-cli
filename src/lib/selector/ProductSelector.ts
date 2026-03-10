@@ -612,7 +612,7 @@ export class ProductSelector {
       private getStandardPricebookEntriesQuery(productIds: Array<string>) {
         return `
           SELECT 
-            UnitPrice, IsActive, UseStandardPrice, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode 
+            Id, UnitPrice, IsActive, UseStandardPrice, Product2.enxCPQ__TECH_External_Id__c, CurrencyIsoCode 
           FROM PricebookEntry 
           WHERE Product2.enxCPQ__TECH_External_Id__c IN ('${productIds.join("','")}')
             AND Pricebook2.IsStandard = true
